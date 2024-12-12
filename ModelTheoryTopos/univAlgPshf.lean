@@ -31,6 +31,10 @@ inductive fml (m : monosig) : Nat -> Type where
   | eq : tm m n -> tm m n -> fml m n
   | exists : fml m (n + 1) -> fml m n
 
+def fml.existsn : {n' : Nat} -> fml m (n + n') -> fml m n
+| 0, φ => φ
+| _+1, φ => existsn φ.exists
+
 
 -- x1, .., xn | φ ⊢ ψ
 structure sequent (m : monosig) where
@@ -42,6 +46,32 @@ structure sequent (m : monosig) where
 structure theory where
   sig : monosig
   axioms : List (sequent sig)
+
+def Ren n n' := Fin n -> Fin n'
+
+-- TODO: there's probably a name for that def in Fin
+def Ren.lift (f : Ren n n') : Ren (n+1) (n'+1) :=
+  Fin.cases 0 (fun i => f i + 1)
+
+def tm.ren (f : Ren n n') : tm m n -> tm m n'
+| .var i => .var (f i)
+| .op o k => .op o (fun i => (k i).ren f)
+
+def fml.ren (f : Ren n n') : fml m n -> fml m n'
+| .pred p k => .pred p (fun i => (k i).ren f)
+| .true => .true
+| .false => .false
+| .conj φ ψ => .conj (φ.ren f) (ψ.ren f)
+| .disj φ ψ => .disj (φ.ren f) (ψ.ren f)
+| .eq t u => .eq (t.ren f) (u.ren f)
+| .exists φ => .exists (φ.ren f.lift)
+
+-- just to show how to use
+def weaken_fml_for_functional_prop1 (φ : fml m (n1 + n2)) : fml m (n1 + n1 + n2) :=
+  φ.ren (Fin.addCases (Fin.castAdd n2 ∘ Fin.castAdd n1) (Fin.natAdd (n1+n1)))
+
+def weaken_fml_for_functional_prop2 (φ : fml m (n1 + n2)) : fml m (n1 + n1 + n2) :=
+  φ.ren (Fin.addCases (Fin.castAdd n2 ∘ Fin.natAdd n1) (Fin.natAdd (n1+n1)))
 
 
 namespace HeytingThy
