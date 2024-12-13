@@ -7,64 +7,8 @@ import Mathlib.CategoryTheory.ChosenFiniteProducts.FunctorCategory
 import Mathlib.CategoryTheory.Monoidal.Types.Basic
 import Mathlib.CategoryTheory.Functor.Category
 import Mathlib.CategoryTheory.Sites.Sieves
-
-
-structure monosig where
-  ops : Type
-  arity_ops : ops -> Nat
-  preds : Type
-  arity_preds : preds -> Nat
-
--- terms with n variables on the signature m
-inductive tm (m : monosig) (n : Nat) where
-  | var : Fin n -> tm m n     -- x1, .. xn ⊢ xk     k ∈ Fin n
-  | op : (o : m.ops) -> (Fin (m.arity_ops o) -> tm m n) -> tm m n
-    -- σ ∈ m.ops   x1, .. xn ⊢ t1,.., tj      x1, .. xn ⊢ σ(t1, .., tj)    arity(σ) = j
-
-inductive fml (m : monosig) : Nat -> Type where
-  | pred : (p : m.preds) -> (Fin (m.arity_preds p) -> tm m n) -> fml m n
-  | true : fml m n
-  | false : fml m n
-  | conj : fml m n -> fml m n -> fml m n
-  | disj : fml m n -> fml m n -> fml m n
-  -- | infdisj : (A : Type) -> (A -> fml m n) -> fml m n
-  | eq : tm m n -> tm m n -> fml m n
-  | exists : fml m (n + 1) -> fml m n
-
-def fml.existsn : {n' : Nat} -> fml m (n + n') -> fml m n
-| 0, φ => φ
-| _+1, φ => existsn φ.exists
-
-
--- x1, .., xn | φ ⊢ ψ
-structure sequent (m : monosig) where
-  ctx : Nat
-  premise : fml m ctx := .true
-  concl : fml m ctx
-
-
-structure theory where
-  sig : monosig
-  axioms : List (sequent sig)
-
-def Ren n n' := Fin n -> Fin n'
-
--- TODO: there's probably a name for that def in Fin
-def Ren.lift (f : Ren n n') : Ren (n+1) (n'+1) :=
-  Fin.cases 0 (fun i => f i + 1)
-
-def tm.ren (f : Ren n n') : tm m n -> tm m n'
-| .var i => .var (f i)
-| .op o k => .op o (fun i => (k i).ren f)
-
-def fml.ren (f : Ren n n') : fml m n -> fml m n'
-| .pred p k => .pred p (fun i => (k i).ren f)
-| .true => .true
-| .false => .false
-| .conj φ ψ => .conj (φ.ren f) (ψ.ren f)
-| .disj φ ψ => .disj (φ.ren f) (ψ.ren f)
-| .eq t u => .eq (t.ren f) (u.ren f)
-| .exists φ => .exists (φ.ren f.lift)
+import ModelTheoryTopos.Syntax.Signature
+import ModelTheoryTopos.Syntax.GeometricLogic
 
 -- just to show how to use
 def weaken_fml_for_functional_prop1 (φ : fml m (n1 + n2)) : fml m (n1 + n1 + n2) :=
@@ -320,7 +264,8 @@ namespace InterpPsh
   | .false => toUnit _ ≫ SubobjectClassifier.bot
   | .conj φ ψ => lift (L.interp_fml φ) (L.interp_fml ψ) ≫ SubobjectClassifier.conj
   | .disj φ ψ => lift (interp_fml L φ) (interp_fml L ψ) ≫ SubobjectClassifier.disj
-  | .exists φ => SubobjectClassifier.existπ (L.interp_fml φ)
+  | .infdisj φ => sorry
+  | .existsQ φ => SubobjectClassifier.existπ (L.interp_fml φ)
   | .eq t u => lift (L.interp_tm t) (interp_tm L u) ≫ SubobjectClassifier.eq
 
   def model {S : monosig} (L : Str S C) (s : sequent S) : Prop :=
