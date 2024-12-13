@@ -43,6 +43,27 @@ def fml.ren {n n' : RenCtx} (f : n ⟶ n') : fml m n -> fml m n'
 | .eq t u => .eq (t.ren f) (u.ren f)
 | .existsQ φ => .existsQ (φ.ren (lift f))
 
+def lift_subst (f : Fin n → tm m n') : Fin (n+1) → tm m (n'+1) :=
+  Fin.cases (.var 0) (tm.ren Fin.succ ∘ f)
+
+def fml.subst {n n' : RenCtx} (f : Fin n ⟶  tm m n') : fml m n -> fml m n'
+| .pred p k => .pred p (fun i => (k i).subst f)
+| .true => .true
+| .false => .false
+| .conj φ ψ => .conj (φ.subst f) (ψ.subst f)
+| .disj φ ψ => .disj (φ.subst f) (ψ.subst f)
+| .infdisj φ => .infdisj (fun i => (φ i).subst f)
+-- | .infdisj A φ => .infdisj A (fun a => (φ a).subst f)
+| .eq t u => .eq (t.subst f) (u.subst f)
+| .existsQ φ => .existsQ (φ.subst (lift_subst f))
+
+
+def fml.subst_fst (t : fml m (n+1)) (a : tm m n) : fml m n :=
+  subst (Fin.cases a .var) t
+
+def ctx_subst_fst (Γ : List (fml m (n+1))) (a : tm m n) : List (fml m n) :=
+  List.map (fun φ => φ.subst_fst a) Γ
+
 open CategoryTheory
 
 
@@ -80,3 +101,25 @@ instance formulas (m : monosig) : RenCtx ⥤ Type where
 
 
 -- TODO : syntactic proofs for geometric logic
+
+inductive proof : {n : RenCtx} → List (fml m n) → fml m n → Type where
+  | var : φ ∈ Γ → proof Γ φ
+  | true_intro : proof Γ .true
+  | false_elim : proof Γ .false → proof Γ φ
+  | conj_intro : proof Γ φ → proof Γ ψ → proof Γ (.conj φ ψ)
+  | conj_elim_l : proof Γ (.conj φ  ψ) → proof Γ φ
+  | conj_elim_r : proof Γ (.conj φ  ψ) → proof Γ ψ
+  | disj_intro_l : proof Γ φ → proof Γ (.disj φ ψ)
+  | disj_intro_r : proof Γ ψ → proof Γ (.disj φ ψ)
+  | disj_elim : proof Γ (.disj φ ψ) →
+    proof (φ :: Γ) ξ → proof (ψ :: Γ) ξ → proof Γ ξ
+  | infdisj_intro : proof Γ (φ n) → proof Γ (.infdisj φ)
+  | infdisj_elim : proof Γ (.infdisj φ) →
+    (forall n, proof (φ n :: Γ) ξ) → proof Γ ξ
+  | eq_intro : proof Γ (.eq t t)
+  | eq_elim (φ : fml _ _) : proof Δ (.eq t u) →
+    proof (Δ ++ ctx_subst_fst Γ t) (φ.subst_fst t) →
+    proof (Δ ++ ctx_subst_fst Γ u) (φ.subst_fst u)
+  | existsQ_intro : proof Γ (φ.subst_fst t) → proof Γ (.existsQ φ)
+  | existsQ_elim : proof Γ (.existsQ φ) →
+    proof (List.map (fml.ren Fin.succ) Γ) φ
