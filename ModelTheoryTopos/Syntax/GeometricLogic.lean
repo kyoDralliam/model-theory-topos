@@ -46,25 +46,37 @@ def fml.ren {n n' : RenCtx} (f : n ⟶ n') : fml m n -> fml m n'
 open CategoryTheory
 
 
+theorem fml.ren_id {n : RenCtx} (f : fml m n)
+  : fml.ren (𝟙 n) f = f := by
+  induction f with
+  | pred => simp [ren] ; funext i ; simp [tm.ren_id]
+  | true | false => simp [ren]
+  | conj φ ψ ihφ ihψ | disj φ ψ ihφ ihψ =>
+    simp [ren] ; constructor <;> simp [ihφ, ihψ]
+  | infdisj φ ih => simp [ren] ; funext i ; apply ih
+  | eq t u => simp [ren, tm.ren_id]
+  | existsQ φ ih => simp [ren, lift_id, ih]
+
+theorem fml.ren_comp (f : n1 ⟶ n2) (g : n2 ⟶ n3) (t : fml m n1):
+  ren (f ≫ g) t = ren g (ren f t) := by
+  induction t generalizing n2 n3 with
+  | pred => simp [ren] ; funext i ; simp [tm.ren_comp]
+  | true | false => simp [ren]
+  | conj φ ψ ihφ ihψ | disj φ ψ ihφ ihψ =>
+    simp [ren] ; constructor <;> simp [ihφ, ihψ]
+  | infdisj φ ih => simp [ren] ; funext i ; apply ih
+  | eq t u => simp [ren, tm.ren_comp]
+  | existsQ φ ih => simp [ren, lift_comp, ih]
+
+
 instance formulas (m : monosig) : RenCtx ⥤ Type where
   obj := fml m
   map := fml.ren
   map_id := by
-    intros n ; simp ; funext t
-    induction t with
-    | pred => simp [fml.ren] ; funext i ;  sorry -- simp [(terms m).map_id ]
-    | true | false => sorry
-    | conj φ ψ | disj φ psi => sorry
-    | infdisj φ => sorry
-    | eq t u => sorry
-    | existsQ φ => sorry
+    intros n ; simp ; funext t ; apply fml.ren_id
   map_comp := by
-    intros ; simp ; funext t
-    induction t with
-    | pred => simp [fml.ren] ; funext i ;  sorry -- simp [(terms m).map_id ]
-    | true | false => sorry
-    | conj φ ψ | disj φ psi => sorry
-    | infdisj φ => sorry
-    | eq t u => sorry
-    | existsQ φ => sorry
+    intros ; simp ; funext t ; apply fml.ren_comp
 
+
+
+-- TODO : syntactic proofs for geometric logic
