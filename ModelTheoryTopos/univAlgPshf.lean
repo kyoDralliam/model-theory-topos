@@ -7,6 +7,7 @@ import Mathlib.CategoryTheory.ChosenFiniteProducts.FunctorCategory
 import Mathlib.CategoryTheory.Monoidal.Types.Basic
 import Mathlib.CategoryTheory.Functor.Category
 import Mathlib.CategoryTheory.Sites.Sieves
+import Mathlib.CategoryTheory.Whiskering
 import ModelTheoryTopos.Syntax.Signature
 import ModelTheoryTopos.Syntax.GeometricLogic
 
@@ -245,12 +246,13 @@ end SubobjectClassifier
 
 namespace InterpPsh
   open CategoryTheory MonoidalCategory ChosenFiniteProducts
-  variable {C : Type} [Category C]
 
-  structure Str (S : monosig) (C : Type) [Category C] where
+  structure Str (S : monosig) (C : Type) [Category C]  where
     carrier : Psh C
     interp_ops : forall (o : S.ops), npow carrier (S.arity_ops o) ⟶ carrier
     interp_preds : forall (p : S.preds), npow carrier (S.arity_preds p) ⟶ SubobjectClassifier.prop
+
+  variable {C : Type} [Category C]
 
   namespace Str
 
@@ -305,8 +307,18 @@ namespace InterpPsh
     valid : forall s, s ∈ T.axioms → str.model s
 
 
+
   namespace BaseChange
     variable (D : Type) [Category D] (F : Functor C D) (T : theory)
+
+
+    def pb_prop : F.op ⋙ SubobjectClassifier.prop (C:=D) ⟶ SubobjectClassifier.prop where
+      app := fun c x =>
+        let x'' : Sieve (F.obj c.unop) := x
+        (Sieve.functorPullback F x'' : Sieve _)
+
+    def pb_prod (X : Psh D) : npow (F.op ⋙ X) n ⟶ F.op ⋙ npow X n :=
+      by sorry
 
     -- First part, show that a functor F : C ⥤ D
     -- induces by precomposition, a functor
@@ -315,8 +327,15 @@ namespace InterpPsh
     -- F^* : T-Mod(D) ⥤ T-Mod(C)
     def pb_obj (L : Str T.sig D) : Str T.sig C where
       carrier := F.op ⋙ L.carrier
-      interp_ops := fun o => by sorry -- L.interp_ops o
-      interp_preds := by sorry
+      interp_ops := fun o =>
+        let h := L.interp_ops o
+        let h' := whiskerLeft F.op h
+        pb_prod D F _ ≫ h'
+      interp_preds := fun p =>
+        let h := L.interp_preds p
+        let h' := whiskerLeft F.op h
+        let h'' := h' ≫ pb_prop D F
+        pb_prod D F _ ≫ h''
 
     def pb_map (L₁ L₂ : Str T.sig D) (f : L₁ ⟶ L₂) :
       pb_obj D F T L₁ ⟶ pb_obj D F T L₂ where
