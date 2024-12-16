@@ -43,10 +43,10 @@ def fml.ren {n n' : RenCtx} (f : n ⟶ n') : fml m n -> fml m n'
 | .eq t u => .eq (t.ren f) (u.ren f)
 | .existsQ φ => .existsQ (φ.ren (lift f))
 
-def lift_subst (f : Fin n → tm m n') : Fin (n+1) → tm m (n'+1) :=
+def lift_subst {n n' : Subst m} (f : n ⟶ n') : (n+1) ⟶ (n'+1) :=
   Fin.cases (.var 0) (tm.ren Fin.succ ∘ f)
 
-def fml.subst {n n' : RenCtx} (f : Fin n ⟶  tm m n') : fml m n -> fml m n'
+def fml.subst {n n' : Subst m} (f : n ⟶ n') : fml m n → fml m n'
 | .pred p k => .pred p (fun i => (k i).subst f)
 | .true => .true
 | .false => .false
@@ -57,15 +57,7 @@ def fml.subst {n n' : RenCtx} (f : Fin n ⟶  tm m n') : fml m n -> fml m n'
 | .eq t u => .eq (t.subst f) (u.subst f)
 | .existsQ φ => .existsQ (φ.subst (lift_subst f))
 
-
-def fml.subst_fst (t : fml m (n+1)) (a : tm m n) : fml m n :=
-  subst (Fin.cases a .var) t
-
-def ctx_subst_fst (Γ : List (fml m (n+1))) (a : tm m n) : List (fml m n) :=
-  List.map (fun φ => φ.subst_fst a) Γ
-
 open CategoryTheory
-
 
 theorem fml.ren_id {n : RenCtx} (f : fml m n)
   : fml.ren (𝟙 n) f = f := by
@@ -78,6 +70,15 @@ theorem fml.ren_id {n : RenCtx} (f : fml m n)
   | eq t u => simp [ren, tm.ren_id]
   | existsQ φ ih => simp [ren, lift_id, ih]
 
+theorem lift_subst_id (n : Subst m) : lift_subst (𝟙 n) = 𝟙 (n+1: Subst m) := by
+  funext i ; simp [lift_subst, CategoryStruct.id]
+  induction i using Fin.cases <;> simp
+
+theorem lift_subst_comp : lift_subst (f ≫ g) = lift_subst f ≫ lift_subst g := by
+  funext i ; simp [lift_subst, CategoryStruct.comp]
+  induction i using Fin.cases <;> simp
+
+
 theorem fml.ren_comp (f : n1 ⟶ n2) (g : n2 ⟶ n3) (t : fml m n1):
   ren (f ≫ g) t = ren g (ren f t) := by
   induction t generalizing n2 n3 with
@@ -89,18 +90,46 @@ theorem fml.ren_comp (f : n1 ⟶ n2) (g : n2 ⟶ n3) (t : fml m n1):
   | eq t u => simp [ren, tm.ren_comp]
   | existsQ φ ih => simp [ren, lift_comp, ih]
 
+theorem fml.subst_id {n : Subst m} (f : fml m n)
+  : subst (𝟙 n) f = f := by
+  induction f with
+  | pred => simp [subst] ; funext i ; simp [tm.subst_id]
+  --  ; simp [tm.subst_id]
+  | true | false => simp [subst]
+  | conj φ ψ ihφ ihψ | disj φ ψ ihφ ihψ =>
+    simp [subst] ; constructor <;> simp [ihφ, ihψ]
+  | infdisj φ ih => simp [subst] ; funext i ; apply ih
+  | eq t u => simp [subst, tm.subst_id]
+  | existsQ φ ih => simp [subst, lift_subst_id, ih]
 
-instance formulas (m : monosig) : RenCtx ⥤ Type where
-  obj := fml m
-  map := fml.ren
-  map_id := by
-    intros n ; simp ; funext t ; apply fml.ren_id
-  map_comp := by
-    intros ; simp ; funext t ; apply fml.ren_comp
+theorem fml.subst_comp {n1 n2 n3 : Subst m} (f : n1 ⟶ n2) (g : n2 ⟶ n3) (t : fml m n1):
+  subst (f ≫ g) t = subst g (subst f t) := by
+  induction t generalizing n2 n3 with
+  | pred => simp [subst] ; funext i ; simp [tm.subst_comp]
+  | true | false => simp [subst]
+  | conj φ ψ ihφ ihψ | disj φ ψ ihφ ihψ =>
+    simp [subst] ; constructor <;> simp [ihφ, ihψ]
+  | infdisj φ ih => simp [subst] ; funext i ; apply ih
+  | eq t u => simp [subst, tm.subst_comp]
+  | existsQ φ ih => simp [subst, lift_subst_comp, ih]
+
+def Fml m : Subst m ⥤ Type where
+  map := fml.subst
+  map_id := by intros ; funext t ; simp [fml.subst_id]
+  map_comp := by intros ; funext t ; simp [fml.subst_comp]
+
+-- def fml.subst_fst (t : (Fml m).obj (n+1)) (a : tm m n) : fml m n :=
+--   t[a..]
+
+def ListFunctor : Type ⥤ Type where
+  map := List.map
+
+def Ctx m : Subst m ⥤ Type := Fml m ⋙ ListFunctor
 
 
-
--- TODO : syntactic proofs for geometric logic
+-- Is there a way to make Ctx transparent enough for typeclass search ?
+instance: HAppend (List (fml m n)) ((Ctx m).obj n) (List (fml m n)) where
+  hAppend := fun l l' => let l'' : List (fml m n) := l' ; l ++ l''
 
 inductive proof : {n : RenCtx} → List (fml m n) → fml m n → Type where
   | var : φ ∈ Γ → proof Γ φ
@@ -117,9 +146,9 @@ inductive proof : {n : RenCtx} → List (fml m n) → fml m n → Type where
   | infdisj_elim : proof Γ (.infdisj φ) →
     (forall n, proof (φ n :: Γ) ξ) → proof Γ ξ
   | eq_intro : proof Γ (.eq t t)
-  | eq_elim (φ : fml _ _) : proof Δ (.eq t u) →
-    proof (Δ ++ ctx_subst_fst Γ t) (φ.subst_fst t) →
-    proof (Δ ++ ctx_subst_fst Γ u) (φ.subst_fst u)
-  | existsQ_intro : proof Γ (φ.subst_fst t) → proof Γ (.existsQ φ)
+  | eq_elim (φ : (Fml _).obj _) (Γ : (Ctx m).obj _) : proof Δ (.eq t u) →
+    proof (Δ ++ Γ[t..]) (φ[t..]) →
+    proof (Δ ++ Γ[u..]) (φ[u..])
+  | existsQ_intro (φ : (Fml _).obj _) : proof Γ (φ[t..]) → proof Γ (.existsQ φ)
   | existsQ_elim : proof Γ (.existsQ φ) →
     proof (List.map (fml.ren Fin.succ) Γ) φ

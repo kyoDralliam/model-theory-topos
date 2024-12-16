@@ -53,6 +53,7 @@ namespace RelativeMonad
 
   def kl {C D} [Category C] [Category D] {ι : C ⥤ D} {F : C → D} (_ : RelativeMonad ι F) := C
   def to_kl : C → r.kl := fun x => x
+  def from_kl : r.kl → C := fun x => x
 
   instance kleisli : Category (kl r) where
     Hom := fun x y => ι.obj x ⟶ F y

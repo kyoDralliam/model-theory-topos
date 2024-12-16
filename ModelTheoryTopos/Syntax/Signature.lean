@@ -53,24 +53,15 @@ theorem tm.ren_comp (f : n1 ⟶ n2) (g : n2 ⟶ n3) (t : tm m n1):
   | var => simp [tm.ren, CategoryStruct.comp]
   | op _ _ ih => simp [tm.ren] ; funext i ; simp [ih]
 
--- instance terms (m : monosig) : RenCtx ⥤ Type where
---   obj := tm m
---   map := tm.ren
---   map_id := by
---     intros n ; simp ; funext t ; apply tm.ren_id
---   map_comp := by
---     intros ; simp ; funext t ; apply tm.ren_comp
-
-def tm.subst : tm m n → (Fin n → tm m n') → tm m n'
-  | .var x, f => f x
-  | .op o k, f => .op o (fun i => (k i).subst f)
+def tm.subst {n n' : RenCtx} (f : Fin n → tm m n') : tm m n → tm m n'
+  | .var x => f x
+  | .op o k => .op o (fun i => (k i).subst f)
 
 instance emb : RenCtx ⥤ Type where
   obj := Fin
   map := id
 
 -- relative monad structure of terms over emb
-
 
 instance tm.substitution : RelativeMonad emb (tm m) where
   ret := fun n i => .var i
@@ -83,23 +74,38 @@ instance tm.substitution : RelativeMonad emb (tm m) where
     | var => simp [subst]
     | op _ _ ih => simp [subst] ; funext i ; simp [ih]
 
--- theorem tm.subst_map : (terms m).map f = tm.substitution.functor.map f := by
---   funext t ; induction t with
---     | var => simp [subst, terms, ren, emb, RelativeMonad.functor, tm.substitution]
---     | op _ _ ih => simp [subst, terms, ren, RelativeMonad.functor, tm.substitution] ; funext i ; apply ih i
 
--- def subst_fst {m} {C} [Category C] {H : RelativeMonad.kl (tm.substitution (m:=m)) ⥤ C} (a : tm m n) : H.obj (n+1) ⟶ H.obj n :=
---   H.map (Fin.cases a (tm.substitution.ret _))
+-- Category of contexts (natural numbers) and substitutions (maps Fin k -> tm m n)
+abbrev Subst m := (tm.substitution (m:=m)).kl
 
-def subst_fst {m} {H : RelativeMonad.kl (tm.substitution (m:=m)) ⥤ Type} (t : H.obj (n+1)) (a : tm m n) : H.obj n :=
+-- it would have probably been simpler to do the proof directly..
+theorem tm.subst_id (n : Subst m) (t : tm m n) : t.subst (𝟙 n) = t := by
+  calc
+    subst (𝟙 n) t = tm.substitution.bind (tm.substitution.ret _) t := by simp [tm.substitution, CategoryStruct.id]
+    _ = t := by simp [tm.substitution.lunit]
+
+theorem tm.subst_comp (n1 n2 n3 : Subst m) (f : n1 ⟶ n2) (g : n2 ⟶ n3) (t : tm m n1)
+  : t.subst (f ≫ g) = (t.subst f).subst g := by
+  calc
+    subst (f ≫ g) t = tm.substitution.bind (f ≫ tm.substitution.bind g) t := by simp [tm.substitution, CategoryStruct.comp]
+   _ = subst g (subst f t) := by simp [tm.substitution.assoc]; simp [tm.substitution]
+
+
+def subst_fst {m} {H : Subst m ⥤ Type} (t : H.obj (n+1)) (a : tm m n) : H.obj n :=
   H.map (Fin.cases a (tm.substitution.ret _)) t
-
 
 -- TODO: introduce a proper namespace for substitutions
 -- and define the other usual combinators
 notation t "[" a ".." "]" => (subst_fst t a)
 
+
 abbrev Tm (m : monosig) := RelativeMonad.kleisli.forgetful (tm.substitution (m:=m))
+
+instance : OfNat (Subst m) n where
+  ofNat := tm.substitution.to_kl n
+
+instance : HAdd (Subst m) Nat (Subst m) where
+  hAdd := fun k l => tm.substitution.to_kl (tm.substitution.from_kl k + l)
 
 namespace Example
 -- a simple signature with a nullary operation and a binary operation
@@ -108,9 +114,6 @@ def magma : monosig where
   arity_ops := fun b => if b then 0 else 2
   preds := Empty
   arity_preds := Empty.elim
-
-instance : OfNat (RelativeMonad.kl (tm.substitution (m:=m))) n where
-  ofNat := tm.substitution.to_kl n
 
 
 def v0 : (Tm magma).obj 1 := .var (0 : Fin 1)
