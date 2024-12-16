@@ -240,6 +240,7 @@ namespace SubobjectClassifier
   --         _ = B.map (g ≫ f).op b := by simp [h]
   --     }
 
+  noncomputable
   def existπ {A B : Psh C} (φ : A ⊗ B ⟶ prop) : B ⟶ prop := existQ (snd A B) φ
 
 end SubobjectClassifier
@@ -256,10 +257,12 @@ namespace InterpPsh
 
   namespace Str
 
+  noncomputable
   def interp_tm {S : monosig} (L : Str S C) : tm S n -> (npow L.carrier n ⟶ L.carrier)
     | .var k => nproj _ _ k
     | .op o k => (npair _ _ _ (fun i => L.interp_tm (k i))) ≫ L.interp_ops o
 
+  noncomputable
   def interp_fml {S : monosig} (L : Str S C) : fml S n -> (npow L.carrier n ⟶ SubobjectClassifier.prop)
   | .pred p k => (npair _ _ _ (fun i => interp_tm L (k i))) ≫ L.interp_preds p
   | .true => toUnit _ ≫ SubobjectClassifier.top
@@ -325,6 +328,7 @@ namespace InterpPsh
     -- F^* : T-Str(D) ⥤ T-Str(C)
     -- and this restricts to a functor
     -- F^* : T-Mod(D) ⥤ T-Mod(C)
+    noncomputable
     def pb_obj (L : Str T.sig D) : Str T.sig C where
       carrier := F.op ⋙ L.carrier
       interp_ops := fun o =>
@@ -343,6 +347,7 @@ namespace InterpPsh
       ops_comm := by sorry
       preds_comm := by sorry
 
+    noncomputable
     def pullback : Str T.sig D ⥤ Str T.sig C where
       obj := pb_obj D F T
       map := pb_map D F T _ _
