@@ -339,16 +339,13 @@ namespace InterpPsh
 
     def pb_map (L₁ L₂ : Str T.sig D) (f : L₁ ⟶ L₂) :
       pb_obj D F T L₁ ⟶ pb_obj D F T L₂ where
-      map := by sorry -- whisker f.map with F
+      map := whiskerLeft F.op f.map
       ops_comm := by sorry
       preds_comm := by sorry
 
     def pullback : Str T.sig D ⥤ Str T.sig C where
       obj := pb_obj D F T
       map := pb_map D F T _ _
-      map_id := by sorry -- check whether an explicit proof is necessary once pb_map is defined
-      map_comp := by sorry -- check whether an explicit proof is necessary once pb_map is defined
-
 
     -- Second part, (-)^* assembles as a 2-functor
     -- T-Mod : Cat^op -> CAT
