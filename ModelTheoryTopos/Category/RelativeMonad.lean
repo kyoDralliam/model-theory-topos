@@ -25,6 +25,8 @@ namespace RelativeMonad
     map_id := fun x => by simp [lunit]
     map_comp := fun f g => by rw [<-assoc] ; simp [runit]
 
+  @[simp]
+  theorem functor_eq : r.functor.obj x = F x := rfl
 
   -- TODO: link with the standard defs of naturality
   theorem ret_natural {x y} (f : x ⟶ y) :
@@ -35,6 +37,18 @@ namespace RelativeMonad
     r.bind (ι.map f ≫ g ≫ r.functor.map h) = r.functor.map f ≫ r.bind g ≫ r.functor.map h := by
     simp [functor] ; rw [<-Category.assoc, r.assoc,
       <-Category.assoc, <-(r.assoc _ g), Category.assoc, r.runit]
+
+  theorem bind_natural_l {x x' y} (f : x' ⟶ x) (g : ι.obj x ⟶ F y) :
+    r.bind (ι.map f ≫ g) = r.functor.map f ≫ r.bind g := by
+      have := (bind_natural r f g (𝟙 _))
+      simp [Functor.map_id] at this
+      apply this
+
+  theorem bind_natural_r {x y y'} (g : ι.obj x ⟶ F y) (h : y ⟶ y') :
+    r.bind (g ≫ r.functor.map h) = r.bind g ≫ r.functor.map h := by
+      have := (bind_natural r (𝟙 _) g h)
+      simp [Functor.map_id] at this
+      apply this
 
   class Algebra {A} [Category A] (H : A ⥤ D) where
     alg : {x : C} → {a : A} → (ι.obj x ⟶ H.obj a) → (F x ⟶ H.obj a)

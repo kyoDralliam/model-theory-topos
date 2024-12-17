@@ -70,15 +70,6 @@ theorem fml.ren_id {n : RenCtx} (f : fml m n)
   | eq t u => simp [ren, tm.ren_id]
   | existsQ φ ih => simp [ren, lift_id, ih]
 
-theorem lift_subst_id (n : Subst m) : lift_subst (𝟙 n) = 𝟙 (n+1: Subst m) := by
-  funext i ; simp [lift_subst, CategoryStruct.id]
-  induction i using Fin.cases <;> simp
-
-theorem lift_subst_comp : lift_subst (f ≫ g) = lift_subst f ≫ lift_subst g := by
-  funext i ; simp [lift_subst, CategoryStruct.comp]
-  induction i using Fin.cases <;> simp
-
-
 theorem fml.ren_comp (f : n1 ⟶ n2) (g : n2 ⟶ n3) (t : fml m n1):
   ren (f ≫ g) t = ren g (ren f t) := by
   induction t generalizing n2 n3 with
@@ -89,6 +80,20 @@ theorem fml.ren_comp (f : n1 ⟶ n2) (g : n2 ⟶ n3) (t : fml m n1):
   | infdisj φ ih => simp [ren] ; funext i ; apply ih
   | eq t u => simp [ren, tm.ren_comp]
   | existsQ φ ih => simp [ren, lift_comp, ih]
+
+theorem lift_subst_id (n : Subst m) : lift_subst (𝟙 n) = 𝟙 (n+1: Subst m) := by
+  funext i ; simp [lift_subst, CategoryStruct.id]
+  induction i using Fin.cases <;> simp [RelativeMonad.ret, tm.ren]
+
+theorem lift_subst_comp : lift_subst (f ≫ g) = lift_subst f ≫ lift_subst g := by
+  funext i ; simp [lift_subst, CategoryStruct.comp]
+  induction i using Fin.cases with
+    | zero => simp [RelativeMonad.bind, tm.subst, lift_subst]
+    | succ i =>
+      simp [RelativeMonad.bind, <-tm.ren_subst_comp, <-tm.subst_ren_comp]
+      congr; ext x; simp [CategoryStruct.comp, tm.ren_map, lift_subst]
+      rfl
+
 
 theorem fml.subst_id {n : Subst m} (f : fml m n)
   : subst (𝟙 n) f = f := by

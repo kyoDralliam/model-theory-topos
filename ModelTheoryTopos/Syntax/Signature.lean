@@ -41,17 +41,17 @@ def tm.ren {n n' : RenCtx} (f : n ⟶ n') : tm m n -> tm m n'
 | .op o k => .op o (fun i => (k i).ren f)
 
 
-theorem tm.ren_id {n : RenCtx} (t : tm m n)
-  : tm.ren (𝟙 n) t = t := by
-  induction t with
-  | var => simp [tm.ren, CategoryStruct.id]
-  | op _ _ ih => simp [tm.ren] ; funext i ; simp [ih]
+-- theorem tm.ren_id {n : RenCtx} (t : tm m n)
+--   : tm.ren (𝟙 n) t = t := by
+--   induction t with
+--   | var => simp [tm.ren, CategoryStruct.id]
+--   | op _ _ ih => simp [tm.ren] ; funext i ; simp [ih]
 
-theorem tm.ren_comp (f : n1 ⟶ n2) (g : n2 ⟶ n3) (t : tm m n1):
-  ren (f ≫ g) t = ren g (ren f t) := by
-  induction t with
-  | var => simp [tm.ren, CategoryStruct.comp]
-  | op _ _ ih => simp [tm.ren] ; funext i ; simp [ih]
+-- theorem tm.ren_comp (f : n1 ⟶ n2) (g : n2 ⟶ n3) (t : tm m n1):
+--   ren (f ≫ g) t = ren g (ren f t) := by
+--   induction t with
+--   | var => simp [tm.ren, CategoryStruct.comp]
+--   | op _ _ ih => simp [tm.ren] ; funext i ; simp [ih]
 
 def tm.subst {n n' : RenCtx} (f : Fin n → tm m n') : tm m n → tm m n'
   | .var x => f x
@@ -74,9 +74,17 @@ instance tm.substitution : RelativeMonad emb (tm m) where
     | var => simp [subst]
     | op _ _ ih => simp [subst] ; funext i ; simp [ih]
 
+theorem tm.ren_map {n1 n2 : RenCtx} (f : n1 ⟶ n2) (t : tm m n1) : tm.ren f t = tm.substitution.functor.map f t :=
+  by induction t with
+    | var => simp [RelativeMonad.functor, RelativeMonad.bind, subst, ren, RelativeMonad.ret, emb]
+    | op _ _ ih =>
+      simp [RelativeMonad.functor, RelativeMonad.bind, subst, ren, RelativeMonad.ret, emb]
+      funext i ; apply ih i
 
--- Category of contexts (natural numbers) and substitutions (maps Fin k -> tm m n)
 abbrev Subst m := (tm.substitution (m:=m)).kl
+
+theorem tm.subst_map {n n' : Subst m} (f : n ⟶ n') (t : tm m n) :
+  t.subst f = tm.substitution.bind f t := rfl
 
 -- it would have probably been simpler to do the proof directly..
 theorem tm.subst_id (n : Subst m) (t : tm m n) : t.subst (𝟙 n) = t := by
@@ -89,6 +97,33 @@ theorem tm.subst_comp (n1 n2 n3 : Subst m) (f : n1 ⟶ n2) (g : n2 ⟶ n3) (t : 
   calc
     subst (f ≫ g) t = tm.substitution.bind (f ≫ tm.substitution.bind g) t := by simp [tm.substitution, CategoryStruct.comp]
    _ = subst g (subst f t) := by simp [tm.substitution.assoc]; simp [tm.substitution]
+
+theorem tm.ren_id {n : RenCtx} (t : tm m n)
+  : tm.ren (𝟙 n) t = t := by
+  rw [ren_map, substitution.functor.map_id]
+  rfl
+
+theorem tm.ren_comp (f : n1 ⟶ n2) (g : n2 ⟶ n3) (t : tm m n1):
+  ren (f ≫ g) t = ren g (ren f t) := by
+  rw [ren_map, substitution.functor.map_comp, ren_map, ren_map]
+  rfl
+
+theorem tm.ren_subst_comp {n2 : Subst m} (f : Fin n1 ⟶ Fin n2) (g : n2 ⟶ n3) (t : tm m n1):
+  subst (g ∘ f) t = subst g (ren f t) := by
+  have := RelativeMonad.bind_natural_l tm.substitution f g
+  calc
+    subst (g ∘ f) t = tm.substitution.bind (emb.map f ≫ g) t := rfl
+    _ = (substitution.functor.map f ≫ tm.substitution.bind g) t := by rw [this]
+    _ = subst g (ren f t) := by rw [subst_map, ren_map]; simp [CategoryStruct.comp]
+
+
+theorem tm.subst_ren_comp {n2 : Subst m} (f : n1 ⟶ n2) (g : Fin n2 ⟶ Fin n3) (t : tm m n1):
+  subst (f ≫ (tm.substitution.ret _ ∘ g)) t = ren g (subst f t) := by
+  have := RelativeMonad.bind_natural_r tm.substitution f g
+  calc
+    subst (f ≫ (tm.substitution.ret _ ∘ g)) t = (substitution.bind (f ≫ substitution.functor.map g)) t := rfl
+    _ = (substitution.bind f ≫ substitution.functor.map g) t:= by rw [this]
+    _ = ren g (subst f t) := by rw [ren_map, subst_map]; simp [CategoryStruct.comp]
 
 
 def subst_fst {m} {H : Subst m ⥤ Type} (t : H.obj (n+1)) (a : tm m n) : H.obj n :=
