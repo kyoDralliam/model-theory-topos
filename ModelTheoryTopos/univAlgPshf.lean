@@ -109,13 +109,20 @@ namespace CategoryTheory.ChosenFiniteProducts
 
   def nproj (x : D) (n : Nat) (k : Fin n) : (npow x n ⟶ x) :=
     k.succRecOn
-      (fun _ => ChosenFiniteProducts.fst x _)
-      (fun _ _ ih => ChosenFiniteProducts.snd _ _ ≫ ih)
+      (fun _ => fst x _)
+      (fun _ _ ih => snd _ _ ≫ ih)
 
   def npair (x y : D) (n : Nat) (k : Fin n → (x ⟶ y)) : x ⟶ npow y n :=
     match n with
-    | 0 => ChosenFiniteProducts.toUnit x
-    | n+1 => ChosenFiniteProducts.lift (k 0) (npair x y n (fun i => k (i+1)))
+    | 0 => toUnit x
+    | n+1 => lift (k 0) (npair x y n (fun i => k (i+1)))
+
+  theorem npair_natural (x y z: D) (n : Nat) (f : x ⟶ y) (k : Fin n → (y ⟶ z))  :
+    npair x z n (fun i => f ≫ k i) = f ≫ npair y z n k := by
+    induction n with
+      | zero => apply toUnit_unique
+      | succ n ih =>
+        simp [npair, ih]
 
   def nlift (x y : D) (n : Nat) (k : Fin n → (x ⟶ y)) : npow x n ⟶ npow y n :=
     match n with
@@ -150,6 +157,12 @@ namespace CategoryTheory.ChosenFiniteProducts
   theorem nlift_diag_comp (x y z : D) (f: x ⟶ y) (g : y ⟶ z) :
     nlift_diag x y n f ≫ nlift_diag y z n g = nlift_diag x z n (f ≫ g) :=
     nlift_comp x y z n (fun _ => f) (fun _ => g)
+
+  def npow_functor (n : Nat) : D ⥤ D where
+    obj := fun x => npow x n
+    map := nlift_diag _ _ n
+    map_id := by apply nlift_diag_id
+    map_comp := by intros; symm; apply nlift_diag_comp
 
 end CategoryTheory.ChosenFiniteProducts
 
@@ -320,8 +333,36 @@ namespace InterpPsh
         let x'' : Sieve (F.obj c.unop) := x
         (Sieve.functorPullback F x'' : Sieve _)
 
-    def pb_prod (X : Psh D) : npow (F.op ⋙ X) n ⟶ F.op ⋙ npow X n :=
-      by sorry
+    -- TODO: rename
+    noncomputable
+    def f (X : Psh D) (n : Nat) d : (npow X n).obj d ⟶ npow (X.obj d) n :=
+      npair _ _ n (fun i => (nproj X n i).app d)
+
+    theorem f_succ : f D X (n+1) d = ChosenFiniteProducts.lift (ChosenFiniteProducts.fst _ _) (ChosenFiniteProducts.snd _ _ ≫ f D X n d) := by
+      simp [f, npair]; apply ChosenFiniteProducts.hom_ext <;> simp [nproj]
+      · rfl
+      · simp [npair_natural] ;rfl
+
+    theorem f_iso X n d : IsIso (f D X n d) := by
+      induction n with
+        | zero => exists (ChosenFiniteProducts.toUnit _)
+        | succ n ih =>
+          exists (𝟙 (X.obj d) ⊗ inv (f D X n d)) ; constructor
+          · rw [f_succ, lift_map] ; apply hom_ext <;> simp <;> rfl
+          · simp [f_succ, npow]
+
+
+
+    @[simp]
+    noncomputable
+    def pb_prod0 (X : Psh D) (n : Nat) : F.op ⋙ npow X n ⟶ npow (F.op ⋙ X) n :=
+      npair _ (F.op ⋙ X) n (fun i => whiskerLeft F.op (nproj X n i))
+
+    noncomputable
+    def pb_prod (X : Psh D) (n : Nat) : F.op ⋙ npow X n ≅ npow (F.op ⋙ X) n where
+      hom := (pb_prod0 D F X n)
+      inv := sorry
+
 
     -- First part, show that a functor F : C ⥤ D
     -- induces by precomposition, a functor
@@ -334,12 +375,12 @@ namespace InterpPsh
       interp_ops := fun o =>
         let h := L.interp_ops o
         let h' := whiskerLeft F.op h
-        pb_prod D F _ ≫ h'
+        (pb_prod D F _ _).inv ≫ h'
       interp_preds := fun p =>
         let h := L.interp_preds p
         let h' := whiskerLeft F.op h
         let h'' := h' ≫ pb_prop D F
-        pb_prod D F _ ≫ h''
+        (pb_prod D F _ _).inv ≫ h''
 
     def pb_map (L₁ L₂ : Str T.sig D) (f : L₁ ⟶ L₂) :
       pb_obj D F T L₁ ⟶ pb_obj D F T L₂ where
