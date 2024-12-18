@@ -3,6 +3,7 @@ import Mathlib.CategoryTheory.Category.Basic
 import Mathlib.CategoryTheory.Types
 import Mathlib.CategoryTheory.Opposites
 import Mathlib.CategoryTheory.ChosenFiniteProducts
+import Mathlib.CategoryTheory.ChosenFiniteProducts.Cat
 import Mathlib.CategoryTheory.ChosenFiniteProducts.FunctorCategory
 import Mathlib.CategoryTheory.Monoidal.Types.Basic
 import Mathlib.CategoryTheory.Functor.Category
@@ -117,6 +118,26 @@ namespace CategoryTheory.ChosenFiniteProducts
     | 0 => toUnit x
     | n+1 => lift (k 0) (npair x y n (fun i => k (i+1)))
 
+  theorem npair_univ {x y : D} (n : Nat) (k : Fin n → (x ⟶ y)) (f : x ⟶ npow y n)
+    (h : forall i : Fin n, k i = f ≫ nproj y n i) :
+    npair x y n k = f := by
+    induction n with
+      | zero => apply toUnit_unique
+      | succ n ih =>
+        simp [npair] ; apply hom_ext <;> simp
+        · have := h 0
+          simp [nproj] at this
+          assumption
+        · rw [ih]
+          intros i
+          have hi := h i.succ
+          simp [nproj] at hi
+          rw [hi, Category.assoc]
+          congr
+
+  theorem npair_nproj {x y : D} (n : Nat) (k : Fin n → (x ⟶ y)) (i : Fin n) :
+    npair x y n k ≫ nproj y n i = k i := by sorry
+
   theorem npair_natural (x y z: D) (n : Nat) (f : x ⟶ y) (k : Fin n → (y ⟶ z))  :
     npair x z n (fun i => f ≫ k i) = f ≫ npair y z n k := by
     induction n with
@@ -165,6 +186,15 @@ namespace CategoryTheory.ChosenFiniteProducts
     map_comp := by intros; symm; apply nlift_diag_comp
 
 end CategoryTheory.ChosenFiniteProducts
+
+namespace NatIso
+open CategoryTheory
+
+noncomputable
+def ofNatTrans {C D} [Category C] [Category D] {F G : C ⥤ D} (θ : F ⟶ G) (h : forall c, IsIso (θ.app c)) : (F ≅ G) :=
+  NatIso.ofComponents (fun c => asIso (θ.app c)) (fun f => θ.naturality f)
+
+end NatIso
 
 abbrev CategoryTheory.Psh (C:Type) [Category C] := Functor Cᵒᵖ Type
 
@@ -270,6 +300,7 @@ namespace InterpPsh
 
   namespace Str
 
+
   noncomputable
   def interp_tm {S : monosig} (L : Str S C) : tm S n -> (npow L.carrier n ⟶ L.carrier)
     | .var k => nproj _ _ k
@@ -358,10 +389,100 @@ namespace InterpPsh
     def pb_prod0 (X : Psh D) (n : Nat) : F.op ⋙ npow X n ⟶ npow (F.op ⋙ X) n :=
       npair _ (F.op ⋙ X) n (fun i => whiskerLeft F.op (nproj X n i))
 
+    def ev (c : Cᵒᵖ) : Psh C ⥤ Type where
+      obj := fun X => X.obj c
+      map := fun f => f.app c
+
+    theorem ev_map c {X Y : Psh C} (f : X ⟶ Y) : (ev c).map f = f.app c := rfl
+
+    theorem pb_prob_pointwise_inv (X : Psh D) n c : IsIso ((pb_prod0 D F X n).app c) := by
+      let h1 := (pb_prod0 D F X n).app c
+      let h2 := f C (F.op ⋙ X) n c
+      let d := F.op.obj c
+      let h3 := f D X n d
+      have eq : h1 ≫ h2 = h3 := by
+        simp [h1, h2, h3, f, d]
+        symm
+        apply npair_univ
+        intros i
+        rw [Category.assoc, npair_nproj]
+        have := (ev c).map_comp (pb_prod0 D F X n) (nproj _ _ i)
+        symm at this
+        rw [ev_map, ev_map, pb_prod0, npair_nproj] at this
+        simp [this, ev_map]
+      have iso2 : IsIso h2 := f_iso C (F.op ⋙ X) n c
+      have iso3 : IsIso h3 := f_iso D X n d
+      have iso12 : IsIso (h1 ≫ h2) := by rewrite [eq] ; assumption
+      apply IsIso.of_isIso_comp_right h1 h2
+
     noncomputable
-    def pb_prod (X : Psh D) (n : Nat) : F.op ⋙ npow X n ≅ npow (F.op ⋙ X) n where
-      hom := (pb_prod0 D F X n)
-      inv := sorry
+    def pb_prod (X : Psh D) (n : Nat) : F.op ⋙ npow X n ≅ npow (F.op ⋙ X) n :=
+      NatIso.ofNatTrans (pb_prod0 D F X n) (pb_prob_pointwise_inv D F X n)
+
+    theorem bin_prod_pointwise (X Y : Psh C) c : (X ⊗  Y).obj c = X.obj c ⊗ Y.obj c := rfl
+
+    -- def ev  : Dᵒᵖ ⊗ Psh D ⥤ Type where
+    --   obj := fun X => X.obj d
+    --   map := fun f => f.app d
+
+    -- def npow_fwd (n:Nat) (d : Dᵒᵖ) : ev D d ⋙ npow_functor n ⟶ npow_functor n ⋙ ev D d ≅  :=
+
+    -- def npow_componentwise (n:Nat) (d : Dᵒᵖ) : npow_functor n ⋙ ev D d ≅ ev D d ⋙ npow_functor n :=
+
+    -- (X : Psh D) d : (npow X n).obj d ≅ npow (X.obj d) n where
+
+    -- def npow_componentwise (X : Psh D) d : (npow X n).obj d ≅ npow (X.obj d) n where
+    --   hom := by sorry
+    -- --   inv := by sorry
+
+
+      -- induction n withF
+      -- | zero => rfl
+      -- | succ _ ih => simp [npow, ih, bin_prod_pointwise]
+
+    -- theorem npow_componentwise (X : Psh D) : (npow X n).obj d = npow (X.obj d) n := by
+    --   induction n withF
+    --   | zero => rfl
+    --   | succ _ ih => simp [npow, ih, bin_prod_pointwise]
+
+    -- def pb_prod_inv (X : Psh D) (n : Nat) c : ((npow (F.op ⋙ X) n).obj c) → (F.op ⋙ npow X n).obj c:=
+    --   fun fxn =>
+    --   have y := npow_componentwise C (F.op ⋙ X) ▸ fxn
+    --   npow_componentwise D X ▸ y
+
+    -- noncomputable
+    -- def pb_preserves_prod0 (X : Psh D) (n : Nat) c : (F.op ⋙ npow X n).obj c ≅ (npow (F.op ⋙ X) n).obj c where
+    --   hom := (pb_prod D F X n).app c
+    --   inv := pb_prod_inv D F X n c
+    --   hom_inv_id := by
+    --     simp [pb_prod, pb_prod_inv, npair, ]
+    --     unfold pb_prod_inv
+    --     sorry
+    --   inv_hom_id := by
+    --     funext fxn
+    --     simp [CategoryStruct.comp, Function.comp, pb_prod_inv]; sorry
+
+    -- noncomputable
+    -- def pb_preserves_prod (X : Psh D) (n : Nat) : F.op ⋙ npow X n ≅ npow (F.op ⋙ X) n :=
+    --   NatIso.ofComponents (pb_preserves_prod0 D F X n) (fun f => (pb_prod D F X n).naturality f)
+
+
+
+    -- def pb_prod (X : Psh D) : (n : Nat) → npow (F.op ⋙ X) n ⟶ F.op ⋙ npow X n
+    --   | .zero => ChosenFiniteProducts.toUnit _
+    --   | .succ n => by
+    --     constructor
+    --     case app => intros ; simp [npow, bin_prod_pointwise]; exact (𝟙 _ ⊗ (pb_prod X n).app _)
+    --     case naturality => intros c c' f; simp [npow] ; sorry
+    --    --by simp [npow] sorry
+
+    --  where
+    --   app :=
+    --   -- by simp [npow_componentwise] at fxn |- ; exact fxn
+    --   naturality := by intros; simp; funext fxn; simp; sorry
+
+      -- simp [npow_componentwise] at fxn; sorry
+
 
 
     -- First part, show that a functor F : C ⥤ D
