@@ -185,6 +185,22 @@ namespace CategoryTheory.ChosenFiniteProducts
     map_id := by apply nlift_diag_id
     map_comp := by intros; symm; apply nlift_diag_comp
 
+  -- TODO : get Yiming's version
+  theorem nlift_nproj {x y : D} (n : Nat) (k : Fin n → (x ⟶ y)) (i : Fin n) :
+    nlift x y n k ≫ nproj y n i = nproj x n i ≫ k i := by sorry
+
+  theorem nproj_natural (x y : D) (n : Nat) (f : x ⟶ y) (i : Fin n) :
+    (npow_functor n).map f ≫ nproj y n i = nproj x n i ≫ f := by
+    simp [npow_functor, nlift_diag, nlift_nproj]
+
+  theorem npair_natural' (x y y': D) (n : Nat) (g : y ⟶ y') (k : Fin n → (x ⟶ y))  :
+    npair x y' n (fun i => k i ≫ g) = npair x y n k ≫ (npow_functor n).map g := by
+    apply npair_univ
+    intros i
+    simp [nproj_natural]
+    rw [<-Category.assoc, npair_nproj]
+
+
 end CategoryTheory.ChosenFiniteProducts
 
 namespace NatIso
@@ -194,7 +210,32 @@ noncomputable
 def ofNatTrans {C D} [Category C] [Category D] {F G : C ⥤ D} (θ : F ⟶ G) (h : forall c, IsIso (θ.app c)) : (F ≅ G) :=
   NatIso.ofComponents (fun c => asIso (θ.app c)) (fun f => θ.naturality f)
 
+noncomputable
+def ofNatTrans' {C D} [Category C] [Category D] {F G : C ⥤ D} (θ : F ⟶ G) (h : forall c, IsIso (θ.app c)) : IsIso θ :=
+  Iso.isIso_hom (ofNatTrans θ h)
+
 end NatIso
+
+namespace CategoryTheory.ChosenFiniteProducts
+  open MonoidalCategory
+
+  variable {C D : Type u} [Category C] [Category D] [ChosenFiniteProducts C] [ChosenFiniteProducts D] (F : C ⥤ D)
+
+  def npow_oplax : npow_functor n ⋙ F ⟶ F ⋙ npow_functor n where
+    app := fun X => npair (F.obj (npow X n)) (F.obj X) n (fun i => F.map (nproj X n i))
+    naturality := by
+      intros X Y f
+      simp [npow_functor]
+      have natl := npair_natural _ _ (F.obj Y) n (F.map ((npow_functor n).map f))
+      have natr := npair_natural' (F.obj (npow X n)) _ _ n (F.map f)
+      have := nproj_natural X Y n f
+      simp [npow_functor] at natl natr this
+      rw [<- natl, <-natr]
+      congr; ext i
+      rw [<-F.map_comp,<-F.map_comp, this]
+
+end CategoryTheory.ChosenFiniteProducts
+
 
 abbrev CategoryTheory.Psh (C:Type) [Category C] := Functor Cᵒᵖ Type
 
@@ -364,6 +405,35 @@ namespace InterpPsh
         let x'' : Sieve (F.obj c.unop) := x
         (Sieve.functorPullback F x'' : Sieve _)
 
+    def SubobjectClassifier.pb_prop_top :
+      whiskerLeft F.op SubobjectClassifier.top ≫ pb_prop D F  =
+      SubobjectClassifier.top := by
+      ext x ⟨⟩
+      rfl
+
+    def SubobjectClassifier.pb_prop_bot :
+      whiskerLeft F.op SubobjectClassifier.bot ≫ pb_prop D F  =
+      SubobjectClassifier.bot := by
+      ext x ⟨⟩
+      rfl
+
+    def SubobjectClassifier.pb_prop_conj :
+      whiskerLeft F.op SubobjectClassifier.conj ≫ pb_prop D F  =
+      (pb_prop D F ⊗ pb_prop D F) ≫ SubobjectClassifier.conj := by
+      ext x ⟨φ , ψ⟩
+      rfl
+
+    def SubobjectClassifier.pb_prop_disj :
+      whiskerLeft F.op SubobjectClassifier.disj ≫ pb_prop D F  =
+      (pb_prop D F ⊗ pb_prop D F) ≫ SubobjectClassifier.disj := by
+      ext x ⟨φ , ψ⟩
+      rfl
+
+    def SubobjectClassifier.pb_prop_eq (X : Psh D) :
+      whiskerLeft F.op (SubobjectClassifier.eq (A:=X)) ≫ pb_prop D F =
+      SubobjectClassifier.eq (A:=F.op ⋙ X) := sorry
+
+
     -- TODO: rename
     noncomputable
     def f (X : Psh D) (n : Nat) d : (npow X n).obj d ⟶ npow (X.obj d) n :=
@@ -418,6 +488,16 @@ namespace InterpPsh
     noncomputable
     def pb_prod (X : Psh D) (n : Nat) : F.op ⋙ npow X n ≅ npow (F.op ⋙ X) n :=
       NatIso.ofNatTrans (pb_prod0 D F X n) (pb_prob_pointwise_inv D F X n)
+
+    noncomputable
+    def pb_prod'  (n : Nat) : npow_functor n ⋙ (whiskeringLeft _ _ _).obj F.op ≅  (whiskeringLeft _ _ Type).obj F.op ⋙ npow_functor n :=
+      NatIso.ofNatTrans (npow_oplax ((whiskeringLeft _ _ Type).obj F.op)) (by
+        intros X
+        simp [npow_oplax]
+        have:= NatIso.ofNatTrans' (pb_prod0 D F X n) (pb_prob_pointwise_inv D F X n)
+        simp [pb_prod0] at this
+        exact this)
+      -- NatIso.ofNatTrans (pb_prod0 D F X n) (pb_prob_pointwise_inv D F X n)
 
     theorem bin_prod_pointwise (X Y : Psh C) c : (X ⊗  Y).obj c = X.obj c ⊗ Y.obj c := rfl
 
@@ -513,6 +593,27 @@ namespace InterpPsh
     def pullback : Str T.sig D ⥤ Str T.sig C where
       obj := pb_obj D F T
       map := pb_map D F T _ _
+
+    def pb_prop_interp_tm (L : Str T.sig D) (t : tm T.sig n) :
+      whiskerLeft F.op (L.interp_tm t) =
+      (pb_prod D F _ n).hom ≫ (pb_obj D F T L).interp_tm t := by
+      sorry
+
+    def pb_prop_interp_fml (L : Str T.sig D) (φ : fml T.sig n) :
+      whiskerLeft F.op (L.interp_fml φ) ≫ pb_prop D F =
+      (pb_prod D F _ n).hom ≫ (pb_obj D F T L).interp_fml φ  := by
+        induction φ with
+        | pred p _ => sorry
+        | true => sorry
+        | false => sorry
+        | conj _ _ _ _ => sorry
+        | disj _ _ _ _ => sorry
+        | infdisj _ _ => sorry
+        | eq _ _ => sorry
+        | existsQ _ _ => sorry
+
+
+
 
     -- Second part, (-)^* assembles as a 2-functor
     -- T-Mod : Cat^op -> CAT
