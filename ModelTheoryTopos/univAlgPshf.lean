@@ -134,9 +134,42 @@ namespace CategoryTheory.ChosenFiniteProducts
           simp [nproj] at hi
           rw [hi, Category.assoc]
           congr
+  --new: to_npow_pair npair_univ'(maybe a better name would be npair_ext)
+  --nproj_succ nlift_nproj nlift_npair
+  theorem to_npow_npair  {x y : D} (n : Nat)  (f : x ⟶ npow y n) :
+   npair x y n (fun i => f ≫ nproj y n i )= f := by
+     apply npair_univ
+     intros i
+     simp
+
+  theorem npair_univ' {x y : D} (n : Nat) (f g: x ⟶ npow y n)
+    (h : forall i : Fin n, f ≫ nproj y n i = g ≫ nproj y n i) : f = g := by
+     have a : f = npair x y n (fun i => f ≫ nproj y n i ):=
+          by simp[to_npow_npair]
+     rw[a]
+     apply npair_univ
+     intros i
+     simp[h]
+
+  theorem nproj_succ  (x : D) (n : Nat) (i : Fin n) :
+    nproj x (n+1) i.succ = snd _ _ ≫ (nproj x n i) := by
+   simp[nproj ]
+
 
   theorem npair_nproj {x y : D} (n : Nat) (k : Fin n → (x ⟶ y)) (i : Fin n) :
-    npair x y n k ≫ nproj y n i = k i := by sorry
+    npair x y n k ≫ nproj y n i = k i := by
+      induction n with
+       | zero => exact (Fin.elim0 i)
+       | succ n ih =>
+         induction i using Fin.cases with
+         | zero =>
+           simp[nproj,npair]
+         | succ i =>
+           simp[npair]
+           simp[nproj_succ]
+           simp[ih]
+
+
 
   theorem npair_natural (x y z: D) (n : Nat) (f : x ⟶ y) (k : Fin n → (y ⟶ z))  :
     npair x z n (fun i => f ≫ k i) = f ≫ npair y z n k := by
@@ -150,6 +183,28 @@ namespace CategoryTheory.ChosenFiniteProducts
     | 0 => 𝟙 (𝟙_ D)
     | n+1 => k 0 ⊗ nlift x y n (fun i => k (i+1))
     -- npair (npow x n) y n (fun i => nproj x n i ≫ k i)
+
+
+
+  theorem nlift_nproj {x y : D} (n : Nat) (k : Fin n → (x ⟶ y)) (i : Fin n) :
+    nlift x y n k ≫ nproj y n i = nproj x n i ≫ k i := by
+      induction n with
+       | zero => exact (Fin.elim0 i)
+       | succ n ih =>
+         induction i using Fin.cases with
+         | zero =>
+           simp[nlift,nproj]
+         | succ i =>
+           simp[nproj_succ]
+           simp[nlift]
+           simp[ih]
+
+  theorem nlift_npair (x y : D) (n : Nat) (k : Fin n → (x ⟶ y)) :
+   nlift x y n k = npair (npow x n) y n (fun i => nproj x n i ≫ k i) := by
+    apply npair_univ'
+    intros i
+    simp[npair_nproj]
+    simp[nlift_nproj]
 
 
   def nlift_diag (x y : D) (n : Nat) (f : x ⟶ y) : npow x n ⟶ npow y n :=
@@ -186,8 +241,6 @@ namespace CategoryTheory.ChosenFiniteProducts
     map_comp := by intros; symm; apply nlift_diag_comp
 
   -- TODO : get Yiming's version
-  theorem nlift_nproj {x y : D} (n : Nat) (k : Fin n → (x ⟶ y)) (i : Fin n) :
-    nlift x y n k ≫ nproj y n i = nproj x n i ≫ k i := by sorry
 
   theorem nproj_natural (x y : D) (n : Nat) (f : x ⟶ y) (i : Fin n) :
     (npow_functor n).map f ≫ nproj y n i = nproj x n i ≫ f := by
@@ -570,6 +623,10 @@ namespace InterpPsh
     -- F^* : T-Str(D) ⥤ T-Str(C)
     -- and this restricts to a functor
     -- F^* : T-Mod(D) ⥤ T-Mod(C)
+
+
+
+
     noncomputable
     def pb_obj (L : Str T.sig D) : Str T.sig C where
       carrier := F.op ⋙ L.carrier
@@ -583,11 +640,68 @@ namespace InterpPsh
         let h'' := h' ≫ pb_prop D F
         (pb_prod D F _ _).inv ≫ h''
 
+    theorem pb_prod_hom (X : Psh D) (n : Nat):
+   (pb_prod D F X n).hom = (pb_prod0 D F X n) := rfl
+
+
+    theorem nproj_pb_prod0 (X : Psh D) (n : Nat) (n: ℕ ) (i: Fin n):
+   (pb_prod0 D F X n)≫ (nproj (F.op ⋙ X) n i) = (whiskerLeft F.op (nproj X n i)):= by
+     ext c a
+     simp[npair_nproj]
+
+    instance nlift_whisker0 (L₁ L₂ : Psh D)  (n : Nat) (k : Fin n → (L₁ ⟶ L₂)):
+    CategoryTheory.whiskerLeft F.op
+    (nlift L₁ L₂ n k) ≫ (pb_prod D F L₂ n).hom =
+    (pb_prod D F L₁ n).hom ≫ nlift (F.op ⋙ L₁) (F.op ⋙ L₂) n (fun i => CategoryTheory.whiskerLeft F.op (k i))
+     := by
+      apply npair_univ'
+      intros i
+      simp
+      simp[nlift_nproj]
+      simp[pb_prod_hom]
+      simp[npair_nproj]
+      simp[← Category.assoc]
+      simp[npair_nproj]
+      simp[← CategoryTheory.whiskerLeft_comp]
+      simp[nlift_nproj]
+
+    theorem nlift_whisker  (L₁ L₂ : Psh D)  (n : Nat) (k : Fin n → (L₁ ⟶ L₂)):
+    nlift (F.op ⋙ L₁) (F.op ⋙ L₂) n (fun i => CategoryTheory.whiskerLeft F.op (k i)) ≫
+    (pb_prod D F L₂ n).inv =
+    (pb_prod D F L₁ n).inv ≫
+    CategoryTheory.whiskerLeft F.op
+    (nlift L₁ L₂ n k) := by
+      have
+      a:= nlift_whisker0 D F L₁ L₂ n k
+      symm
+      have
+      b : CategoryTheory.whiskerLeft F.op (nlift L₁ L₂ n k) ≫ (pb_prod D F L₂ n).hom ≫ (pb_prod D F L₂ n).inv =
+  (pb_prod D F L₁ n).hom ≫ nlift (F.op ⋙ L₁) (F.op ⋙ L₂) n (fun i ↦ CategoryTheory.whiskerLeft F.op (k i)) ≫  (pb_prod D F L₂ n).inv :=
+       sorry
+      have
+      c: (pb_prod D F L₁ n).inv ≫  CategoryTheory.whiskerLeft F.op (nlift L₁ L₂ n k) ≫ (pb_prod D F L₂ n).hom ≫ (pb_prod D F L₂ n).inv =
+      (pb_prod D F L₁ n).inv ≫ (pb_prod D F L₁ n).hom ≫ nlift (F.op ⋙ L₁) (F.op ⋙ L₂) n (fun i ↦ CategoryTheory.whiskerLeft F.op (k i)) ≫  (pb_prod D F L₂ n).inv :=
+      sorry
+      simp at c
+      exact c
+
     def pb_map (L₁ L₂ : Str T.sig D) (f : L₁ ⟶ L₂) :
       pb_obj D F T L₁ ⟶ pb_obj D F T L₂ where
       map := whiskerLeft F.op f.map
-      ops_comm := by sorry
-      preds_comm := by sorry
+      ops_comm := by
+        intros o
+        simp[pb_obj,← CategoryTheory.whiskerLeft_comp]
+        simp[← f.ops_comm]
+        simp[← Category.assoc]
+        simp[nlift_diag,nlift_whisker]
+      preds_comm := by
+        intros o
+        simp[pb_obj,← CategoryTheory.whiskerLeft_comp]
+        simp[← f.preds_comm]
+        simp[← Category.assoc]
+        simp[nlift_diag,nlift_whisker]
+
+
 
     noncomputable
     def pullback : Str T.sig D ⥤ Str T.sig C where
