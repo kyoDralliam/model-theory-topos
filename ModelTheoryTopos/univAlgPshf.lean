@@ -507,7 +507,7 @@ namespace InterpPsh
 
 
 
-    @[simp]
+
     noncomputable
     def pb_prod0 (X : Psh D) (n : Nat) : F.op ⋙ npow X n ⟶ npow (F.op ⋙ X) n :=
       npair _ (F.op ⋙ X) n (fun i => whiskerLeft F.op (nproj X n i))
@@ -532,7 +532,7 @@ namespace InterpPsh
         have := (ev c).map_comp (pb_prod0 D F X n) (nproj _ _ i)
         symm at this
         rw [ev_map, ev_map, pb_prod0, npair_nproj] at this
-        simp [this, ev_map]
+        simp [this, ev_map,pb_prod0 ]
       have iso2 : IsIso h2 := f_iso C (F.op ⋙ X) n c
       have iso3 : IsIso h3 := f_iso D X n d
       have iso12 : IsIso (h1 ≫ h2) := by rewrite [eq] ; assumption
@@ -644,10 +644,15 @@ namespace InterpPsh
    (pb_prod D F X n).hom = (pb_prod0 D F X n) := rfl
 
 
-    theorem nproj_pb_prod0 (X : Psh D) (n : Nat) (n: ℕ ) (i: Fin n):
+    theorem nproj_pb_prod0 (X : Psh D)  (n: ℕ ) (i: Fin n):
    (pb_prod0 D F X n)≫ (nproj (F.op ⋙ X) n i) = (whiskerLeft F.op (nproj X n i)):= by
      ext c a
-     simp[npair_nproj]
+     simp[npair_nproj,pb_prod0 ]
+
+     theorem nproj_pb_prod0_symm (X : Psh D) (n: ℕ ) (i: Fin n):
+    (whiskerLeft F.op (nproj X n i)) = (pb_prod0 D F X n)≫ (nproj (F.op ⋙ X) n i) := by
+     ext c a
+     simp[npair_nproj,pb_prod0 ]
 
     instance nlift_whisker0 (L₁ L₂ : Psh D)  (n : Nat) (k : Fin n → (L₁ ⟶ L₂)):
     CategoryTheory.whiskerLeft F.op
@@ -659,7 +664,7 @@ namespace InterpPsh
       simp
       simp[nlift_nproj]
       simp[pb_prod_hom]
-      simp[npair_nproj]
+      simp[npair_nproj,pb_prod0 ]
       simp[← Category.assoc]
       simp[npair_nproj]
       simp[← CategoryTheory.whiskerLeft_comp]
@@ -708,10 +713,67 @@ namespace InterpPsh
       obj := pb_obj D F T
       map := pb_map D F T _ _
 
-    def pb_prop_interp_tm (L : Str T.sig D) (t : tm T.sig n) :
+
+    theorem inv_comp_eq' {C : Type u} [Category.{v} C] {X Y Z : C} (α : X ≅ Y) {f : X ⟶ Z} {g : Y ⟶ Z} :
+     f = α.hom ≫ g ↔ α.inv ≫ f = g  := sorry
+
+
+    theorem pb_obj_interp_ops (L : Str T.sig D)  (o: T.sig.ops):
+       whiskerLeft F.op (L.interp_ops o) =
+       (pb_prod D F L.carrier (T.sig.arity_ops o)).hom ≫ (pb_obj D F T L).interp_ops o := by
+
+       simp[← Iso.inv_comp_eq]
+       simp[pb_obj]
+
+    theorem pb_obj_interp_ops0 (L : Str T.sig D)  (o: T.sig.ops):
+       (pb_prod D F L.carrier (T.sig.arity_ops o)).inv ≫ whiskerLeft F.op (L.interp_ops o) =
+       (pb_obj D F T L).interp_ops o := by
+       simp[Iso.inv_comp_eq]
+       simp[pb_obj]
+
+
+    theorem pb_prod_pb_prod0  (X : Psh D) (n : Nat) :
+     (pb_prod D F X n).hom = pb_prod0 D F X n := rfl
+
+    theorem pb_npair_compatible (P : Psh D) (n : Nat) (k: Fin n → (X ⟶  P)):
+     npair (F.op⋙ X) (F.op⋙ P) n (fun i => whiskerLeft F.op (k i)) ≫ (pb_prod D F P  n).inv  =
+     whiskerLeft F.op (npair X P n k)
+     := by
+      simp[Iso.comp_inv_eq]
+      apply npair_univ'
+      intro i
+      simp[npair_nproj]
+      simp[pb_prod_pb_prod0]
+      simp[nproj_pb_prod0]
+      simp[← CategoryTheory.whiskerLeft_comp]
+      simp[npair_nproj]
+
+
+    def pb_prop_interp_tm (L : Str T.sig D)  (n : ℕ ) (t : tm T.sig n) :
       whiskerLeft F.op (L.interp_tm t) =
       (pb_prod D F _ n).hom ≫ (pb_obj D F T L).interp_tm t := by
-      sorry
+        simp[inv_comp_eq']
+        induction t with
+        | var _ =>
+          simp[Str.interp_tm]
+          simp[Iso.inv_comp_eq]
+          simp[pb_prod_pb_prod0]
+          simp[nproj_pb_prod0_symm]
+          simp[pb_obj]
+        | op o a a_ih =>
+          simp[Str.interp_tm]
+          simp[pb_obj_interp_ops]
+          simp[← Category.assoc]
+          simp[← pb_obj_interp_ops0]
+          simp[← a_ih]
+          simp[npair_natural]
+          simp[← Category.assoc]
+          simp
+          simp[pb_obj]
+          simp[← Category.assoc]
+          simp[pb_npair_compatible]
+
+
 
     def pb_prop_interp_fml (L : Str T.sig D) (φ : fml T.sig n) :
       whiskerLeft F.op (L.interp_fml φ) ≫ pb_prop D F =
