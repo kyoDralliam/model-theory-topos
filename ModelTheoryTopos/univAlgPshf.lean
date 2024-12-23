@@ -482,9 +482,18 @@ namespace InterpPsh
       ext x ⟨φ , ψ⟩
       rfl
 
+
+
     def SubobjectClassifier.pb_prop_eq (X : Psh D) :
       whiskerLeft F.op (SubobjectClassifier.eq (A:=X)) ≫ pb_prop D F =
-      SubobjectClassifier.eq (A:=F.op ⋙ X) := sorry
+      SubobjectClassifier.eq (A:=F.op ⋙ X) := by
+        ext x ⟨a1 , a2⟩
+        apply CategoryTheory.Sieve.arrows_ext
+        simp[CategoryTheory.whiskerLeft,pb_prop,
+             SubobjectClassifier.eq]
+        funext c0 f
+        simp[Presieve.functorPullback]
+
 
 
     -- TODO: rename
