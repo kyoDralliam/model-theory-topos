@@ -854,8 +854,6 @@ namespace InterpPsh
     ChosenFiniteProducts.lift ((pb_obj D F T L).interp_fml f1) ((pb_obj D F T L).interp_fml f2)
           := by
             apply hom_ext
-             -- whisker of ≫
-             -- simp[CategoryTheory.whiskerLeft_comp]
             · simp only[Category.assoc]
               simp only[tensorHom_fst]
               simp only[lift_fst]
@@ -875,7 +873,36 @@ namespace InterpPsh
           simp[← Category.assoc]
           simp[a]
 
-        | disj _ _ _ _ => sorry
+        | disj f1 f2 ih1 ih2 =>
+          rename_i m
+          simp
+          simp[Str.interp_fml]
+          simp[SubobjectClassifier.pb_prop_disj]
+          have a:
+          CategoryTheory.whiskerLeft F.op (ChosenFiniteProducts.lift (L.interp_fml f1) (L.interp_fml f2)) ≫
+          (pb_prop D F ⊗ pb_prop D F) =
+          (pb_prod D F L.carrier m).hom ≫
+    ChosenFiniteProducts.lift ((pb_obj D F T L).interp_fml f1) ((pb_obj D F T L).interp_fml f2)
+          := by
+            apply hom_ext
+            · simp only[Category.assoc]
+              simp only[tensorHom_fst]
+              simp only[lift_fst]
+              simp only[whiskerLeft_lift]
+              simp only[← Category.assoc]
+              simp only[lift_fst]
+              simp[ih1]
+
+            · simp only[Category.assoc]
+              simp only[tensorHom_snd]
+              simp only[lift_snd]
+              simp only[whiskerLeft_lift]
+              simp only[← Category.assoc]
+              simp only[lift_snd]
+              simp[ih2]
+
+          simp[← Category.assoc]
+          simp[a]
         | infdisj _ _ => sorry
         | eq _ _ => sorry
         | existsQ _ _ => sorry
