@@ -649,6 +649,16 @@ namespace InterpPsh
         let h'' := h' ≫ pb_prop D F
         (pb_prod D F _ _).inv ≫ h''
 
+
+    theorem pb_obj_interp_preds (L : Str T.sig D)  (p: T.sig.preds):
+       (pb_obj D F T L).interp_preds p =
+       (pb_prod D F L.carrier (T.sig.arity_preds p)).inv ≫
+       whiskerLeft F.op (L.interp_preds p) ≫ pb_prop D F := by
+
+       simp[← Iso.inv_comp_eq]
+       simp[pb_obj]
+
+
     theorem pb_prod_hom (X : Psh D) (n : Nat):
    (pb_prod D F X n).hom = (pb_prod0 D F X n) := rfl
 
@@ -734,6 +744,7 @@ namespace InterpPsh
        simp[← Iso.inv_comp_eq]
        simp[pb_obj]
 
+
     theorem pb_obj_interp_ops0 (L : Str T.sig D)  (o: T.sig.ops):
        (pb_prod D F L.carrier (T.sig.arity_ops o)).inv ≫ whiskerLeft F.op (L.interp_ops o) =
        (pb_obj D F T L).interp_ops o := by
@@ -782,13 +793,19 @@ namespace InterpPsh
           simp[← Category.assoc]
           simp[pb_npair_compatible]
 
-
-
     def pb_prop_interp_fml (L : Str T.sig D) (φ : fml T.sig n) :
       whiskerLeft F.op (L.interp_fml φ) ≫ pb_prop D F =
       (pb_prod D F _ n).hom ≫ (pb_obj D F T L).interp_fml φ  := by
         induction φ with
-        | pred p _ => sorry
+        | pred p ts =>
+           rename_i m
+           #check Str.interp_fml (pb_obj D F T L) (fml.pred p ts)
+           simp[Str.interp_fml]
+           simp[pb_obj_interp_preds]
+           simp[← pb_npair_compatible]
+           simp[pb_prop_interp_tm]
+           simp[npair_natural]
+           simp[pb_obj]
         | true => sorry
         | false => sorry
         | conj _ _ _ _ => sorry
