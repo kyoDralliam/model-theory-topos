@@ -904,7 +904,14 @@ namespace InterpPsh
           simp[← Category.assoc]
           simp[a]
         | infdisj _ _ => sorry
-        | eq _ _ => sorry
+        | eq t1 t2 =>
+          rename_i m
+          simp
+          simp[Str.interp_fml]
+          simp[SubobjectClassifier.pb_prop_eq]
+          simp[whiskerLeft_lift]
+          simp[pb_prop_interp_tm]
+          simp[← comp_lift]
         | existsQ _ _ => sorry
 
 
