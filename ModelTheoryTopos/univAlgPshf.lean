@@ -806,7 +806,17 @@ namespace InterpPsh
            simp[pb_prop_interp_tm]
            simp[npair_natural]
            simp[pb_obj]
-        | true => sorry
+        | true =>
+          rename_i m
+          simp
+          simp[Str.interp_fml]
+          simp[SubobjectClassifier.pb_prop_top]
+          simp[← Category.assoc]
+          have a: CategoryTheory.whiskerLeft F.op (toUnit (npow L.carrier m)) =
+            ((pb_prod D F L.carrier m).hom ≫ toUnit (npow (pb_obj D F T L).carrier m)) :=
+             by
+              apply toUnit_unique
+          simp only [a]
         | false => sorry
         | conj _ _ _ _ => sorry
         | disj _ _ _ _ => sorry
