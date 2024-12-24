@@ -768,6 +768,21 @@ namespace InterpPsh
       simp[← CategoryTheory.whiskerLeft_comp]
       simp[npair_nproj]
 
+    theorem lift_app (X Y Z:Psh C) (f:X⟶ Y) (g:X⟶ Z) (c: Cᵒᵖ )
+    (a : X.obj c):
+    (ChosenFiniteProducts.lift f g).app c a =
+    ⟨f.app c a, g.app c a⟩ := rfl--it should be somewhere in mathlib, cannot find it
+
+    theorem whiskerLeft_lift (X Y Z:Psh D) (f:X⟶ Y) (g:X⟶ Z):
+    CategoryTheory.whiskerLeft F.op
+    (ChosenFiniteProducts.lift f g) =
+    ChosenFiniteProducts.lift
+    (CategoryTheory.whiskerLeft F.op f)
+    (CategoryTheory.whiskerLeft F.op g) := by
+     ext cop a
+     simp[CategoryTheory.whiskerLeft_apply]
+     simp[lift_app]
+
 
     def pb_prop_interp_tm (L : Str T.sig D)  (n : ℕ ) (t : tm T.sig n) :
       whiskerLeft F.op (L.interp_tm t) =
@@ -808,7 +823,7 @@ namespace InterpPsh
            simp[pb_obj]
         | true =>
           rename_i m
-          simp
+          --simp it does not do anything, why do not report error either?
           simp[Str.interp_fml]
           simp[SubobjectClassifier.pb_prop_top]
           simp[← Category.assoc]
@@ -817,8 +832,49 @@ namespace InterpPsh
              by
               apply toUnit_unique
           simp only [a]
-        | false => sorry
-        | conj _ _ _ _ => sorry
+        | false =>
+          rename_i m
+          simp[Str.interp_fml]
+          simp[SubobjectClassifier.pb_prop_bot ]
+          simp[← Category.assoc]
+          have a: CategoryTheory.whiskerLeft F.op (toUnit (npow L.carrier m)) =
+            ((pb_prod D F L.carrier m).hom ≫ toUnit (npow (pb_obj D F T L).carrier m)) :=
+             by
+              apply toUnit_unique
+          simp only [a]
+        | conj f1 f2 ih1 ih2 =>
+          rename_i m
+          simp
+          simp[Str.interp_fml]
+          simp[SubobjectClassifier.pb_prop_conj]
+          have a:
+          CategoryTheory.whiskerLeft F.op (ChosenFiniteProducts.lift (L.interp_fml f1) (L.interp_fml f2)) ≫
+          (pb_prop D F ⊗ pb_prop D F) =
+          (pb_prod D F L.carrier m).hom ≫
+    ChosenFiniteProducts.lift ((pb_obj D F T L).interp_fml f1) ((pb_obj D F T L).interp_fml f2)
+          := by
+            apply hom_ext
+             -- whisker of ≫
+             -- simp[CategoryTheory.whiskerLeft_comp]
+            · simp only[Category.assoc]
+              simp only[tensorHom_fst]
+              simp only[lift_fst]
+              simp only[whiskerLeft_lift]
+              simp only[← Category.assoc]
+              simp only[lift_fst]
+              simp[ih1]
+
+            · simp only[Category.assoc]
+              simp only[tensorHom_snd]
+              simp only[lift_snd]
+              simp only[whiskerLeft_lift]
+              simp only[← Category.assoc]
+              simp only[lift_snd]
+              simp[ih2]
+
+          simp[← Category.assoc]
+          simp[a]
+
         | disj _ _ _ _ => sorry
         | infdisj _ _ => sorry
         | eq _ _ => sorry
