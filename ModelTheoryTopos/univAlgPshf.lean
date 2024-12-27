@@ -839,19 +839,13 @@ namespace InterpPsh
     (pb_prod D F L₁ n).inv ≫
     CategoryTheory.whiskerLeft F.op
     (nlift L₁ L₂ n k) := by
+      --why it does not work if I simplify the goal instead? QQQQQ
+
       have
       a:= nlift_whisker0 D F L₁ L₂ n k
-      symm
-      have
-      b : CategoryTheory.whiskerLeft F.op (nlift L₁ L₂ n k) ≫ (pb_prod D F L₂ n).hom ≫ (pb_prod D F L₂ n).inv =
-  (pb_prod D F L₁ n).hom ≫ nlift (F.op ⋙ L₁) (F.op ⋙ L₂) n (fun i ↦ CategoryTheory.whiskerLeft F.op (k i)) ≫  (pb_prod D F L₂ n).inv :=
-       sorry
-      have
-      c: (pb_prod D F L₁ n).inv ≫  CategoryTheory.whiskerLeft F.op (nlift L₁ L₂ n k) ≫ (pb_prod D F L₂ n).hom ≫ (pb_prod D F L₂ n).inv =
-      (pb_prod D F L₁ n).inv ≫ (pb_prod D F L₁ n).hom ≫ nlift (F.op ⋙ L₁) (F.op ⋙ L₂) n (fun i ↦ CategoryTheory.whiskerLeft F.op (k i)) ≫  (pb_prod D F L₂ n).inv :=
-      sorry
-      simp at c
-      exact c
+      symm at a
+      simp [← CategoryTheory.IsIso.eq_inv_comp] at a
+      simp [a]
 
     def pb_map (L₁ L₂ : Str T.sig D) (f : L₁ ⟶ L₂) :
       pb_obj D F T L₁ ⟶ pb_obj D F T L₂ where
@@ -876,9 +870,6 @@ namespace InterpPsh
       obj := pb_obj D F T
       map := pb_map D F T _ _
 
-
-    theorem inv_comp_eq' {C : Type u} [Category.{v} C] {X Y Z : C} (α : X ≅ Y) {f : X ⟶ Z} {g : Y ⟶ Z} :
-     f = α.hom ≫ g ↔ α.inv ≫ f = g  := sorry
 
 
     theorem pb_obj_interp_ops (L : Str T.sig D)  (o: T.sig.ops):
@@ -1050,7 +1041,7 @@ namespace InterpPsh
     def pb_prop_interp_tm (L : Str T.sig D)  (n : ℕ ) (t : tm T.sig n) :
       whiskerLeft F.op (L.interp_tm t) =
       (pb_prod D F _ n).hom ≫ (pb_obj D F T L).interp_tm t := by
-        simp[inv_comp_eq']
+        simp[← CategoryTheory.IsIso.inv_comp_eq]
         induction t with
         | var _ =>
           simp[Str.interp_tm]
