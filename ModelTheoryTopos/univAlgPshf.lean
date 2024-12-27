@@ -142,6 +142,7 @@ namespace CategoryTheory.ChosenFiniteProducts
      intros i
      simp
 
+
   theorem npair_univ' {x y : D} (n : Nat) (f g: x ⟶ npow y n)
     (h : forall i : Fin n, f ≫ nproj y n i = g ≫ nproj y n i) : f = g := by
      have a : f = npair x y n (fun i => f ≫ nproj y n i ):=
@@ -184,6 +185,10 @@ namespace CategoryTheory.ChosenFiniteProducts
     | n+1 => k 0 ⊗ nlift x y n (fun i => k (i+1))
     -- npair (npow x n) y n (fun i => nproj x n i ≫ k i)
 
+  /-noncomputable
+    def pb_prod0 (X : Psh D) (n : Nat) : F.op ⋙ npow X n ⟶ npow (F.op ⋙ X) n :=
+      npair _ (F.op ⋙ X) n (fun i => whiskerLeft F.op (nproj X n i))
+   -/
 
 
   theorem nlift_nproj {x y : D} (n : Nat) (k : Fin n → (x ⟶ y)) (i : Fin n) :
@@ -201,6 +206,13 @@ namespace CategoryTheory.ChosenFiniteProducts
 
   theorem nlift_npair (x y : D) (n : Nat) (k : Fin n → (x ⟶ y)) :
    nlift x y n k = npair (npow x n) y n (fun i => nproj x n i ≫ k i) := by
+    apply npair_univ'
+    intros i
+    simp[npair_nproj]
+    simp[nlift_nproj]
+
+  theorem nlift_npair_nproj (x  : D) (n : Nat) :
+   nlift x x n (fun i => 𝟙 x) = npair (npow x n) x n (fun i => nproj x n i) := by
     apply npair_univ'
     intros i
     simp[npair_nproj]
@@ -365,6 +377,11 @@ namespace SubobjectClassifier
             exact this
       }
 
+  theorem existQ_app_arrows {A B : Psh C} (p : A ⟶ B) (φ : A ⟶ prop) (X: Cᵒᵖ) (b: B.obj X) (Y: C) (f: Y ⟶ Opposite.unop X):
+    ((existQ p φ).app X b).arrows  f = exists a, p.app (Opposite.op Y) a = B.map f.op b ∧ (φ.app _ a).arrows (𝟙 Y) := rfl
+
+
+
   -- def existQ {A B : Psh C} (p : A ⟶ B) : B ⟶ prop C where
   --   app X := fun b =>
   --     {
@@ -521,11 +538,133 @@ namespace InterpPsh
     def pb_prod0 (X : Psh D) (n : Nat) : F.op ⋙ npow X n ⟶ npow (F.op ⋙ X) n :=
       npair _ (F.op ⋙ X) n (fun i => whiskerLeft F.op (nproj X n i))
 
+   -- theorem npow_app (X : Psh D) (n : Nat) (d:D) :
+    --(npow X n).obj (Opposite.op d) = npow (X.obj (Opposite.op d)) n := sorry
+    /-
+    def pb_prod1 (X : Psh D) (n : Nat) : npow (F.op ⋙ X) n ⟶ F.op ⋙ npow X n :=
+    match n with
+    | 0 =>
+    {
+      app := by
+       intros c
+       exact CategoryTheory.ChosenFiniteProducts.toUnit
+       sorry
+      naturality := sorry
+    }
+    | (n + 1) => {
+      app := fun
+        | .op unop => by
+          intro a
+          simp
+          simp[npow_app] at a
+          simp[npow_app]
+          simp[npow]
+          sorry
+      naturality := sorry
+    }--fun a => sorry -- 𝟙 (F.op ⋙ X) ⊗ pb_prod1 D F X n
+-/
+    --def pb_prod1 (X : Psh D) (n : Nat) : npow (F.op ⋙ X) n ⟶ F.op ⋙ npow X n :=
+
+
+
+
+
     def ev (c : Cᵒᵖ) : Psh C ⥤ Type where
       obj := fun X => X.obj c
       map := fun f => f.app c
 
     theorem ev_map c {X Y : Psh C} (f : X ⟶ Y) : (ev c).map f = f.app c := rfl
+    theorem pb_prob0_comm_lemma (X : Psh D) n c :
+     ((pb_prod0 D F X n).app c) ≫ (f C (F.op ⋙ X) n c) = f D X n (F.op.obj c) := by
+      let h1 := (pb_prod0 D F X n).app c
+      let h2 := f C (F.op ⋙ X) n c
+      let d := F.op.obj c
+      let h3 := f D X n d
+      have eq : h1 ≫ h2 = h3 := by
+        simp [h1, h2, h3, f, d]
+        symm
+        apply npair_univ
+        intros i
+        rw [Category.assoc, npair_nproj]
+        have := (ev c).map_comp (pb_prod0 D F X n) (nproj _ _ i)
+        symm at this
+        rw [ev_map, ev_map, pb_prod0, npair_nproj] at this
+        simp [this, ev_map,pb_prod0 ]
+      simp[h1,h2,h3,d] at eq
+      exact eq
+
+
+    theorem pb_prod0_pair (X : Psh D) (m : Nat) (Y: C)
+     (t1: (F.op ⋙ X).obj (Opposite.op Y))
+     (tm: (F.op ⋙ npow X m).obj (Opposite.op Y)):
+    (pb_prod0 D F X (m + 1)).app (Opposite.op Y) (t1, tm) =
+    (t1, (pb_prod0 D F X m).app (Opposite.op Y) tm) := by
+      let k0 : (npow X (m + 1)).obj (F.op.obj (Opposite.op Y)) := (t1, tm)
+      let h1 := (pb_prod0 D F X (m+1)).app (Opposite.op Y)
+      let k1 := h1 k0
+      let h2 := f C (F.op ⋙ X) (m+1) (Opposite.op Y)
+      let d := F.op.obj (Opposite.op Y)
+      let h3 := f D X (m+1) d
+      have eq : h1 ≫ h2 = h3 := by
+       have a00 := pb_prob0_comm_lemma D F X (m+1) (Opposite.op Y)
+       simp[h1,h2,h3,d]
+       exact a00
+      have a1: (pb_prod0 D F X (m + 1)).app (Opposite.op Y) (t1, tm) = h1 k0 := by
+       simp[h1,k0]
+
+      let a2:= h2 (h1 k0)
+      have e0 : h2 (h1 k0) = (h1 ≫ h2) k0 := by simp
+      simp only [eq] at e0
+      simp only [h3,k0] at e0
+      simp only [f_succ] at e0
+      have eid: (fst (X.obj d) ((npow X m).obj d)) = (fst (X.obj d) ((npow X m).obj d)) ≫ 𝟙 (X.obj d) := by simp
+      rw[eid] at e0
+      simp only[CategoryTheory.ChosenFiniteProducts.lift_fst_comp_snd_comp] at e0
+      simp at e0
+
+      let h1' := (pb_prod0 D F X m).app (Opposite.op Y)
+      let h2' := f C (F.op ⋙ X) m (Opposite.op Y)
+
+      let h3' := f D X m d
+      have eq' : h1' ≫ h2' = h3' := by
+       have a000 := pb_prob0_comm_lemma D F X m (Opposite.op Y)
+       simp[h1',h2',h3',d]
+       exact a000
+
+
+      simp only[a1]
+      have ff : (h1≫ h2) k0 = h2 (t1, (pb_prod0 D F X m).app (Opposite.op Y) tm) := by
+       simp[k0]
+       simp[e0]
+       simp[h2,f_succ]
+       have eid' : (fst (X.obj (Opposite.op (F.obj Y))) ((npow (F.op ⋙ X) m).obj (Opposite.op Y))) =
+        (fst (X.obj (Opposite.op (F.obj Y))) ((npow (F.op ⋙ X) m).obj (Opposite.op Y)))≫ 𝟙 _ := by simp
+       rw[eid']
+       simp only[CategoryTheory.ChosenFiniteProducts.lift_fst_comp_snd_comp]
+       simp []
+       have al: f D X m d tm = h3' tm := by
+        simp[h3']
+       have a:f D X m d tm = f C (F.op ⋙ X) m (Opposite.op Y) ((pb_prod0 D F X m).app (Opposite.op Y) tm) := by
+        simp[al]
+        simp[← eq']
+       simp[a]
+
+
+       --simp[Prod.mk.inj_iff] why not work? qqqqq
+      have iso2 : IsIso h2 := f_iso C (F.op ⋙ X) (m+1) (Opposite.op Y)
+      have eee: (h2 ≫ inv h2)  = (𝟙 _ )  := by simp
+      have eel: (h1 ≫ h2 ≫ inv h2) k0 = inv h2 ((h1 ≫ h2) k0 ) := by
+        simp only [← Category.assoc]
+        simp
+      have ee: (h1 ≫ h2 ≫ inv h2) k0 = (h2 ≫ inv h2) (t1, (pb_prod0 D F X m).app (Opposite.op Y) tm):= by
+        simp only [eel]
+        simp at ff
+        simp[ff]
+      simp only [eee] at ee
+      simp at ee
+      exact ee
+
+
 
     theorem pb_prob_pointwise_inv (X : Psh D) n c : IsIso ((pb_prod0 D F X n).app c) := by
       let h1 := (pb_prod0 D F X n).app c
@@ -550,6 +689,10 @@ namespace InterpPsh
     noncomputable
     def pb_prod (X : Psh D) (n : Nat) : F.op ⋙ npow X n ≅ npow (F.op ⋙ X) n :=
       NatIso.ofNatTrans (pb_prod0 D F X n) (pb_prob_pointwise_inv D F X n)
+
+
+    theorem pb_prod0_pb_prod_hom (X : Psh D) (n : Nat):
+     (pb_prod0 D F X n) = (pb_prod D F X n).hom := rfl
 
     noncomputable
     def pb_prod'  (n : Nat) : npow_functor n ⋙ (whiskeringLeft _ _ _).obj F.op ≅  (whiskeringLeft _ _ Type).obj F.op ⋙ npow_functor n :=
@@ -649,7 +792,8 @@ namespace InterpPsh
         let h'' := h' ≫ pb_prop D F
         (pb_prod D F _ _).inv ≫ h''
 
-
+     theorem pb_obj_carrier (L : Str T.sig D) :(pb_obj D F T L).carrier = F.op ⋙ L.carrier
+     :=rfl
     theorem pb_obj_interp_preds (L : Str T.sig D)  (p: T.sig.preds):
        (pb_obj D F T L).interp_preds p =
        (pb_prod D F L.carrier (T.sig.arity_preds p)).inv ≫
@@ -783,6 +927,125 @@ namespace InterpPsh
      simp[CategoryTheory.whiskerLeft_apply]
      simp[lift_app]
 
+    theorem SubobjectClassifier.pb_prop_existQ (F: C⥤ D) {A B : Psh D} (p: A⟶ B) (φ: A ⟶ SubobjectClassifier.prop):
+    whiskerLeft F.op (SubobjectClassifier.existQ p φ)  ≫ pb_prop D F =
+    SubobjectClassifier.existQ (whiskerLeft F.op p) ((whiskerLeft F.op φ) ≫ pb_prop D F) := by
+     ext c a
+     simp
+     ext Y f
+     simp[SubobjectClassifier.existQ_app_arrows]
+     simp[pb_prop]
+     simp[SubobjectClassifier.existQ_app_arrows]
+
+
+
+    theorem snd_app (X Y: Psh D)  (d: D)
+    (t1: X.obj (Opposite.op d))
+    (t2: Y.obj (Opposite.op d)):
+    (snd X Y).app (Opposite.op d) (t1, t2) = t2 := rfl
+
+
+
+    theorem SubobjectClassifier.pb_prop_existQ'  (f : fml T.sig (m + 1))
+     (ih: CategoryTheory.whiskerLeft F.op (L.interp_fml f) ≫ pb_prop D F =
+  (pb_prod D F L.carrier (m + 1)).hom ≫ (pb_obj D F T L).interp_fml f):
+      whiskerLeft F.op (SubobjectClassifier.existπ (L.interp_fml f))  ≫ pb_prop D F  =
+      (pb_prod D F L.carrier m).hom ≫ SubobjectClassifier.existπ ((pb_obj D F T L).interp_fml f) := by
+      simp[SubobjectClassifier.existπ]
+
+      simp[SubobjectClassifier.pb_prop_existQ]
+      simp[ih]
+
+      simp[pb_obj_carrier]
+      ext c a
+      simp[pb_prod_pb_prod0]
+      ext Y g
+      simp[SubobjectClassifier.existQ_app_arrows]
+      constructor
+      intros
+      · rename_i h
+        cases h
+        rename_i w h
+        cases h
+        rename_i h1 h2
+        cases w
+        rename_i t1 tm
+        simp [snd_app] at h1
+        let a1:= ((pb_prod D F L.carrier m).hom).app _ tm
+        exists  ⟨ t1,a1⟩
+        simp
+        constructor
+        · simp[a1]
+          simp[h1]
+          simp[snd_app]
+          simp[pb_prod_pb_prod0]
+          have := (pb_prod0 D F L.carrier m).naturality g.op
+          simp at this
+          have hh : (npow (F.op ⋙ L.carrier) m).map g.op ((pb_prod0 D F L.carrier m).app c a) =
+                  ((pb_prod0 D F L.carrier m).app (Opposite.op (Opposite.unop c)) ≫ (npow (F.op ⋙ L.carrier) m).map g.op) a :=
+                    by
+                     simp
+          simp only[hh]
+          simp only [← this]
+          simp
+        · simp[a1]
+          simp[pb_prod_pb_prod0]
+          have e : (t1, (pb_prod0 D F L.carrier m).app (Opposite.op Y) tm) =
+           ((pb_prod0 D F L.carrier (m + 1)).app (Opposite.op Y) (t1, tm)) := by
+            simp only[pb_prod0_pair]
+          simp[e]
+          exact h2
+      intros
+      · rename_i h
+        cases h
+        rename_i w h
+        cases h
+        rename_i h1 h2
+        cases w
+        rename_i t10 tm0
+        simp [snd_app] at h1
+        let a1:= ((pb_prod D F L.carrier m).inv).app _ tm0
+        exists  ⟨ t10,a1⟩
+        simp[snd_app]
+        constructor
+        · simp[a1]
+          simp[h1]
+          have e0:
+          (npow (F.op ⋙ L.carrier) m).map g.op ((pb_prod0 D F L.carrier m).app c a) =
+          (pb_prod D F L.carrier m).hom.app (Opposite.op Y)
+           ((npow L.carrier m).map (F.map g).op a) := by
+           simp[pb_prod_pb_prod0]
+           have := (pb_prod0 D F L.carrier m).naturality g.op
+           simp at this
+           have hh : (npow (F.op ⋙ L.carrier) m).map g.op ((pb_prod0 D F L.carrier m).app c a) =
+                  ((pb_prod0 D F L.carrier m).app (Opposite.op (Opposite.unop c)) ≫ (npow (F.op ⋙ L.carrier) m).map g.op) a := by simp
+           simp only[hh]
+           simp only [← this]
+           simp
+          simp[e0]
+        · simp[a1]
+          --simp[pb_prod_pb_prod0]
+          have e : ((pb_prod0 D F L.carrier (m + 1)).app (Opposite.op Y)
+        (t10, (pb_prod D F L.carrier m).inv.app (Opposite.op Y) tm0)) =
+           (t10, tm0) := by
+           simp
+           simp only[pb_prod0_pair D F]
+           have e1: (pb_prod0 D F L.carrier m).app (Opposite.op Y) ((pb_prod D F L.carrier m).inv.app (Opposite.op Y) tm0) =
+                    ((pb_prod D F L.carrier m).inv ≫ pb_prod0 D F L.carrier m).app (Opposite.op Y) tm0 := by
+                     simp[pb_prod0_pb_prod_hom]
+
+           simp only[e1]
+           have e11: (pb_prod D F L.carrier m).inv ≫ pb_prod0 D F L.carrier m = 𝟙 _ := by
+            simp [pb_prod0_pb_prod_hom]
+           simp only[e11]
+           simp
+          --sorry --may need to define the inverse by induction
+          simp[e]
+          exact h2
+
+
+
+
 
     def pb_prop_interp_tm (L : Str T.sig D)  (n : ℕ ) (t : tm T.sig n) :
       whiskerLeft F.op (L.interp_tm t) =
@@ -912,7 +1175,15 @@ namespace InterpPsh
           simp[whiskerLeft_lift]
           simp[pb_prop_interp_tm]
           simp[← comp_lift]
-        | existsQ _ _ => sorry
+        | existsQ f ih =>
+          rename_i m
+          simp
+          simp[Str.interp_fml]
+          --simp[SubobjectClassifier.existπ]
+          have := SubobjectClassifier.pb_prop_existQ' D F T f ih
+          exact this
+         -- simp[SubobjectClassifier.existQ]
+
 
 
 
