@@ -44,6 +44,12 @@ namespace ChosenFiniteProducts
     (t2: Y.obj (Opposite.op c)):
     (snd X Y).app (Opposite.op c) (t1, t2) = t2 := rfl
 
+  theorem lift_app (T X Y: Psh C) (f : T ⟶ X) (g : T ⟶ Y) (c : Cᵒᵖ) :
+    (lift f g).app c = lift (f.app c) (g.app c) := rfl
+
+  theorem lift_app_pt (T X Y: Psh C) (f : T ⟶ X) (g : T ⟶ Y) (c : Cᵒᵖ) (t : T.obj c):
+    (lift f g).app c t = (f.app c t, g.app c t) := rfl
+
 end ChosenFiniteProducts
 
 namespace SubobjectClassifier
@@ -173,13 +179,25 @@ namespace BaseChange
       simp[h1,h2,h3,d] at eq
       exact eq
 
+    theorem pb_prod0_succ (X : Psh D) (m : Nat) :
+      pb_prod0 F X (m + 1) =
+        lift
+          (whiskerLeft F.op (ChosenFiniteProducts.fst _ _))
+          (whiskerLeft F.op (ChosenFiniteProducts.snd _ _) ≫ pb_prod0 F X m) := by
+      simp [pb_prod0, npair]
+      congr
+      simp [<-npair_natural]
+      congr
+
 
     theorem pb_prod0_pair (X : Psh D) (m : Nat) (Y: C)
      (t1: (F.op ⋙ X).obj (Opposite.op Y))
      (tm: (F.op ⋙ npow X m).obj (Opposite.op Y)):
     (pb_prod0 F X (m + 1)).app (Opposite.op Y) (t1, tm) =
     (t1, (pb_prod0 F X m).app (Opposite.op Y) tm) := by
-      let k0 : (npow X (m + 1)).obj (F.op.obj (Opposite.op Y)) := (t1, tm)
+      simp [pb_prod0_succ]
+      congr
+      /-let k0 : (npow X (m + 1)).obj (F.op.obj (Opposite.op Y)) := (t1, tm)
       let h1 := (pb_prod0 F X (m+1)).app (Opposite.op Y)
       let k1 := h1 k0
       let h2 := ChosenFiniteProducts.f (F.op ⋙ X) (m+1) (Opposite.op Y)
@@ -242,7 +260,7 @@ namespace BaseChange
         simp[ff]
       simp only [eee] at ee
       simp at ee
-      exact ee
+      exact ee-/
 
 
 
