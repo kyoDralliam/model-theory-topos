@@ -157,3 +157,17 @@ inductive proof : {n : RenCtx} → List (fml m n) → fml m n → Type where
   | existsQ_intro (φ : (Fml _).obj _) : proof Γ (φ[t..]) → proof Γ (.existsQ φ)
   | existsQ_elim : proof Γ (.existsQ φ) →
     proof (List.map (fml.ren Fin.succ) Γ) φ
+
+
+
+
+namespace Miscellaneous
+
+-- just to show how to use
+def weaken_fml_for_functional_prop1 (φ : fml m (n1 + n2)) : fml m (n1 + n1 + n2) :=
+  φ.ren (Fin.addCases (Fin.castAdd n2 ∘ Fin.castAdd n1) (Fin.natAdd (n1+n1)))
+
+def weaken_fml_for_functional_prop2 (φ : fml m (n1 + n2)) : fml m (n1 + n1 + n2) :=
+  φ.ren (Fin.addCases (Fin.castAdd n2 ∘ Fin.natAdd n1) (Fin.natAdd (n1+n1)))
+
+end Miscellaneous
