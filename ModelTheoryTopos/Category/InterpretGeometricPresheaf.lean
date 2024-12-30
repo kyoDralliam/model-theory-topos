@@ -44,17 +44,14 @@ namespace InterpPsh
   | .eq t u => lift (L.interp_tm t) (interp_tm L u) ≫ SubobjectClassifier.eq
 
   def model {S : monosig} (L : Str S C) (s : sequent S) : Prop :=
-    forall (Γ : Cᵒᵖ) vs,
-      let interp_premise : Sieve Γ.unop := (L.interp_fml s.premise).app Γ vs
-      let interp_concl := (L.interp_fml s.concl).app Γ vs
-      interp_premise ≤ interp_concl
+   L.interp_fml s.premise ≤ L.interp_fml s.concl
 
   structure morphism {S : monosig} (L L' : Str S C) where
     map : L.carrier ⟶ L'.carrier
     ops_comm : forall (o : S.ops), nlift_diag _ _ _ map ≫ L'.interp_ops o = L.interp_ops o ≫ map
     preds_comm : forall (p : S.preds), nlift_diag _ _ _ map ≫ L'.interp_preds p  = L.interp_preds p
 
-  instance : {S : monosig} → Category (Str S C) where
+  instance category : {S : monosig} → Category (Str S C) where
     Hom := morphism
     id L := {
       map := 𝟙 L.carrier
@@ -78,6 +75,11 @@ namespace InterpPsh
   structure Mod (T : theory) (C : Type) [Category C] where
     str : Str T.sig C
     valid : forall s, s ∈ T.axioms → str.model s
+
+  instance : forall {T : theory} {C : Type} [Category C], Category (Mod T C) where
+    Hom M M' := M.str ⟶ M'.str
+    id M := 𝟙 M.str
+    comp := Str.category.comp
 
 
 
@@ -278,7 +280,7 @@ namespace InterpPsh
           simp[← Category.assoc]
           simp[pb_npair_compatible]
 
-    def pb_prop_interp_fml (L : Str T.sig D) (φ : fml T.sig n) :
+    def pb_prop_interp_fml {n : Nat} (L : Str T.sig D) (φ : fml T.sig n) :
       whiskerLeft F.op (L.interp_fml φ) ≫ pb_prop F =
       (pb_prod F _ n).hom ≫ (pb_obj D F T L).interp_fml φ  := by
         induction φ with
@@ -390,9 +392,21 @@ namespace InterpPsh
           exact this
          -- simp[SubobjectClassifier.existQ]
 
+    -- def pb_prop_preserves_entailment (φ ψ : SubobjectClassifier.prop (C:=D))
+
+    def pb_prop_interp_fml' {n : Nat} (L : Str T.sig D) (φ : fml T.sig n) :
+      (pb_obj D F T L).interp_fml φ =
+        (pb_prod F _ n).inv ≫ whiskerLeft F.op (L.interp_fml φ) ≫ pb_prop F := by
+        sorry
 
 
-
+    def pb_prop_preserves_interp (L : Str T.sig D) (φ : fml T.sig n) :
+       L.model s → (pb_obj D F T L).model s := by
+      intros h
+      simp [Str.model, pb_prop_interp_fml']
+      apply SubobjectClassifier.le_iso
+      apply pb_prop_le F
+      apply h
 
     -- Second part, (-)^* assembles as a 2-functor
     -- T-Mod : Cat^op -> CAT

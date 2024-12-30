@@ -52,6 +52,21 @@ namespace ChosenFiniteProducts
 
 end ChosenFiniteProducts
 
+namespace Sieve
+
+variable {C : Type u₁} [Category.{v₁} C] {D : Type u₂} [Category.{v₂} D] (F : C ⥤ D)
+variable {X Y Z : C} (f : Y ⟶ X)
+
+@[simp]
+def entails (S R : Sieve X) : Sieve X where
+  arrows Y f := forall Z (h : Z ⟶ Y), S (h ≫ f) → R (h ≫ f)
+  downward_closed := by
+    intros Y Z f h g Z' g'
+    rw [<- Category.assoc]
+    apply h
+
+end Sieve
+
 namespace SubobjectClassifier
   variable {C : Type} [Category C]
 
@@ -67,6 +82,37 @@ namespace SubobjectClassifier
       intros
       simp [Sieve.pullback_comp]
       rfl
+
+  def entail : prop (C:=C) ⊗ prop ⟶ prop where
+    app X := fun p => (Sieve.entails p.1 p.2 : Sieve X.unop)
+    naturality X Y f := by
+      ext p
+      apply Sieve.arrows_ext
+      funext Z g
+      ext
+      constructor <;> intros h Z' g'
+      · rw [<- Category.assoc]
+        apply h Z' g'
+      · have := h Z' g'
+        rw [<-Category.assoc] at this
+        apply this
+
+  instance po_to_prop {X : Psh C} : PartialOrder (X ⟶ prop) where
+    le f g := forall Γ (x : X.obj Γ),
+      let lhs : Sieve Γ.unop := f.app Γ x
+      lhs ≤ (g.app Γ x : Sieve Γ.unop)
+    le_refl := by intros f Γ x ; apply le_refl
+    le_trans := by
+      intros f g h fg gh Γ x ; eapply le_trans
+      · apply fg
+      · apply gh
+    le_antisymm := by
+      intros f g fg gf ; ext Γ x ; simp [prop] ; apply le_antisymm <;> aesop
+
+  theorem le_iso {X Y : Psh C} (φ : X ≅ Y) (f g : X ⟶ prop) :
+    f ≤ g -> φ.inv ≫ f ≤ φ.inv ≫ g := by
+    intros fg Γ x
+    apply fg
 
   def top : 𝟙_ (Psh C) ⟶ prop where
     app X := fun _ => (⊤ : Sieve X.unop)
@@ -426,6 +472,11 @@ namespace BaseChange
         simp[SubobjectClassifier.existQ_app_arrows]
         simp[pb_prop]
         simp[SubobjectClassifier.existQ_app_arrows]
+
+    theorem pb_prop_le {X : Psh D} (φ ψ : X ⟶ SubobjectClassifier.prop) :
+      φ ≤ ψ → (whiskerLeft F.op φ ≫ pb_prop F) ≤ (whiskerLeft F.op ψ ≫ pb_prop F) := by
+      intros h Ξ x lhs Δ f
+      apply h _ x (F.map f)
 
   end SubobjectClassifier
 
