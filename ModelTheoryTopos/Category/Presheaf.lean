@@ -390,6 +390,8 @@ namespace BaseChange
       simp [← CategoryTheory.IsIso.eq_inv_comp] at a
       simp [a]
 
+
+
     theorem pb_npair_compatible (P : Psh D) (n : Nat) (k: Fin n → (X ⟶  P)):
      npair (F.op⋙ X) (F.op⋙ P) n (fun i => whiskerLeft F.op (k i)) ≫ (pb_prod F P  n).inv  =
      whiskerLeft F.op (npair X P n k)

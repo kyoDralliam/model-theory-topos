@@ -397,16 +397,74 @@ namespace InterpPsh
     def pb_prop_interp_fml' {n : Nat} (L : Str T.sig D) (φ : fml T.sig n) :
       (pb_obj D F T L).interp_fml φ =
         (pb_prod F _ n).inv ≫ whiskerLeft F.op (L.interp_fml φ) ≫ pb_prop F := by
-        sorry
+        simp[Iso.inv_comp_eq,pb_prop_interp_fml]
 
 
-    def pb_prop_preserves_interp (L : Str T.sig D) (φ : fml T.sig n) :
+
+    def pb_prop_preserves_interp (L : Str T.sig D) (s : sequent T.sig) :
        L.model s → (pb_obj D F T L).model s := by
       intros h
       simp [Str.model, pb_prop_interp_fml']
       apply SubobjectClassifier.le_iso
       apply pb_prop_le F
       apply h
+
+
+
+    instance : Category (Mod T C) where
+    Hom M M':= M.str ⟶ M'.str
+    id M := 𝟙 M.str
+    comp := Str.category.comp
+
+    noncomputable
+
+    def pb_model (M: Mod T D ) : Mod T C where
+      str := (pullback D F T).obj M.str
+      valid := by
+        intros a ax
+        simp[pullback]
+        have := M.valid a ax
+        exact (pb_prop_preserves_interp _ F T M.str a this)
+
+    theorem nlift_diag_whisker (L₁ L₂ : Psh D)  (n : Nat) (f : (L₁ ⟶ L₂)) :
+     nlift_diag (F.op ⋙ L₁) (F.op ⋙ L₂) n (CategoryTheory.whiskerLeft F.op f) =
+    (pb_prod F L₁ n).inv ≫
+    CategoryTheory.whiskerLeft F.op
+    (nlift_diag L₁ L₂ n f) ≫
+    (pb_prod F L₂ n).hom := by
+     simp[← Category.assoc]
+     simp only[← Iso.comp_inv_eq]
+     simp[nlift_diag]
+     simp[nlift_whisker]
+
+    def pb_morphism (X Y : Mod T D) (f : X ⟶ Y) :
+     pb_model D F T X ⟶ pb_model D F T Y where
+       map := CategoryTheory.whiskerLeft F.op f.map
+       ops_comm := by
+        simp[pb_model,pullback,pb_obj_carrier]
+        simp[nlift_diag_whisker]
+        simp[← pb_obj_interp_ops0]
+        simp[← CategoryTheory.whiskerLeft_comp]
+        simp[f.ops_comm]
+       preds_comm := by
+        simp[pb_model,pullback,pb_obj_carrier]
+        simp[nlift_diag_whisker]
+        simp[pb_obj_interp_preds]
+        simp[← Category.assoc]
+        simp[← CategoryTheory.whiskerLeft_comp]
+        simp[f.preds_comm]
+
+    noncomputable
+    def pullback_Mod : Mod T D ⥤ Mod T C where
+    obj M := pb_model D F T M
+    map f := pb_morphism _ F T _ _ f
+
+
+
+
+
+
+
 
     -- Second part, (-)^* assembles as a 2-functor
     -- T-Mod : Cat^op -> CAT
