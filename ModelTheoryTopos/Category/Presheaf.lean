@@ -212,6 +212,23 @@ namespace SubobjectClassifier
         simp
         apply hf ; assumption
 
+
+  theorem lift_app1 {X : Psh C} (f g: X ⟶ prop) (c : Cᵒᵖ) (x: X.obj c):
+   ((lift f g).app c x).1  = (lift f g ≫ fst _ _).app c x := by
+      have p: ((lift f g).app c x).1  = (lift f g ≫ fst _ _).app c x := by
+       simp only[CategoryTheory.ChosenFiniteProducts.lift_fst]
+       rfl
+      simp[p]
+
+  theorem lift_app2 {X : Psh C} (f g: X ⟶ prop) (c : Cᵒᵖ) (x: X.obj c):
+   ((lift f g).app c x).2  = (lift f g ≫ snd _ _).app c x := by
+      have p: ((lift f g).app c x).2  = (lift f g ≫ snd _ _).app c x := by
+       simp only[CategoryTheory.ChosenFiniteProducts.lift_snd]
+       rfl
+      simp[p]
+
+
+
   noncomputable
   instance complete_lattice_to_prop {X : Psh C} : CompleteLattice (X ⟶ prop) where
     le f g := forall Γ (x : X.obj Γ),
@@ -230,18 +247,101 @@ namespace SubobjectClassifier
     inf φ ψ := ChosenFiniteProducts.lift φ ψ ≫ conj
     sSup := SubobjectClassifier.sSup
     sInf := SubobjectClassifier.sInf
-    le_sup_left := by sorry
-    le_sup_right := by sorry
-    sup_le := by sorry
-    inf_le_left := by sorry
-    inf_le_right := by sorry
-    le_inf := by sorry
-    le_sSup := by sorry
-    sSup_le := by sorry
-    sInf_le := by sorry
-    le_sInf := by sorry
-    le_top := by sorry
-    bot_le := by sorry
+    le_sup_left := by
+      intros f g c x
+      simp
+      simp[disj,lift_app1]
+    le_sup_right := by
+      intros f g c x
+      simp
+      simp[disj,lift_app2]
+    sup_le := by
+      intros f g h h1 h2 c x
+      simp[disj,lift_app1,lift_app2]
+      have h1':= h1 c x
+      have h2':= h2 c x
+      simp[h1',h2']
+    inf_le_left := by
+      intros f g c x
+      simp
+      simp[conj,lift_app1]
+    inf_le_right := by
+      intros f g c x
+      simp
+      simp[conj,lift_app2]
+    le_inf := by
+      intros f g h h1 h2 c x
+      simp[conj,lift_app1,lift_app2]
+      have h1':= h1 c x
+      have h2':= h2 c x
+      simp[h1',h2']
+    le_sSup := by
+      intros s a h
+      simp[SubobjectClassifier.sSup]
+      intros c x
+      let x0: Set (Sieve (c.unop)) := {x_1 | ∃ p, s p ∧ p.app c x = x_1}
+      --#check @le_sSup (Sieve (c.unop)) _ x0 (a.app c x)
+      have h1 := @le_sSup (Sieve (c.unop)) _ x0 (a.app c x)
+      simp only[x0] at h1
+      apply h1
+      simp
+      exists a
+    sSup_le := by
+      intros s a h
+      simp only[SubobjectClassifier.sSup]
+      intros c x
+      let x0: Set (Sieve (c.unop)) := {x_1 | ∃ p, ∃ (_ : s p), p.app c x = x_1}
+      have h1 := @sSup_le (Sieve (c.unop)) _ x0 (a.app c x)
+      simp only[x0] at h1
+      apply h1
+      intros b h2
+      simp at h2
+      cases h2
+      rename_i h21 h22
+      cases h22
+      rename_i h221 h222
+      simp[← h222]
+      apply h
+      assumption
+    sInf_le := by
+      intros s a h
+      simp[SubobjectClassifier.sInf]
+      intros c x
+      let x0: Set (Sieve (c.unop)) := {x_1 | ∃ p, s p ∧ p.app c x = x_1}
+      have h1 := @sInf_le (Sieve (c.unop)) _ x0 (a.app c x)
+      simp only[x0] at h1
+      apply h1
+      simp
+      exists a
+    le_sInf := by
+      intros s a h
+      simp only[SubobjectClassifier.sInf]
+      intros c x
+      let x0: Set (Sieve (c.unop)) := {x_1 | ∃ p, ∃ (_ : s p), p.app c x = x_1}
+      have h1 := @le_sInf (Sieve (c.unop)) _ x0 (a.app c x)
+      simp only[x0] at h1
+      apply h1
+      intros b h2
+      simp at h2
+      cases h2
+      rename_i h21 h22
+      cases h22
+      rename_i h221 h222
+      simp[← h222]
+      apply h
+      assumption
+    le_top := by
+      intro f c x
+      simp
+      have h1 := @le_top (Sieve (c.unop)) _
+      simp
+      simp[SubobjectClassifier.top]
+    bot_le := by
+      intro f c x
+      simp
+      have h1 := @bot_le (Sieve (c.unop)) _
+      simp
+      simp[SubobjectClassifier.bot]
 
 
   -- instance po_to_prop {X : Psh C} : PartialOrder (X ⟶ prop) where
