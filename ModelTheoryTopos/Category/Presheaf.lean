@@ -97,23 +97,6 @@ namespace SubobjectClassifier
         rw [<-Category.assoc] at this
         apply this
 
-  instance po_to_prop {X : Psh C} : PartialOrder (X ⟶ prop) where
-    le f g := forall Γ (x : X.obj Γ),
-      let lhs : Sieve Γ.unop := f.app Γ x
-      lhs ≤ (g.app Γ x : Sieve Γ.unop)
-    le_refl := by intros f Γ x ; apply le_refl
-    le_trans := by
-      intros f g h fg gh Γ x ; eapply le_trans
-      · apply fg
-      · apply gh
-    le_antisymm := by
-      intros f g fg gf ; ext Γ x ; simp [prop] ; apply le_antisymm <;> aesop
-
-  theorem le_iso {X Y : Psh C} (φ : X ≅ Y) (f g : X ⟶ prop) :
-    f ≤ g -> φ.inv ≫ f ≤ φ.inv ≫ g := by
-    intros fg Γ x
-    apply fg
-
   def top : 𝟙_ (Psh C) ⟶ prop where
     app X := fun _ => (⊤ : Sieve X.unop)
     naturality X Y f := by
@@ -189,6 +172,94 @@ namespace SubobjectClassifier
 
   noncomputable
   def existπ {A B : Psh C} (φ : A ⊗ B ⟶ prop) : B ⟶ prop := existQ (snd A B) φ
+
+  def sSup {X : Psh C} (P : Set (X ⟶ prop)) : X ⟶ prop where
+    app Γ x :=
+      let P' : Set (Sieve Γ.unop) := { (p.app Γ x : Sieve Γ.unop) | (p : X ⟶ prop) (_h : P p) }
+      (SupSet.sSup P' : Sieve Γ.unop)
+    naturality := by
+      intros Γ Δ g
+      funext x
+      rw [Sieve.ext_iff]
+      intros Ξ f ; constructor
+      · simp ; intros p hp hf
+        exists p ; constructor ; assumption
+        rw [<-types_comp_apply (X.map g) (p.app Δ), p.naturality g] at hf
+        simp at hf
+        exact hf
+      · simp ; intros p hp hf
+        exists p ; constructor ; assumption
+        rw [<-types_comp_apply (X.map g) (p.app Δ), p.naturality g]
+        simp
+        exact hf
+
+  def sInf {X : Psh C} (P : Set (X ⟶ prop)) : X ⟶ prop where
+    app Γ x :=
+      let P' : Set (Sieve Γ.unop) := { (p.app Γ x : Sieve Γ.unop) | (p : X ⟶ prop) (_h : P p) }
+      (InfSet.sInf P' : Sieve Γ.unop)
+    naturality := by
+      intros Γ Δ g
+      funext x
+      rw [Sieve.ext_iff]
+      intros Ξ f ; constructor
+      · simp ; intros hf p hp
+        have := hf p hp
+        rw [<-types_comp_apply (X.map g) (p.app Δ), p.naturality g] at this
+        simp at this
+        exact this
+      · simp ; intros hf p hp
+        rw [<-types_comp_apply (X.map g) (p.app Δ), p.naturality g]
+        simp
+        apply hf ; assumption
+
+  noncomputable
+  instance complete_lattice_to_prop {X : Psh C} : CompleteLattice (X ⟶ prop) where
+    le f g := forall Γ (x : X.obj Γ),
+      let lhs : Sieve Γ.unop := f.app Γ x
+      lhs ≤ (g.app Γ x : Sieve Γ.unop)
+    le_refl := by intros f Γ x ; apply le_refl
+    le_trans := by
+      intros f g h fg gh Γ x ; eapply le_trans
+      · apply fg
+      · apply gh
+    le_antisymm := by
+      intros f g fg gf ; ext Γ x ; simp [prop] ; apply le_antisymm <;> aesop
+    top := ChosenFiniteProducts.toUnit _ ≫ SubobjectClassifier.top
+    bot := ChosenFiniteProducts.toUnit _ ≫ SubobjectClassifier.bot
+    sup φ ψ := ChosenFiniteProducts.lift φ ψ ≫ disj
+    inf φ ψ := ChosenFiniteProducts.lift φ ψ ≫ conj
+    sSup := SubobjectClassifier.sSup
+    sInf := SubobjectClassifier.sInf
+    le_sup_left := by sorry
+    le_sup_right := by sorry
+    sup_le := by sorry
+    inf_le_left := by sorry
+    inf_le_right := by sorry
+    le_inf := by sorry
+    le_sSup := by sorry
+    sSup_le := by sorry
+    sInf_le := by sorry
+    le_sInf := by sorry
+    le_top := by sorry
+    bot_le := by sorry
+
+
+  -- instance po_to_prop {X : Psh C} : PartialOrder (X ⟶ prop) where
+  --   le f g := forall Γ (x : X.obj Γ),
+  --     let lhs : Sieve Γ.unop := f.app Γ x
+  --     lhs ≤ (g.app Γ x : Sieve Γ.unop)
+  --   le_refl := by intros f Γ x ; apply le_refl
+  --   le_trans := by
+  --     intros f g h fg gh Γ x ; eapply le_trans
+  --     · apply fg
+  --     · apply gh
+  --   le_antisymm := by
+  --     intros f g fg gf ; ext Γ x ; simp [prop] ; apply le_antisymm <;> aesop
+
+  theorem le_iso {X Y : Psh C} (φ : X ≅ Y) (f g : X ⟶ prop) :
+    f ≤ g -> φ.inv ≫ f ≤ φ.inv ≫ g := by
+    intros fg Γ x
+    apply fg
 
 end SubobjectClassifier
 
