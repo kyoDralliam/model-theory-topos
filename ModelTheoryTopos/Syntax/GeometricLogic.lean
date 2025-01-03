@@ -151,9 +151,9 @@ inductive proof {T : theory}: {n : RenCtx} → FmlCtx T n → fml T.sig n → Pr
   | disj_intro_r : proof Γ ψ → proof Γ (.disj φ ψ)
   | disj_elim : proof Γ (.disj φ ψ) →
     proof (φ :: Γ) ξ → proof (ψ :: Γ) ξ → proof Γ ξ
-  | infdisj_intro : proof Γ (φ n) → proof Γ (.infdisj φ)
+  | infdisj_intro : proof Γ (φ k) → proof Γ (.infdisj φ)
   | infdisj_elim : proof Γ (.infdisj φ) →
-    (forall n, proof (φ n :: Γ) ξ) → proof Γ ξ
+    (forall k, proof (φ k :: Γ) ξ) → proof Γ ξ
   | eq_intro : proof Γ (.eq t t)
   | eq_elim (φ : (Fml _).obj _) (Γ : (Ctx _).obj _) : proof Δ (.eq t u) →
     proof (Δ ++ Γ[t..]) (φ[t..]) →
@@ -232,6 +232,32 @@ theorem sequent.to_proof : (of_formulas Γ φ).derivable -> proof Γ φ := by
     · apply proof.var ; simp
     · simp at ih ; apply proof.cut _ _ _ ih
       intros ; apply proof.var; simp ; right ; assumption
+
+namespace Hilbert
+  inductive proof {T : theory}: {n : RenCtx} → fml T.sig n → fml T.sig n → Prop where
+    | axiom : s ∈ T.axioms -> proof (s.premise.subst σ) (s.concl.subst σ)
+    | cut : proof φ τ -> proof τ ψ -> proof φ ψ
+    | var : proof φ φ
+    | true_intro : proof φ .true
+    | false_elim : proof φ .false → proof φ ψ
+    | conj_intro : proof ν φ → proof ν ψ → proof ν (.conj φ ψ)
+    | conj_elim_l : proof (.conj φ  ψ) φ
+    | conj_elim_r : proof (.conj φ  ψ) ψ
+    | disj_intro_l : proof φ (.disj φ ψ)
+    | disj_intro_r : proof ψ (.disj φ ψ)
+    | disj_elim : proof δ (.disj φ ψ) →
+      proof (φ.conj δ) ξ → proof (ψ.conj δ) ξ → proof δ ξ
+    | infdisj_intro : proof (φ k) (.infdisj φ)
+    | infdisj_elim : proof δ (.infdisj φ) →
+      (forall k, proof (.conj (φ k) δ) ξ) → proof Γ ξ
+    | eq_intro : proof .true (.eq t t)
+    | eq_elim (φ γ : (Fml _).obj _) : proof δ (.eq t u) →
+      proof (δ.conj (γ[t..])) (φ[t..]) →
+      proof (δ.conj (γ[u..])) (φ[u..])
+    | existsQ_intro (φ : (Fml _).obj _) : proof (φ[t..]) (.existsQ φ)
+    | existsQ_elim : proof (fml.ren Fin.succ (.existsQ φ)) φ
+    | ren : proof φ ψ -> proof (fml.ren ρ φ) (fml.ren ρ ψ)
+end Hilbert
 
 namespace Miscellaneous
 
