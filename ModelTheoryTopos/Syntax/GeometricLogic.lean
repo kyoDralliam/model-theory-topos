@@ -136,7 +136,11 @@ def Ctx m : Subst m ⥤ Type := Fml m ⋙ ListFunctor
 instance: HAppend (List (fml m n)) ((Ctx m).obj n) (List (fml m n)) where
   hAppend := fun l l' => let l'' : List (fml m n) := l' ; l ++ l''
 
-inductive proof : {n : RenCtx} → List (fml m n) → fml m n → Type where
+abbrev FmlCtx (T : theory) n := List (fml T.sig n)
+
+inductive proof {T : theory}: {n : RenCtx} → FmlCtx T n → fml T.sig n → Prop where
+  | axiom : s ∈ T.axioms -> proof Γ (s.premise.subst σ) -> proof Γ (s.concl.subst σ)
+  -- | cut : (forall φ, φ ∈ Δ -> proof Γ φ) -> proof Δ ψ -> proof Γ ψ
   | var : φ ∈ Γ → proof Γ φ
   | true_intro : proof Γ .true
   | false_elim : proof Γ .false → proof Γ φ
@@ -151,13 +155,52 @@ inductive proof : {n : RenCtx} → List (fml m n) → fml m n → Type where
   | infdisj_elim : proof Γ (.infdisj φ) →
     (forall n, proof (φ n :: Γ) ξ) → proof Γ ξ
   | eq_intro : proof Γ (.eq t t)
-  | eq_elim (φ : (Fml _).obj _) (Γ : (Ctx m).obj _) : proof Δ (.eq t u) →
+  | eq_elim (φ : (Fml _).obj _) (Γ : (Ctx _).obj _) : proof Δ (.eq t u) →
     proof (Δ ++ Γ[t..]) (φ[t..]) →
     proof (Δ ++ Γ[u..]) (φ[u..])
   | existsQ_intro (φ : (Fml _).obj _) : proof Γ (φ[t..]) → proof Γ (.existsQ φ)
   | existsQ_elim : proof Γ (.existsQ φ) →
     proof (List.map (fml.ren Fin.succ) Γ) φ
 
+
+theorem proof.weaken {T : theory} n (Δ : FmlCtx T n) ψ (hψ : proof Δ ψ) : forall Γ (hsub : forall φ, φ ∈ Δ -> φ ∈ Γ), proof Γ ψ :=
+  by sorry
+
+-- TODO: cut could be made admissible ; requires weakening first
+theorem proof.cut {T : theory} n (Δ : FmlCtx T n) ψ (hψ : proof Δ ψ) : forall Γ (hsub : forall φ, φ ∈ Δ -> proof Γ φ), proof Γ ψ := by
+  induction hψ with
+  | «axiom» _ _ ih =>
+    intros ; apply proof.axiom ; assumption ; apply ih ; assumption
+  | var hin => intros Γ hsub; apply hsub ; assumption
+  | true_intro => intros ; apply true_intro
+  | false_elim _ _ => sorry
+  | conj_intro _ _ ih₁ ih₂ =>
+    intros; apply conj_intro
+    · apply ih₁ ; assumption
+    · apply ih₂ ; assumption
+  | conj_elim_l _ ih => intros; apply conj_elim_l <;> apply ih ; assumption
+  | conj_elim_r _ ih => intros; apply conj_elim_r <;> apply ih ; assumption
+  | disj_intro_l _ ih => intros; apply disj_intro_l ; apply ih ; assumption
+  | disj_intro_r _ ih => intros; apply disj_intro_r ; apply ih ; assumption
+  | disj_elim h hl hr ih ihl ihr =>
+    intros _ hsub ; apply disj_elim
+    · apply ih ; assumption
+    · apply ihl ; try assumption
+      simp ; constructor <;> try assumption
+      · apply var ; simp
+      · intros ; apply weaken ; apply hsub ; assumption
+        intros ; simp ; right ; assumption
+    · apply ihr ; try assumption
+      simp ; constructor <;> try assumption
+      · apply var ; simp
+      · intros ; apply weaken ; apply hsub ; assumption
+        intros ; simp ; right ; assumption
+  | infdisj_intro _ _ => sorry
+  | infdisj_elim _ _ _ _ => sorry
+  | eq_intro => sorry
+  | eq_elim φ Γ _ _ _ _ => sorry
+  | existsQ_intro φ _ _ => sorry
+  | existsQ_elim _ _ => sorry
 
 
 
