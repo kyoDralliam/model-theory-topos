@@ -203,6 +203,35 @@ theorem proof.cut {T : theory} n (Δ : FmlCtx T n) ψ (hψ : proof Δ ψ) : fora
   | existsQ_elim _ _ => sorry
 
 
+def sequent.derivable (T : theory) (s : sequent T.sig) := proof [s.premise] s.concl
+
+def sequent.of_formulas (Γ : FmlCtx T n) (φ : fml T.sig n) : sequent T.sig where
+  ctx := n
+  premise := List.foldr .conj .true Γ
+  concl := φ
+
+theorem sequent.from_proof : proof Γ φ -> (of_formulas Γ φ).derivable := by
+  intros hΓφ
+  apply proof.cut _ _ _ hΓφ
+  clear hΓφ
+  induction Γ with
+  | nil => simp
+  | cons ψ Γ ih =>
+    simp [of_formulas] ; constructor
+    · apply proof.conj_elim_l ; apply proof.var ; simp ; rfl
+    · intros τ hτ ; apply proof.cut _ _ _ (ih _ hτ) ; simp [of_formulas]
+      apply proof.conj_elim_r ; apply proof.var ; simp ; rfl
+
+theorem sequent.to_proof : (of_formulas Γ φ).derivable -> proof Γ φ := by
+  intros hs ; apply proof.cut _ _ _ hs
+  clear hs
+  induction Γ with
+  | nil => simp [of_formulas] ; apply proof.true_intro
+  | cons ψ Γ ih =>
+    simp [of_formulas] ; apply proof.conj_intro
+    · apply proof.var ; simp
+    · simp at ih ; apply proof.cut _ _ _ ih
+      intros ; apply proof.var; simp ; right ; assumption
 
 namespace Miscellaneous
 
