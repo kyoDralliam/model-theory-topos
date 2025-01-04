@@ -458,6 +458,66 @@ namespace InterpPsh
     def pullback_Mod : Mod T D ⥤ Mod T C where
     obj M := pb_model D F T M
     map f := pb_morphism _ F T _ _ f
+    /-def model {S : monosig} (L : Str S C) (s : sequent S) : Prop :=
+   L.interp_fml s.premise ≤ L.interp_fml s.concl
+   structure sequent (m : monosig) where
+  ctx : Nat
+  premise : fml m ctx := .true
+  concl : fml m ctx
+
+   -/
+
+   --theorem sequent_fields {T : theory} {n : RenCtx} (a : sequent T.sig):
+  theorem subst_interp_tm  (L: Str S C) (n : RenCtx) (m : Subst S) (σ : Fin n → tm S m) (t: tm S n) :
+   L.interp_tm (tm.subst σ t) =
+   npair (npow L.carrier m) L.carrier n (fun i => L.interp_tm (σ i)) ≫ L.interp_tm t := by
+     induction t with
+     | var _ => sorry
+     | op o _ _ => sorry
+
+
+  theorem subst_interp_fml (L: Str S C) (n : RenCtx) (m : Subst S) (σ : Fin n → tm S m) (φ: fml S n) :
+   L.interp_fml (fml.subst σ φ) =
+   npair (npow L.carrier m) L.carrier n (fun i => L.interp_tm (σ i)) ≫ L.interp_fml φ := by
+    induction φ with
+    | pred p _ => sorry
+    | true => sorry
+    | false => sorry
+    | conj _ _ _ _ => sorry
+    | disj _ _ _ _ => sorry
+    | infdisj _ _ => sorry
+    | eq _ _ => sorry
+    | existsQ _ _ => sorry
+
+
+
+  theorem soundness {T : theory} {n : RenCtx} (M:Mod T D) (φ ψ: fml T.sig n)
+     (h:Hilbert.proof φ ψ): InterpPsh.Str.model M.str (sequent.mk _ φ ψ) := by
+      induction h with
+      | «axiom» _ =>
+         rename_i a m σ hyp
+         have := M.valid a hyp
+         simp[InterpPsh.Str.model] at *
+         simp[subst_interp_fml]
+         apply BaseChange.SubobjectClassifier.prop_le_precomp
+         assumption
+      | cut _ _ _ _ => sorry
+      | var => sorry
+      | true_intro => sorry
+      | false_elim _ _ => sorry
+      | conj_intro _ _ _ _ => sorry
+      | conj_elim_l => sorry
+      | conj_elim_r => sorry
+      | disj_intro_l => sorry
+      | disj_intro_r => sorry
+      | disj_elim _ _ _ _ _ _ => sorry
+      | infdisj_intro => sorry
+      | infdisj_elim _ _ _ _ => sorry
+      | eq_intro => sorry
+      | eq_elim φ γ _ _ _ _ => sorry
+      | existsQ_intro φ => sorry
+      | existsQ_elim => sorry
+      | ren _ _ => sorry
 
 
 

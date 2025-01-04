@@ -651,6 +651,15 @@ namespace BaseChange
       intros h Ξ x lhs Δ f
       apply h _ x (F.map f)
 
+    theorem prop_le_precomp {X : Psh D} (φ ψ : X ⟶ SubobjectClassifier.prop) (G: Y ⟶ X):
+      φ ≤ ψ → G ≫ φ ≤ G ≫ ψ := by
+      intros hyp dop x lhs
+      simp[lhs]
+      intros d' f h
+      have := hyp dop (G.app dop x) f
+      apply this
+      assumption
+
   end SubobjectClassifier
 
 end BaseChange
