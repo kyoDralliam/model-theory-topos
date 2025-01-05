@@ -510,11 +510,21 @@ namespace InterpPsh
 
   theorem interp_fml_infdisj (L: Str S C) (n : RenCtx) (φ : ℕ → fml S n) :
     Str.interp_fml L (fml.infdisj φ) =
-    SubobjectClassifier.complete_lattice_to_prop.sSup {Str.interp_fml L (φ i) |( i: ℕ ) } := sorry
+    SubobjectClassifier.complete_lattice_to_prop.sSup {Str.interp_fml L (φ i) |( i: ℕ ) } := by
+     sorry--need to fill the sorry for infdisj!
 
-  theorem lift_same_eq (X Y: Psh D) (f: X ⟶ Y): ChosenFiniteProducts.lift f f ≫ SubobjectClassifier.eq = ⊤ := sorry
+  --theorem lift_same_eq_app  (X Y: Psh D) (f: X ⟶ Y)
 
-  theorem interp_fml_eq_refl (L: Str S C) (n : RenCtx) (t: tm S n) :
+  theorem lift_same_eq (X Y: Psh D) (f: X ⟶ Y): ChosenFiniteProducts.lift f f ≫ SubobjectClassifier.eq = ⊤ := by
+    ext dop a
+    simp only[SubobjectClassifier.complete_lattice_to_prop]
+    simp
+    ext d' g
+    simp[SubobjectClassifier.top_app]
+    simp[SubobjectClassifier.eq]
+    congr
+
+    theorem interp_fml_eq_refl (L: Str S C) (n : RenCtx) (t: tm S n) :
     Str.interp_fml L (fml.eq t t) = ⊤ := by
     simp only[Str.interp_fml]
     simp only[lift_same_eq]

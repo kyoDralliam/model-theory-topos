@@ -103,6 +103,9 @@ namespace SubobjectClassifier
       funext
       simp
 
+  theorem top_app (c: Cᵒᵖ ) (x: (𝟙_ (Psh C)).obj c)  (c' : C) (f : c' ⟶ c.unop): (SubobjectClassifier.top.app c x).arrows f := sorry
+
+
   def bot : 𝟙_ (Psh C) ⟶ prop where
     app X := fun _ => (⊥ : Sieve X.unop)
     naturality X Y f := by
@@ -130,6 +133,8 @@ namespace SubobjectClassifier
       simp [Sieve.ext_iff]
       intros Z g
       constructor <;> exact id
+
+  --theorem eq_app (X:Cᵒᵖ ): (SubobjectClassifier.eq).app X
 
   def existQ {A B : Psh C} (p : A ⟶ B) (φ : A ⟶ prop) : B ⟶ prop where
     app X := fun b =>
