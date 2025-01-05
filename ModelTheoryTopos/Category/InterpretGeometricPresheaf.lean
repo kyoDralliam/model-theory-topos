@@ -472,8 +472,20 @@ namespace InterpPsh
    L.interp_tm (tm.subst σ t) =
    npair (npow L.carrier m) L.carrier n (fun i => L.interp_tm (σ i)) ≫ L.interp_tm t := by
      induction t with
-     | var _ => sorry
-     | op o _ _ => sorry
+     | var _ =>
+      rename_i i
+      simp[tm.subst,Str.interp_tm,npair_nproj]
+     | op o _ _ =>
+      rename_i a a_ih
+      simp[tm.subst,Str.interp_tm]
+      have h1 : (npair (npow L.carrier m) L.carrier (S.arity_ops o) fun i ↦ L.interp_tm (tm.subst σ (a i))) =
+          (npair (npow L.carrier m) L.carrier n fun i ↦ L.interp_tm (σ i)) ≫
+    (npair (npow L.carrier n) L.carrier (S.arity_ops o) fun i ↦ L.interp_tm (a i)) := by
+       apply npair_univ
+       intro i
+       have := a_ih i
+       simp[this,npair_nproj]
+      simp[h1]
 
 
   theorem subst_interp_fml (L: Str S C) (n : RenCtx) (m : Subst S) (σ : Fin n → tm S m) (φ: fml S n) :
