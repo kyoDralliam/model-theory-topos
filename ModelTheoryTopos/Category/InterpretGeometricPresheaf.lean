@@ -506,13 +506,68 @@ namespace InterpPsh
         intro i
         simp[Category.assoc,npair_nproj]
       simp[h]
-    | true => sorry
-    | false => sorry
-    | conj _ _ _ _ => sorry
-    | disj _ _ _ _ => sorry
-    | infdisj _ _ => sorry
-    | eq _ _ => sorry
-    | existsQ _ _ => sorry
+    | true =>
+      rename_i n
+      simp[fml.subst]
+      simp[Str.interp_fml]
+      have h : toUnit (npow L.carrier m) =
+       (npair (npow L.carrier m) L.carrier n fun i ↦ L.interp_tm (σ i)) ≫ toUnit (npow L.carrier n)
+       := by
+       apply toUnit_unique
+      simp[← Category.assoc,h]
+    | false =>
+      rename_i n
+      simp[fml.subst]
+      simp[Str.interp_fml]
+      have h : toUnit (npow L.carrier m) =
+       (npair (npow L.carrier m) L.carrier n fun i ↦ L.interp_tm (σ i)) ≫ toUnit (npow L.carrier n)
+       := by
+       apply toUnit_unique
+      simp[← Category.assoc,h]
+    | conj f1 f2 h1 h2 =>
+      /-rename_i n
+      have h1:= h1 σ
+      have h2:= h2 σ
+      simp[Str.interp_fml,fml.subst]
+      have h: ChosenFiniteProducts.lift (L.interp_fml (fml.subst σ f1)) (L.interp_fml (fml.subst σ f2)) =
+       (npair (npow L.carrier m) L.carrier n fun i ↦ L.interp_tm (σ i)) ≫
+       ChosenFiniteProducts.lift (L.interp_fml f1) (L.interp_fml f2) := by
+       apply hom_ext
+       · simp[]
+         simp[subst_interp_fml]
+       · simp[]
+         simp[subst_interp_fml]
+      simp[h,← Category.assoc]-/ sorry
+    | disj f1 f2 h1 h2 =>
+      /-rename_i n
+      have h1:= h1 σ
+      have h2:= h2 σ
+      simp[Str.interp_fml,fml.subst]
+      have h: ChosenFiniteProducts.lift (L.interp_fml (fml.subst σ f1)) (L.interp_fml (fml.subst σ f2)) =
+       (npair (npow L.carrier m) L.carrier n fun i ↦ L.interp_tm (σ i)) ≫
+       ChosenFiniteProducts.lift (L.interp_fml f1) (L.interp_fml f2) := by
+       apply hom_ext
+       · simp[]
+         simp[subst_interp_fml]
+       · simp[]
+         simp[subst_interp_fml]
+      simp[h,← Category.assoc]-/ sorry
+    | infdisj _ _ => sorry --need to define semantics first
+    | eq t1 t2 =>
+      rename_i n
+      simp[Str.interp_fml,fml.subst]
+      have h : ChosenFiniteProducts.lift (L.interp_tm (tm.subst σ t1)) (L.interp_tm (tm.subst σ t2)) =
+      (npair (npow L.carrier m) L.carrier n fun i ↦ L.interp_tm (σ i)) ≫
+      ChosenFiniteProducts.lift (L.interp_tm t1) (L.interp_tm t2) := by
+        apply hom_ext
+        · simp[]
+          simp[subst_interp_tm]
+        · simp[]
+          simp[subst_interp_tm]
+      simp[h,← Category.assoc]
+    | existsQ f ih =>
+      rename_i n
+      sorry
 
 
   theorem interp_fml_true (L: Str S C) (n : RenCtx) :  @Str.interp_fml C _ n S L fml.true = ⊤ := by
