@@ -492,7 +492,20 @@ namespace InterpPsh
    L.interp_fml (fml.subst σ φ) =
    npair (npow L.carrier m) L.carrier n (fun i => L.interp_tm (σ i)) ≫ L.interp_fml φ := by
     induction φ with
-    | pred p _ => sorry
+    | pred p _ =>
+      rename_i n a
+      simp[fml.subst]
+      simp[Str.interp_fml,subst_interp_tm]
+      simp[← Category.assoc]
+      have h : (npair (npow L.carrier m) L.carrier (S.arity_preds p) fun i ↦
+      (npair (npow L.carrier m) L.carrier n fun i ↦ L.interp_tm (σ i)) ≫ L.interp_tm (a i)) =
+      ((npair (npow L.carrier m) L.carrier n fun i ↦ L.interp_tm (σ i)) ≫
+      npair (npow L.carrier n) L.carrier (S.arity_preds p) fun i ↦ L.interp_tm (a i))
+      := by
+        apply npair_univ
+        intro i
+        simp[Category.assoc,npair_nproj]
+      simp[h]
     | true => sorry
     | false => sorry
     | conj _ _ _ _ => sorry
