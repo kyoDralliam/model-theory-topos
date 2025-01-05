@@ -343,6 +343,15 @@ namespace SubobjectClassifier
       simp
       simp[SubobjectClassifier.bot]
 
+  theorem complete_lattice_to_prop_top (X:Psh C) : (@SubobjectClassifier.complete_lattice_to_prop C _ X).top =
+   ChosenFiniteProducts.toUnit _ ≫ SubobjectClassifier.top := rfl
+
+  theorem complete_lattice_to_prop_inf (X:Psh C) (φ ψ: X ⟶ prop): (@SubobjectClassifier.complete_lattice_to_prop C _ X).inf φ ψ  =
+   ChosenFiniteProducts.lift φ ψ ≫ conj := rfl
+
+  theorem complete_lattice_to_prop_sup (X:Psh C) (φ ψ: X ⟶ prop): (@SubobjectClassifier.complete_lattice_to_prop C _ X).sup φ ψ  =
+   ChosenFiniteProducts.lift φ ψ ≫ disj := rfl
+
 
   -- instance po_to_prop {X : Psh C} : PartialOrder (X ⟶ prop) where
   --   le f g := forall Γ (x : X.obj Γ),

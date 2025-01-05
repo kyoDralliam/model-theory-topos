@@ -490,6 +490,36 @@ namespace InterpPsh
     | existsQ _ _ => sorry
 
 
+  theorem interp_fml_true (L: Str S C) (n : RenCtx) :  @Str.interp_fml C _ n S L fml.true = ⊤ := by
+    simp[Str.interp_fml ,SubobjectClassifier.complete_lattice_to_prop]
+
+  theorem interp_fml_false (L: Str S C) (n : RenCtx) :  @Str.interp_fml C _ n S L fml.false = ⊥ := by
+    simp[Str.interp_fml ,SubobjectClassifier.complete_lattice_to_prop]
+
+  theorem interp_fml_conj (L: Str S C) (n : RenCtx) (φ ψ: fml S n) :
+    Str.interp_fml L (φ.conj ψ) =
+    SubobjectClassifier.complete_lattice_to_prop.inf (Str.interp_fml L φ) (Str.interp_fml L ψ) := by
+    simp only[SubobjectClassifier.complete_lattice_to_prop_inf,Str.interp_fml]
+
+  theorem interp_fml_disj (L: Str S C) (n : RenCtx) (φ ψ: fml S n) :
+    Str.interp_fml L (φ.disj ψ) =
+    SubobjectClassifier.complete_lattice_to_prop.sup (Str.interp_fml L φ) (Str.interp_fml L ψ) := by
+    simp only[SubobjectClassifier.complete_lattice_to_prop_sup,Str.interp_fml]
+
+  theorem SemilatticeInf_Lattice_inf {α : Type u} [Lattice α] (a b:α) : SemilatticeInf.inf a b = Lattice.inf a b := rfl
+
+  theorem interp_fml_infdisj (L: Str S C) (n : RenCtx) (φ : ℕ → fml S n) :
+    Str.interp_fml L (fml.infdisj φ) =
+    SubobjectClassifier.complete_lattice_to_prop.sSup {Str.interp_fml L (φ i) |( i: ℕ ) } := sorry
+
+  theorem lift_same_eq (X Y: Psh D) (f: X ⟶ Y): ChosenFiniteProducts.lift f f ≫ SubobjectClassifier.eq = ⊤ := sorry
+
+  theorem interp_fml_eq_refl (L: Str S C) (n : RenCtx) (t: tm S n) :
+    Str.interp_fml L (fml.eq t t) = ⊤ := by
+    simp only[Str.interp_fml]
+    simp only[lift_same_eq]
+
+
 
   theorem soundness {T : theory} {n : RenCtx} (M:Mod T D) (φ ψ: fml T.sig n)
      (h:Hilbert.proof φ ψ): InterpPsh.Str.model M.str (sequent.mk _ φ ψ) := by
@@ -501,22 +531,79 @@ namespace InterpPsh
          simp[subst_interp_fml]
          apply BaseChange.SubobjectClassifier.prop_le_precomp
          assumption
-      | cut _ _ _ _ => sorry
-      | var => sorry
-      | true_intro => sorry
-      | false_elim _ _ => sorry
-      | conj_intro _ _ _ _ => sorry
-      | conj_elim_l => sorry
-      | conj_elim_r => sorry
-      | disj_intro_l => sorry
-      | disj_intro_r => sorry
-      | disj_elim _ _ _ _ _ _ => sorry
-      | infdisj_intro => sorry
+      | cut phi2tau tau2psi Mphitau Mtaupsi =>
+        simp[InterpPsh.Str.model] at *
+        apply SubobjectClassifier.complete_lattice_to_prop.le_trans
+        assumption
+        assumption
+      | var =>
+        simp[InterpPsh.Str.model]
+      | true_intro =>
+        simp[InterpPsh.Str.model,interp_fml_true]
+      | false_elim a a_ih =>
+        rename_i n φ ψ
+        simp[InterpPsh.Str.model,interp_fml_false] at *
+        --have := (@SubobjectClassifier.complete_lattice_to_prop _ _ (npow M.str.carrier n)).le_trans
+        apply SubobjectClassifier.complete_lattice_to_prop.le_trans
+        assumption
+        simp[bot_le]
+      | conj_intro _ _ _ _ =>
+        rename_i n a φ ψ pphi ppsi h1 h2
+        simp[InterpPsh.Str.model] at *
+        simp only[interp_fml_conj]
+        apply SubobjectClassifier.complete_lattice_to_prop.le_trans
+        have := @SemilatticeInf.le_inf _ _ (M.str.interp_fml a) (M.str.interp_fml φ) (M.str.interp_fml ψ)
+        apply this
+        · assumption
+        · assumption
+        simp[SemilatticeInf_Lattice_inf]
+      | conj_elim_l =>
+        simp[InterpPsh.Str.model,interp_fml_conj]
+        apply SubobjectClassifier.complete_lattice_to_prop.inf_le_left
+      | conj_elim_r =>
+        simp[InterpPsh.Str.model,interp_fml_conj]
+        apply SubobjectClassifier.complete_lattice_to_prop.inf_le_right
+      | disj_intro_l =>
+        simp[InterpPsh.Str.model,interp_fml_disj]
+        apply SubobjectClassifier.complete_lattice_to_prop.le_sup_left
+      | disj_intro_r =>
+        simp[InterpPsh.Str.model,interp_fml_disj]
+        apply SubobjectClassifier.complete_lattice_to_prop.le_sup_right
+      | disj_elim _ _ _ _ _ _ =>
+        rename_i n f1 f2 f3 f4 f1pf2orf3 f2cf1pf4 f3cf1pf4 h1 h2 h3
+        simp[InterpPsh.Str.model,interp_fml_conj,interp_fml_disj] at *
+        set a := M.str.interp_fml f1 with a_def
+        set b := M.str.interp_fml f2 with b_def
+        set c := M.str.interp_fml f3 with c_def
+        set d := M.str.interp_fml f4 with d_def
+        simp[← a_def,← b_def,← c_def,← d_def] at *
+        sorry
+      | infdisj_intro =>
+        simp[InterpPsh.Str.model,interp_fml_infdisj]
+        apply SubobjectClassifier.complete_lattice_to_prop.le_sSup
+        simp
       | infdisj_elim _ _ _ _ => sorry
-      | eq_intro => sorry
-      | eq_elim φ γ _ _ _ _ => sorry
-      | existsQ_intro φ => sorry
-      | existsQ_elim => sorry
+      | eq_intro =>
+        simp[InterpPsh.Str.model]
+        simp[interp_fml_eq_refl,interp_fml_true]
+      | eq_elim φ γ _ _ _ _ =>
+        simp[InterpPsh.Str.model] at *
+        rename_i n f t1 t2 p1 p2 h1 h2
+        --use subst interp lemmas
+        sorry
+      | existsQ_intro φ =>
+        rename_i n t
+        simp[InterpPsh.Str.model]
+        intros dop x l
+        simp[l]
+        intros d' f h
+        simp[SubobjectClassifier.existQ_app_arrows,Str.interp_fml,SubobjectClassifier.existπ]
+
+        sorry
+      | existsQ_elim =>
+        rename_i n φ
+        simp[InterpPsh.Str.model]
+        sorry
       | ren _ _ => sorry
 
 
