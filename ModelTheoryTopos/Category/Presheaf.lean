@@ -11,10 +11,30 @@ import Mathlib.CategoryTheory.Whiskering
 import ModelTheoryTopos.Category.ChosenFiniteProducts
 import ModelTheoryTopos.Category.NatIso
 
+open CategoryTheory MonoidalCategory ChosenFiniteProducts
+
+--
+/- explicit description of a pullback square P = X ×_Z Y
+  P ----> Y
+  |       |
+  V       v
+  X ----> Z
+-/
+structure pb_square {C : Type} [Category C] {P X Y Z : C} (f : X ⟶ Z) (g : Y ⟶ Z) (πX : P ⟶ X) (πY : P ⟶ Y) where
+  commutes : πX ≫ f = πY ≫ g
+  univ : forall {P'} (πX' : P' ⟶ X) (πY' : P' ⟶ Y),
+    πX' ≫ f = πY' ≫ g -> (P' ⟶ P)
+  univ_eq₁ : forall {P'} (πX' : P' ⟶ X) (πY' : P' ⟶ Y)
+    (h : πX' ≫ f = πY' ≫ g), univ πX' πY' h ≫ πX = πX'
+  univ_eq₂ : forall {P'} (πX' : P' ⟶ X) (πY' : P' ⟶ Y)
+    (h : πX' ≫ f = πY' ≫ g), univ πX' πY' h ≫ πY = πY'
+  univ_eta : forall {P'} (πX' : P' ⟶ X) (πY' : P' ⟶ Y)
+    (h : πX' ≫ f = πY' ≫ g) (u : P' ⟶ P),
+    u ≫ πX = πX' -> u ≫ πY = πY' -> u = univ πX' πY' h
+
 
 abbrev CategoryTheory.Psh (C:Type) [Category C] := Functor Cᵒᵖ Type
 
-open CategoryTheory MonoidalCategory ChosenFiniteProducts
 
 namespace ChosenFiniteProducts
   variable {C : Type} [Category C]
@@ -136,6 +156,9 @@ namespace SubobjectClassifier
 
   --theorem eq_app (X:Cᵒᵖ ): (SubobjectClassifier.eq).app X
 
+  -- p^* : (B ⟶ prop) -> (A ⟶ prop)
+  def precomp {A B : Psh C} (p : A ⟶ B) (ψ : B ⟶ prop) : A ⟶ prop := p ≫ ψ
+
   def existQ {A B : Psh C} (p : A ⟶ B) (φ : A ⟶ prop) : B ⟶ prop where
     app X := fun b =>
       {
@@ -157,6 +180,7 @@ namespace SubobjectClassifier
             simp at this
             exact this
       }
+
 
   theorem existQ_app_arrows {A B : Psh C} (p : A ⟶ B) (φ : A ⟶ prop) (X: Cᵒᵖ) (b: B.obj X) (Y: C) (f: Y ⟶ Opposite.unop X):
     ((existQ p φ).app X b).arrows  f = exists a, p.app (Opposite.op Y) a = B.map f.op b ∧ (φ.app _ a).arrows (𝟙 Y) := rfl
@@ -358,22 +382,34 @@ namespace SubobjectClassifier
    ChosenFiniteProducts.lift φ ψ ≫ disj := rfl
 
 
-  -- instance po_to_prop {X : Psh C} : PartialOrder (X ⟶ prop) where
-  --   le f g := forall Γ (x : X.obj Γ),
-  --     let lhs : Sieve Γ.unop := f.app Γ x
-  --     lhs ≤ (g.app Γ x : Sieve Γ.unop)
-  --   le_refl := by intros f Γ x ; apply le_refl
-  --   le_trans := by
-  --     intros f g h fg gh Γ x ; eapply le_trans
-  --     · apply fg
-  --     · apply gh
-  --   le_antisymm := by
-  --     intros f g fg gf ; ext Γ x ; simp [prop] ; apply le_antisymm <;> aesop
+  def existQ_precomp_adj {A B : Psh C} (p : A ⟶ B) :
+    GaloisConnection (existQ p) (precomp p) := by sorry
+    -- existQ p φ ≤ ψ ↔ φ ≤ precomp p ψ := by sorry
+
+  theorem existQ_counit {A B : Psh C} (p : A ⟶ B) (ψ : B ⟶ prop) :
+    existQ p (precomp p ψ) ≤ ψ := by sorry
+
+  theorem existQ_unit {A B : Psh C} (p : A ⟶ B) (φ : A ⟶ prop) :
+    φ ≤ precomp p (existQ p φ) := by sorry
+
+  def mate {B B' A A' : Psh C} (g : A ⟶ B) (g' : A' ⟶ B') (m : A' ⟶ A) (k : B' ⟶ B)
+    (h : m ≫ g = g' ≫ k) (φ : B' ⟶ prop) : existQ m (precomp g' φ) ≤ precomp g (existQ k φ) := by
+    calc existQ m (precomp g' φ) ≤  existQ m (precomp g' (precomp k (existQ k φ))) := by sorry
+      _ ≤ existQ m (precomp (g' ≫ k) (existQ k φ)) := by sorry
+      _ ≤ existQ m (precomp (m ≫ g) (existQ k φ)) := by sorry
+      _ ≤ existQ m (precomp m (precomp g (existQ k φ))) := by sorry
+      _ ≤ precomp g (existQ k φ) := by apply existQ_counit
+
+
+
+  theorem le_precomp {X Y : Psh C} (φ : Y ⟶ X) (f g : X ⟶ prop) :
+    f ≤ g -> φ ≫ f ≤ φ ≫ g := by
+    intros fg Γ x
+    apply fg
 
   theorem le_iso {X Y : Psh C} (φ : X ≅ Y) (f g : X ⟶ prop) :
     f ≤ g -> φ.inv ≫ f ≤ φ.inv ≫ g := by
-    intros fg Γ x
-    apply fg
+    apply le_precomp
 
 end SubobjectClassifier
 
