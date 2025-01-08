@@ -512,9 +512,39 @@ namespace SubobjectClassifier
     simp only[GaloisConnection] at this
     simp[← this]
 
+  theorem precomp_monotone {A B: Psh C} (g : A ⟶ B) (φ ψ: B ⟶ prop):
+   φ ≤ ψ → precomp g φ ≤  precomp g ψ := by
+    intro h cop x l c' f asm
+    simp[l] at asm
+    simp[precomp] at *
+    have := h cop (g.app cop x) f
+    apply this
+    assumption
+
+  theorem existQ_monotone {A B: Psh C} (g : A ⟶ B) (φ ψ: A ⟶ prop):
+   φ ≤ ψ → existQ g φ ≤  existQ g ψ := by
+    intro h cop x l c' f asm
+    simp[l] at asm
+    simp[existQ] at *
+    cases asm
+    rename_i a ha
+    cases ha
+    rename_i h1 h2
+    exists a
+    simp[h1]
+    apply h
+    assumption
+
+
+
   def mate {B B' A A' : Psh C} (g : A ⟶ B) (g' : A' ⟶ B') (m : A' ⟶ A) (k : B' ⟶ B)
     (h : m ≫ g = g' ≫ k) (φ : B' ⟶ prop) : existQ m (precomp g' φ) ≤ precomp g (existQ k φ) := by
-    calc existQ m (precomp g' φ) ≤  existQ m (precomp g' (precomp k (existQ k φ))) := by sorry
+    calc existQ m (precomp g' φ) ≤  existQ m (precomp g' (precomp k (existQ k φ))) := by
+          have h1:  φ ≤  (precomp k (existQ k φ)) := by
+            apply existQ_unit
+          apply existQ_monotone
+          apply precomp_monotone
+          assumption
       _ ≤ existQ m (precomp (g' ≫ k) (existQ k φ)) := by
        simp[precomp]
       _ ≤ existQ m (precomp (m ≫ g) (existQ k φ)) := by
