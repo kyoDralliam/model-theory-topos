@@ -462,9 +462,7 @@ namespace SubobjectClassifier
     simp only[GaloisConnection]
     intros φ ψ
     constructor
-    · --intro h
-      --intro cop x l c' f h1
-      simp only[Sieve_le_alt]
+    · simp only[Sieve_le_alt]
       intro l
       intro cop x h
       let s1: Sieve cop.unop:= (existQ p φ).app cop (p.app cop x)
@@ -484,19 +482,6 @@ namespace SubobjectClassifier
       simp[precomp]
       simp[s2] at a'
       assumption
-
-
-
-
-      /-intro h cop x l c' f h1
-      simp[l] at h1
-      let s: Sieve (Opposite.unop cop) := (existQ p φ).app cop (p.app cop x)
-      have p1_0: s = ⊤ := by
-        simp[← CategoryTheory.Sieve.id_mem_iff_eq_top]
-        simp[s]
-        simp[existQ]
-        exists x
-        simp-/
     · simp only[Sieve_le_alt]
       intro l
       intro cop x h
@@ -512,38 +497,20 @@ namespace SubobjectClassifier
        assumption
       simp[s1,precomp,h1] at h'
       assumption
-    /-· intro h cop x l c' f h1
-      simp[l] at h1
-      let s: Sieve (Opposite.unop cop) := (existQ p φ).app cop (p.app cop x)
-      have p1_0: s = ⊤ := by
-        simp[← CategoryTheory.Sieve.id_mem_iff_eq_top]
-        simp[s]
-        simp[existQ]
-        exists x
-        simp
 
-        sorry
-      have p1 : ((existQ p φ).app cop (p.app cop x)).arrows f :=
-
-        sorry
-      simp[precomp]
-      apply h
-      assumption
-    · sorry
-
-    -- existQ p φ ≤ ψ ↔ φ ≤ precomp p ψ := by sorry
-    -/
 
   theorem existQ_counit {A B : Psh C} (p : A ⟶ B) (ψ : B ⟶ prop) :
     existQ p (precomp p ψ) ≤ ψ := by
-    intro cop x l c' f h
-    simp[l] at h
+    have := existQ_precomp_adj p
+    simp only[GaloisConnection] at this
+    simp[this]
 
-
-    sorry
 
   theorem existQ_unit {A B : Psh C} (p : A ⟶ B) (φ : A ⟶ prop) :
-    φ ≤ precomp p (existQ p φ) := by sorry
+    φ ≤ precomp p (existQ p φ) := by
+    have := existQ_precomp_adj p
+    simp only[GaloisConnection] at this
+    simp[← this]
 
   def mate {B B' A A' : Psh C} (g : A ⟶ B) (g' : A' ⟶ B') (m : A' ⟶ A) (k : B' ⟶ B)
     (h : m ≫ g = g' ≫ k) (φ : B' ⟶ prop) : existQ m (precomp g' φ) ≤ precomp g (existQ k φ) := by
