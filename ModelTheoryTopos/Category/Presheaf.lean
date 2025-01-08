@@ -497,7 +497,21 @@ namespace SubobjectClassifier
         simp[existQ]
         exists x
         simp-/
-    · sorry
+    · simp only[Sieve_le_alt]
+      intro l
+      intro cop x h
+      simp[← CategoryTheory.Sieve.id_mem_iff_eq_top,existQ] at h
+      cases h
+      rename_i x0 hx0
+      cases hx0
+      rename_i h1 h2
+      simp[CategoryTheory.Sieve.id_mem_iff_eq_top,existQ] at h2
+      let s1 :  Sieve (cop.unop) := ((precomp p ψ).app cop x0)
+      have h' : s1 = ⊤ := by
+       apply l
+       assumption
+      simp[s1,precomp,h1] at h'
+      assumption
     /-· intro h cop x l c' f h1
       simp[l] at h1
       let s: Sieve (Opposite.unop cop) := (existQ p φ).app cop (p.app cop x)
