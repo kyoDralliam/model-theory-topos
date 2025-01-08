@@ -515,9 +515,12 @@ namespace SubobjectClassifier
   def mate {B B' A A' : Psh C} (g : A ⟶ B) (g' : A' ⟶ B') (m : A' ⟶ A) (k : B' ⟶ B)
     (h : m ≫ g = g' ≫ k) (φ : B' ⟶ prop) : existQ m (precomp g' φ) ≤ precomp g (existQ k φ) := by
     calc existQ m (precomp g' φ) ≤  existQ m (precomp g' (precomp k (existQ k φ))) := by sorry
-      _ ≤ existQ m (precomp (g' ≫ k) (existQ k φ)) := by sorry
-      _ ≤ existQ m (precomp (m ≫ g) (existQ k φ)) := by sorry
-      _ ≤ existQ m (precomp m (precomp g (existQ k φ))) := by sorry
+      _ ≤ existQ m (precomp (g' ≫ k) (existQ k φ)) := by
+       simp[precomp]
+      _ ≤ existQ m (precomp (m ≫ g) (existQ k φ)) := by
+       simp[h]
+      _ ≤ existQ m (precomp m (precomp g (existQ k φ))) := by
+       simp[precomp]
       _ ≤ precomp g (existQ k φ) := by apply existQ_counit
 
 
