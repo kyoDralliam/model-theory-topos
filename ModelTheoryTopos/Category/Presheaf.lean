@@ -381,13 +381,152 @@ namespace SubobjectClassifier
   theorem complete_lattice_to_prop_sup (X:Psh C) (φ ψ: X ⟶ prop): (@SubobjectClassifier.complete_lattice_to_prop C _ X).sup φ ψ  =
    ChosenFiniteProducts.lift φ ψ ≫ disj := rfl
 
+  theorem to_prop_naturality {X: Psh C}(φ :X ⟶ prop) (c: Cᵒᵖ) (x: X.obj c) {c': C} (f: c' ⟶ c.unop):
+   φ.app (Opposite.op c') (X.map (Opposite.op f) x) =
+   CategoryTheory.Sieve.pullback f (φ.app c x) := by
+   have := φ.naturality (Opposite.op f)
+   have l : φ.app (Opposite.op c') (X.map (Opposite.op f) x) =
+           (X.map (Opposite.op f) ≫ φ.app (Opposite.op c')) x := by
+    simp
+   have r : Sieve.pullback f (φ.app c x) =
+            (φ.app c ≫ prop.map (Opposite.op f)) x := by
+    simp
+   simp only[l,r]
+   simp only[this]
+
+
+
+
+  theorem Sieve_le_alt1 {X: Psh C}(f g:X ⟶ prop)
+   (h:∀ (c: Cᵒᵖ) (x: X.obj c),
+    let s1 : Sieve c.unop := (f.app c x)
+    let s2 : Sieve c.unop := (g.app c x)
+    s1 = ⊤ → s2 = ⊤): f ≤ g:= by
+    intros cop x lhs c' f1 asm
+    simp[lhs] at asm
+    have a : CategoryTheory.Sieve.pullback f1 lhs = ⊤ := by
+     simp[← CategoryTheory.Sieve.id_mem_iff_eq_top]
+     simp[lhs]
+     assumption
+    let sf : Sieve c':= f.app (Opposite.op c') (X.map (Opposite.op f1) x)
+    have a': sf = ⊤ := by
+     simp[sf]
+     have : CategoryTheory.Sieve.pullback f1 (f.app cop x) = ⊤ := by
+      simp[← CategoryTheory.Sieve.id_mem_iff_eq_top]
+      assumption
+     simp[← to_prop_naturality] at this
+     assumption
+    let sg : Sieve c':= g.app (Opposite.op c') (X.map (Opposite.op f1) x)
+    have a'': sg = ⊤ := by
+     apply h
+     simp[sf] at a'
+     assumption
+    simp[sg] at a''
+    have a''': CategoryTheory.Sieve.pullback f1 (g.app cop x) = ⊤ := by
+     simp[← to_prop_naturality] --prove the next step as simpler form
+     assumption
+    ---simp only[@to_prop_naturality _ _ _ f1] at a'' why???
+    simp[← CategoryTheory.Sieve.id_mem_iff_eq_top] at a'''
+    assumption
+
+  theorem Sieve_le_alt2 {X: Psh C}(f g:X ⟶ prop) (h: f ≤ g):
+   (∀ (c: Cᵒᵖ) (x: X.obj c),
+    let s1 : Sieve c.unop := (f.app c x)
+    let s2 : Sieve c.unop := (g.app c x)
+    s1 = ⊤ → s2 = ⊤):= by
+   intros cop x s1 s2 h1
+   have := h cop x
+   simp [← CategoryTheory.Sieve.id_mem_iff_eq_top] at *
+   have := this (𝟙 (Opposite.unop cop))
+   simp[s2]
+   apply this
+   assumption
+
+  theorem Sieve_le_alt {X: Psh C}(f g:X ⟶ prop):  f ≤ g ↔ ∀ (c: Cᵒᵖ) (x: X.obj c),
+    let s1 : Sieve c.unop := (f.app c x)
+    let s2 : Sieve c.unop := (g.app c x)
+    s1 = ⊤ → s2 = ⊤ := by
+    constructor
+    · intro h
+      apply Sieve_le_alt2
+      exact h
+    · intro h
+      apply Sieve_le_alt1
+      exact h
+
+
+
 
   def existQ_precomp_adj {A B : Psh C} (p : A ⟶ B) :
-    GaloisConnection (existQ p) (precomp p) := by sorry
+    GaloisConnection (existQ p) (precomp p) := by
+    simp only[GaloisConnection]
+    intros φ ψ
+    constructor
+    · --intro h
+      --intro cop x l c' f h1
+      simp only[Sieve_le_alt]
+      intro l
+      intro cop x h
+      let s1: Sieve cop.unop:= (existQ p φ).app cop (p.app cop x)
+      have a : s1 = ⊤ := by
+       simp[← CategoryTheory.Sieve.id_mem_iff_eq_top]
+       simp[s1,existQ]
+       exists x
+       simp
+       simp[CategoryTheory.Sieve.id_mem_iff_eq_top]
+       assumption
+      let s2 : Sieve cop.unop := ψ.app cop (p.app cop x)
+      have a': s2 = ⊤ := by
+       simp[s2]
+       apply l
+       simp[s1] at a
+       assumption
+      simp[precomp]
+      simp[s2] at a'
+      assumption
+
+
+
+
+      /-intro h cop x l c' f h1
+      simp[l] at h1
+      let s: Sieve (Opposite.unop cop) := (existQ p φ).app cop (p.app cop x)
+      have p1_0: s = ⊤ := by
+        simp[← CategoryTheory.Sieve.id_mem_iff_eq_top]
+        simp[s]
+        simp[existQ]
+        exists x
+        simp-/
+    · sorry
+    /-· intro h cop x l c' f h1
+      simp[l] at h1
+      let s: Sieve (Opposite.unop cop) := (existQ p φ).app cop (p.app cop x)
+      have p1_0: s = ⊤ := by
+        simp[← CategoryTheory.Sieve.id_mem_iff_eq_top]
+        simp[s]
+        simp[existQ]
+        exists x
+        simp
+
+        sorry
+      have p1 : ((existQ p φ).app cop (p.app cop x)).arrows f :=
+
+        sorry
+      simp[precomp]
+      apply h
+      assumption
+    · sorry
+
     -- existQ p φ ≤ ψ ↔ φ ≤ precomp p ψ := by sorry
+    -/
 
   theorem existQ_counit {A B : Psh C} (p : A ⟶ B) (ψ : B ⟶ prop) :
-    existQ p (precomp p ψ) ≤ ψ := by sorry
+    existQ p (precomp p ψ) ≤ ψ := by
+    intro cop x l c' f h
+    simp[l] at h
+
+
+    sorry
 
   theorem existQ_unit {A B : Psh C} (p : A ⟶ B) (φ : A ⟶ prop) :
     φ ≤ precomp p (existQ p φ) := by sorry
