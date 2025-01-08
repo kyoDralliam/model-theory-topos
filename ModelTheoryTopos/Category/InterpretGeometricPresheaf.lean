@@ -525,7 +525,7 @@ namespace InterpPsh
        apply toUnit_unique
       simp[← Category.assoc,h]
     | conj f1 f2 h1 h2 =>
-      /-rename_i n
+      rename_i n
       have h1:= h1 σ
       have h2:= h2 σ
       simp[Str.interp_fml,fml.subst]
@@ -534,12 +534,12 @@ namespace InterpPsh
        ChosenFiniteProducts.lift (L.interp_fml f1) (L.interp_fml f2) := by
        apply hom_ext
        · simp[]
-         simp[subst_interp_fml]
+         simp[h1]
        · simp[]
-         simp[subst_interp_fml]
-      simp[h,← Category.assoc]-/ sorry
+         simp[h2]
+      simp[h,← Category.assoc]
     | disj f1 f2 h1 h2 =>
-      /-rename_i n
+      rename_i n
       have h1:= h1 σ
       have h2:= h2 σ
       simp[Str.interp_fml,fml.subst]
@@ -548,10 +548,10 @@ namespace InterpPsh
        ChosenFiniteProducts.lift (L.interp_fml f1) (L.interp_fml f2) := by
        apply hom_ext
        · simp[]
-         simp[subst_interp_fml]
+         simp[h1]
        · simp[]
-         simp[subst_interp_fml]
-      simp[h,← Category.assoc]-/ sorry
+         simp[h2]
+      simp[h,← Category.assoc]
     | infdisj _ _ => sorry --need to define semantics first
     | eq t1 t2 =>
       rename_i n
@@ -567,6 +567,8 @@ namespace InterpPsh
       simp[h,← Category.assoc]
     | existsQ f ih =>
       rename_i n
+      apply le_antisymm
+      · sorry
       sorry
 
 
@@ -608,6 +610,36 @@ namespace InterpPsh
     Str.interp_fml L (fml.eq t t) = ⊤ := by
     simp only[Str.interp_fml]
     simp only[lift_same_eq]
+
+  theorem disj_elim_lemma (A: Type) [Lattice A] (a b c d: A) (h0:a ⊓ (b⊔ c) = (a ⊓ b) ⊔ (a ⊓ c) ) (h1:a ≤ b ⊔ c) (h2: b ⊓ a ≤ d) (h3: c ⊓ a ≤ d): a ≤ d := by
+    have p1: a ⊓ (b ⊔ c) = a := by
+     have := @le_inf_sup A
+     simp[left_eq_inf]
+     assumption
+    --have p2: a ⊓ (b⊔ c) = (a ⊓ b) ⊔ (a ⊓ c) := by
+    -- have := @inf_sup_left A _ a b c
+    -- assumption
+    have p3: a ⊓ b = b ⊓ a := by
+     have := @inf_comm A _ a b
+     assumption
+    have p4: a ⊓ c = c ⊓ a := by
+     have := @inf_comm A _ a c
+     assumption
+    have p6: a ⊓ (b⊔ c) ≤ d := by
+     simp [h0]
+     constructor
+     · simp[p3]
+       assumption
+     · simp[p4]
+       assumption
+    simp[p1] at p6
+    assumption
+
+
+
+
+  noncomputable
+  instance {X : Psh C} : Lattice (X ⟶ SubobjectClassifier.prop) := inferInstance
 
 
 
@@ -666,8 +698,13 @@ namespace InterpPsh
         set b := M.str.interp_fml f2 with b_def
         set c := M.str.interp_fml f3 with c_def
         set d := M.str.interp_fml f4 with d_def
-        simp[← a_def,← b_def,← c_def,← d_def] at *
-        sorry
+        simp only[← a_def,← b_def,← c_def,← d_def] at *
+        have := disj_elim_lemma (npow M.str.carrier n ⟶ SubobjectClassifier.prop)  a b c d
+        apply this
+        · simp only[SubobjectClassifier.psh_distr]
+        · assumption
+        · assumption
+        · assumption
       | infdisj_intro =>
         simp[InterpPsh.Str.model,interp_fml_infdisj]
         apply SubobjectClassifier.complete_lattice_to_prop.le_sSup

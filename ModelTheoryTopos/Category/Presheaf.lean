@@ -371,6 +371,48 @@ namespace SubobjectClassifier
       have h1 := @bot_le (Sieve (c.unop)) _
       simp
       simp[SubobjectClassifier.bot]
+  --sup φ ψ := ChosenFiniteProducts.lift φ ψ ≫ disj
+
+  theorem psh_sup {X: Psh C} (φ ψ: X ⟶ SubobjectClassifier.prop) : φ ⊔ ψ = ChosenFiniteProducts.lift φ ψ ≫ SubobjectClassifier.disj := rfl
+
+  theorem psh_sup_arrows {X: Psh C} (φ ψ: X ⟶ SubobjectClassifier.prop) (c: Cᵒᵖ) (x: X.obj c):
+   ((φ ⊔ ψ).app c x) = ((ChosenFiniteProducts.lift φ ψ ≫ SubobjectClassifier.disj).app c x):= rfl
+
+  --theorem disj_lift
+  theorem psh_sup_arrows' {X: Psh C} (φ ψ: X ⟶ SubobjectClassifier.prop) (c: Cᵒᵖ) (x: X.obj c):
+    let s1 : Sieve c.unop := φ.app c x
+    let s2 : Sieve c.unop := ψ.app c x
+    ((φ ⊔ ψ).app c x) = s1 ⊔ s2 := rfl
+
+  theorem psh_inf {X: Psh C} (φ ψ: X ⟶ SubobjectClassifier.prop) : φ ⊓ ψ = ChosenFiniteProducts.lift φ ψ ≫ SubobjectClassifier.conj := rfl
+
+  theorem psh_inf_arrows' {X: Psh C} (φ ψ: X ⟶ SubobjectClassifier.prop) (c: Cᵒᵖ) (x: X.obj c):
+    let s1 : Sieve c.unop := φ.app c x
+    let s2 : Sieve c.unop := ψ.app c x
+    ((φ ⊓ ψ).app c x) = s1 ⊓ s2 := rfl
+
+  theorem sieve_distr {c: C} (s1 s2 s3: Sieve c) : s1 ⊓ (s2 ⊔ s3) = (s1 ⊓ s2) ⊔ (s1 ⊓ s3) := by
+   apply le_antisymm
+   · intros c' f
+     simp
+     intros h1 h2
+     cases h2
+     · left; constructor; assumption ; assumption
+     · right; constructor; assumption ; assumption
+   intros c' f
+   simp
+   intro h
+   cases h; rename_i h
+   · constructor; cases h; assumption; cases h ;left; assumption
+   · constructor; rename_i h; cases h; assumption; right; rename_i h; cases h; assumption
+
+
+
+  theorem psh_distr {X: Psh C} (a b c: X ⟶ SubobjectClassifier.prop) : a ⊓ (b⊔ c) = (a ⊓ b) ⊔ (a ⊓ c) := by
+   ext c0 x
+   simp only[psh_inf_arrows',psh_sup_arrows',sieve_distr]
+
+
 
   theorem complete_lattice_to_prop_top (X:Psh C) : (@SubobjectClassifier.complete_lattice_to_prop C _ X).top =
    ChosenFiniteProducts.toUnit _ ≫ SubobjectClassifier.top := rfl
