@@ -468,6 +468,8 @@ namespace InterpPsh
    -/
 
    --theorem sequent_fields {T : theory} {n : RenCtx} (a : sequent T.sig):
+
+
   theorem subst_interp_tm  (L: Str S C) (n : RenCtx) (m : Subst S) (σ : Fin n → tm S m) (t: tm S n) :
    L.interp_tm (tm.subst σ t) =
    npair (npow L.carrier m) L.carrier n (fun i => L.interp_tm (σ i)) ≫ L.interp_tm t := by
@@ -486,6 +488,15 @@ namespace InterpPsh
        have := a_ih i
        simp[this,npair_nproj]
       simp[h1]
+
+  theorem ren_subst  (f : n ⟶ n') (t: tm S n): (tm.ren f t) = tm.subst (fun i => tm.var (f i)) t := by
+   induction t with
+   | var _ =>
+     simp[tm.ren,tm.subst]
+   | op o _ _ =>
+     rename_i a ih
+     simp[tm.ren,tm.subst,ih]
+
 
 
   theorem subst_interp_fml (L: Str S C) (n : RenCtx) (m : Subst S) (σ : Fin n → tm S m) (φ: fml S n) :
@@ -575,7 +586,27 @@ namespace InterpPsh
         let mm := (snd L.carrier (npow L.carrier m))
         let kk := snd L.carrier (npow L.carrier n)
         have := SubobjectClassifier.mate sb st mm kk
-        have comm: mm ≫ sb = st ≫ kk := sorry
+        have comm: mm ≫ sb = st ≫ kk := by
+         simp[sb,st,mm,kk]
+         apply npair_univ'
+         simp[Category.assoc,npair_nproj]
+         simp[← CategoryTheory.ChosenFiniteProducts.nproj_succ]
+         have := npair_nproj (n+1) (fun i ↦ L.interp_tm (lift_subst σ i))
+         simp[this]
+         simp[lift_subst,tm.ren]
+         simp[ren_subst,subst_interp_tm]
+         intro i
+         have : snd L.carrier (npow L.carrier m) =
+                (npair (npow L.carrier (m + 1)) L.carrier m fun i ↦ L.interp_tm (tm.var i.succ))
+              := by
+           apply npair_univ'
+           intro i'
+           have := npair_nproj m (fun i ↦ L.interp_tm (tm.var i.succ))
+           simp only[this]
+           simp[Str.interp_tm]
+           simp[nproj_succ] --a lemma
+         simp[this]
+         --simp only[npair_nproj]
         have this := this comm ((L.interp_fml f))
         simp[SubobjectClassifier.precomp] at this
         simp[sb,st,mm,kk] at this

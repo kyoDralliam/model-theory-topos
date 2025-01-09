@@ -172,6 +172,14 @@ namespace CategoryTheory.ChosenFiniteProducts
     simp [nproj_natural]
     rw [<-Category.assoc, npair_nproj]
 
+  --snd L.carrier (npow L.carrier n) ≫ nproj L.carrier n i
+
+  /-theorem snd_nproj (x : D) (n : Nat) (i : Fin n): snd x (npow x n) ≫ nproj x n i = nproj x (n+ 1) (i+1) := by
+   induction n  with
+   | zero => exact (Fin.elim0 i)
+   | succ n _ => simp[nproj_succ]-/
+
+
   end NarryProducts
 
 
