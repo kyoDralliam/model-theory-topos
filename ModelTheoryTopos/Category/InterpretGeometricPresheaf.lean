@@ -512,6 +512,11 @@ namespace InterpPsh
            simp[nproj_succ] --a lemma
     simp[this]
 
+  theorem prod_ext (A B : Type) (a : A) (b : B) (x : A × B) : x.1 = a -> x.2 = b -> x = (a,b) := by
+  intros eq1 eq2
+  cases x
+  simp at *
+  simp [eq1,eq2]
 
 
 
@@ -627,8 +632,50 @@ namespace InterpPsh
 
 
 
+      · intros cop ρ
+        simp[Str.interp_fml,SubobjectClassifier.existπ]
+        intro c' f1
+        simp[SubobjectClassifier.existQ]
+        simp[fml.subst,Str.interp_fml,SubobjectClassifier.existπ,SubobjectClassifier.existQ]
+        intro ρ' h1 h2
+        cases ρ'
+        rename_i fst snd
+        let ρ'' : (L.carrier ⊗ npow L.carrier m).obj (Opposite.op c') := ⟨fst, (npow L.carrier m).map (Opposite.op f1) ρ⟩
+        exists ρ''
+        constructor
+        · simp[ρ'',snd_app]
+          rfl
+        · simp[ih]
+          have sndh : snd = (npow L.carrier n).map f1.op ((npair (npow L.carrier m) L.carrier n fun i ↦ L.interp_tm (σ i)).app cop ρ) := by
+           have h0 : (CategoryTheory.ChosenFiniteProducts.snd L.carrier (npow L.carrier n)).app (Opposite.op c') (fst, snd) = snd := rfl
+           simp[h0] at h1
+           assumption
+          have sndeq: ((npair (npow L.carrier (m + 1)) L.carrier (n + 1) fun i ↦ L.interp_tm (lift_subst σ i)).app (Opposite.op c')
+        ρ'') = (fst,snd) := by
+           apply prod_ext
+           ·
+             /-let p1:  (npow L.carrier (m + 1)).obj (Opposite.op c') ⟶ L.carrier.obj (Opposite.op c') ⊗ (npow L.carrier n).obj (Opposite.op c')  := (npair (npow L.carrier (m + 1)) L.carrier (n + 1) fun i ↦ L.interp_tm (lift_subst σ i)).app (Opposite.op c')
+             have : ((npair (npow L.carrier (m + 1)) L.carrier (n + 1) fun i ↦ L.interp_tm (lift_subst σ i)).app (Opposite.op c') ρ'').1 =
+                    (((npair (npow L.carrier (m + 1)) L.carrier (n + 1) fun i ↦ L.interp_tm (lift_subst σ i)).app (Opposite.op c') ≫ (CategoryTheory.ChosenFiniteProducts.snd _ _)) ρ'')
+             have l : (p1 ≫ (CategoryTheory.ChosenFiniteProducts.snd _ _)) ρ'' = snd := by
+              simp[ρ'',p1,npair]
+              have := @types_comp_apply _ _ _
+                   ((ChosenFiniteProducts.lift (L.interp_tm (lift_subst σ 0))
+                    (npair (npow L.carrier (m + 1)) L.carrier n fun i ↦ L.interp_tm (lift_subst σ i.succ))).app
+                     (Opposite.op c'))
+                   (CategoryTheory.ChosenFiniteProducts.snd (L.carrier.obj (Opposite.op c')) ((npow L.carrier n).obj (Opposite.op c')))
+                   ((fst, (npow L.carrier m).map (Opposite.op f1) ρ))
+              rw [←this]
 
-      sorry
+
+              sorry
+             have r:  (p1 ≫ (CategoryTheory.ChosenFiniteProducts.fst _ _)) ρ'' = fst := sorry
+             -/
+             sorry
+           · sorry
+          simp[sndeq]
+          assumption
+
 
 
   theorem interp_fml_true (L: Str S C) (n : RenCtx) :  @Str.interp_fml C _ n S L fml.true = ⊤ := by
