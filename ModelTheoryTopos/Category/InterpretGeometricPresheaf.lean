@@ -491,7 +491,7 @@ namespace InterpPsh
   theorem subst_interp_fml (L: Str S C) (n : RenCtx) (m : Subst S) (σ : Fin n → tm S m) (φ: fml S n) :
    L.interp_fml (fml.subst σ φ) =
    npair (npow L.carrier m) L.carrier n (fun i => L.interp_tm (σ i)) ≫ L.interp_fml φ := by
-    induction φ with
+    induction φ generalizing m with
     | pred p _ =>
       rename_i n a
       simp[fml.subst]
@@ -526,8 +526,8 @@ namespace InterpPsh
       simp[← Category.assoc,h]
     | conj f1 f2 h1 h2 =>
       rename_i n
-      have h1:= h1 σ
-      have h2:= h2 σ
+      have h1:= h1 m σ
+      have h2:= h2 m σ
       simp[Str.interp_fml,fml.subst]
       have h: ChosenFiniteProducts.lift (L.interp_fml (fml.subst σ f1)) (L.interp_fml (fml.subst σ f2)) =
        (npair (npow L.carrier m) L.carrier n fun i ↦ L.interp_tm (σ i)) ≫
@@ -540,8 +540,8 @@ namespace InterpPsh
       simp[h,← Category.assoc]
     | disj f1 f2 h1 h2 =>
       rename_i n
-      have h1:= h1 σ
-      have h2:= h2 σ
+      have h1:= h1 m σ
+      have h2:= h2 m σ
       simp[Str.interp_fml,fml.subst]
       have h: ChosenFiniteProducts.lift (L.interp_fml (fml.subst σ f1)) (L.interp_fml (fml.subst σ f2)) =
        (npair (npow L.carrier m) L.carrier n fun i ↦ L.interp_tm (σ i)) ≫
@@ -568,7 +568,28 @@ namespace InterpPsh
     | existsQ f ih =>
       rename_i n
       apply le_antisymm
-      · sorry
+      · simp[Str.interp_fml,fml.subst,SubobjectClassifier.existπ]
+        simp[ih]
+        let sb :=  (npair (npow L.carrier m) L.carrier n fun i ↦ L.interp_tm (σ i))
+        let st := (npair (npow L.carrier (m + 1)) L.carrier (n + 1) fun i ↦ L.interp_tm (lift_subst σ i))
+        let mm := (snd L.carrier (npow L.carrier m))
+        let kk := snd L.carrier (npow L.carrier n)
+        have := SubobjectClassifier.mate sb st mm kk
+        have comm: mm ≫ sb = st ≫ kk := sorry
+        have this := this comm ((L.interp_fml f))
+        simp[SubobjectClassifier.precomp] at this
+        simp[sb,st,mm,kk] at this
+        assumption
+        --have hh :
+        --SubobjectClassifier.existQ mm
+         -- st ≤
+        --  (npair (npow L.carrier m) L.carrier n fun i ↦ L.interp_tm (σ i)) ≫
+         --  SubobjectClassifier.existQ (snd L.carrier (npow L.carrier n)) (L.interp_fml f) := sorry
+       -- have hh : SubobjectClassifier.existQ mm (st ≫ L.interp_fml f) ≤ sb ≫  SubobjectClassifier.existQ kk (L.interp_fml f)
+
+
+
+
       sorry
 
 
