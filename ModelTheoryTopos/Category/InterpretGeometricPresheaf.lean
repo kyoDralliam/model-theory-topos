@@ -498,6 +498,22 @@ namespace InterpPsh
      simp[tm.ren,tm.subst,ih]
 
 
+  theorem interp_ren_succ (L: Str S C) (n : RenCtx) (m : Subst S) (t: tm S m): snd L.carrier (npow L.carrier m) ≫ L.interp_tm t =
+    L.interp_tm (tm.ren Fin.succ t) := by
+    simp[ren_subst,subst_interp_tm]
+    have : snd L.carrier (npow L.carrier m) =
+                (npair (npow L.carrier (m + 1)) L.carrier m fun i ↦ L.interp_tm (tm.var i.succ))
+              := by
+           apply npair_univ'
+           intro i'
+           have := npair_nproj m (fun i ↦ L.interp_tm (tm.var i.succ))
+           simp only[this]
+           simp[Str.interp_tm]
+           simp[nproj_succ] --a lemma
+    simp[this]
+
+
+
 
   theorem subst_interp_fml (L: Str S C) (n : RenCtx) (m : Subst S) (σ : Fin n → tm S m) (φ: fml S n) :
    L.interp_fml (fml.subst σ φ) =
@@ -594,18 +610,9 @@ namespace InterpPsh
          have := npair_nproj (n+1) (fun i ↦ L.interp_tm (lift_subst σ i))
          simp[this]
          simp[lift_subst,tm.ren]
-         simp[ren_subst,subst_interp_tm]
          intro i
-         have : snd L.carrier (npow L.carrier m) =
-                (npair (npow L.carrier (m + 1)) L.carrier m fun i ↦ L.interp_tm (tm.var i.succ))
-              := by
-           apply npair_univ'
-           intro i'
-           have := npair_nproj m (fun i ↦ L.interp_tm (tm.var i.succ))
-           simp only[this]
-           simp[Str.interp_tm]
-           simp[nproj_succ] --a lemma
-         simp[this]
+         have := interp_ren_succ L n m (σ i)
+         assumption
          --simp only[npair_nproj]
         have this := this comm ((L.interp_fml f))
         simp[SubobjectClassifier.precomp] at this
