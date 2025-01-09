@@ -497,6 +497,30 @@ namespace InterpPsh
      rename_i a ih
      simp[tm.ren,tm.subst,ih]
 
+  theorem fm_ren_subst  (f : n ⟶ n') (φ: fml S n): (fml.ren f φ) = fml.subst (fun i => tm.var (f i)) φ := by
+   induction φ generalizing n' with
+   | pred p _ =>
+     simp[fml.ren,fml.subst,ren_subst];rfl
+   | true => simp[fml.ren,fml.subst]
+   | false => simp[fml.ren,fml.subst]
+   | conj _ _ _ _ =>
+     rename_i h1 h2
+     simp[fml.ren,fml.subst,h1,h2]
+   | disj _ _ _ _ =>
+     rename_i h1 h2
+     simp[fml.ren,fml.subst,h1,h2]
+   | infdisj _ _ => sorry
+   | eq _ _ =>
+     simp[fml.ren,fml.subst,ren_subst];constructor;rfl;rfl
+   | existsQ _ _ =>
+     rename_i m a h
+     simp[fml.ren,fml.subst,h,lift_subst,_root_.lift]
+     congr
+     funext
+     rename_i x
+     simp[lift_subst] --qqqqqqq
+     sorry
+
 
   theorem interp_ren_succ (L: Str S C) (n : RenCtx) (m : Subst S) (t: tm S m): snd L.carrier (npow L.carrier m) ≫ L.interp_tm t =
     L.interp_tm (tm.ren Fin.succ t) := by
@@ -836,10 +860,31 @@ namespace InterpPsh
       | existsQ_elim =>
         rename_i n φ
         simp[InterpPsh.Str.model]
-        sorry
+        simp[fm_ren_subst,fml.subst,Str.interp_fml,SubobjectClassifier.existπ]
+          --   subst_interp_fml]
+        have := @SubobjectClassifier.existQ_precomp_adj _ _ _ _ (snd M.str.carrier (npow M.str.carrier (n + 1)))
+             ((M.str.interp_fml (fml.subst (lift_subst fun i ↦ tm.var (Fin.succ i)) φ)))
+        simp[this]
+        simp[subst_interp_fml, SubobjectClassifier.precomp]
+        have h : (npair (npow M.str.carrier (n + 1 + 1)) M.str.carrier (n + 1) fun i ↦
+      M.str.interp_tm (lift_subst (fun i ↦ tm.var (Fin.succ i)) i)) =
+              snd M.str.carrier (npow M.str.carrier (n + 1)) := by
+          apply npair_univ'
+          intro i
+          simp[npair_nproj]
+          --simp[lift_subst]
+          simp[snd_nproj]
+          simp[lift_subst]
+          sorry
+        simp[h]
       | ren _ _ => sorry
 
-
+ /-
+  theorem snd_npair_lift_subst_lemma ():
+   snd L.carrier (npow L.carrier m) ≫ L.interp_tm t =
+   (npair (npow L.carrier (m + 1)) L.carrier (n + 1) fun i ↦ L.interp_tm (lift_subst σ i)) ≫
+      nproj L.carrier (n + 1) i.succ
+      -/
 
 
 
