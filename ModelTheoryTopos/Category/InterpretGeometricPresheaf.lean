@@ -813,6 +813,12 @@ namespace InterpPsh
     L.interp_fml (subst_fst φ t) = lift (L.interp_tm t) (𝟙 _) ≫ L.interp_fml φ := by
      simp[subst_interp_fml,subst_fst_subst,npair_Fin_cases]
 
+  theorem app_app {X Y Z:Psh D} (f:X ⟶ Y) (g: Y⟶ Z) (d: Dᵒᵖ ) (x: X.obj d):
+   g.app _ (f.app _ x) = (f ≫ g).app _ x := rfl
+
+  /- (snd M.str.carrier (npow M.str.carrier n)).app (Opposite.op d') a = (npow M.str.carrier n).map f.op x-/
+
+  --theorem snd_app_npow_suc : (snd X (npow X n)).app d a = (npow X n).map
 
   theorem soundness {T : theory} {n : RenCtx} (M:Mod T D) (φ ψ: fml T.sig n)
      (h:Hilbert.proof φ ψ): InterpPsh.Str.model M.str (sequent.mk _ φ ψ) := by
@@ -896,7 +902,37 @@ namespace InterpPsh
         simp[l]
         intros d' f h
         simp[SubobjectClassifier.existQ_app_arrows,Str.interp_fml,SubobjectClassifier.existπ]
-        let t1 := (M.str.interp_tm t).app dop x
+        simp only[interp_subst_fst] at h
+        simp only[CategoryTheory.Sieve.pullback_eq_top_iff_mem] at h
+        simp only[← CategoryTheory.Sieve.id_mem_iff_eq_top] at h
+        simp only [← SubobjectClassifier.to_prop_naturality] at h
+        let a: (M.str.carrier ⊗ npow M.str.carrier n).obj (Opposite.op d') :=
+         ((lift (M.str.interp_tm t) (𝟙 _)).app dop ≫ (npow M.str.carrier (n+1)).map (Opposite.op f)) x
+        exists a
+        constructor
+        · simp[a,snd_app,npow_suc_map_snd,lift_app_pt] ; rfl
+          --snd_app_npow?
+        · have hh :((ChosenFiniteProducts.lift (M.str.interp_tm t) (𝟙 (npow M.str.carrier n)) ≫ M.str.interp_fml φ).app (Opposite.op d')
+      ((npow M.str.carrier n).map (Opposite.op f) x)) =
+          ((M.str.interp_fml φ).app (Opposite.op d') a) := by
+           simp only[a]
+           have := @types_comp_apply _ _ _
+                  ((npow M.str.carrier n).map (Opposite.op f))
+                  ((ChosenFiniteProducts.lift (M.str.interp_tm t) (𝟙 (npow M.str.carrier n)) ≫ M.str.interp_fml φ).app (Opposite.op d'))
+           simp only[← this]
+           have := @types_comp_apply _ _ _
+                  (((ChosenFiniteProducts.lift (M.str.interp_tm t) (𝟙 (npow M.str.carrier n))).app dop ≫
+        (npow M.str.carrier (n + 1)).map (Opposite.op f)))
+                   ((M.str.interp_fml φ).app (Opposite.op d'))
+           simp only[← this]
+           have := (ChosenFiniteProducts.lift (M.str.interp_tm t) (𝟙 (npow M.str.carrier n))).naturality (Opposite.op f)
+           simp only [npow]
+           simp only [← this]
+           simp only[Category.assoc]
+           rfl
+          simp[hh] at h
+          assumption
+        /-let t1 := (M.str.interp_tm t).app dop x
         let t1x : (npow M.str.carrier (n+1)).obj dop := ⟨t1,x⟩
         let t1x' : (M.str.carrier ⊗ npow M.str.carrier n).obj (Opposite.op d') :=
                    (npow M.str.carrier (n+1)).map (Opposite.op f) t1x
@@ -940,7 +976,7 @@ namespace InterpPsh
                 sorry
           simp[hh] at h
           assumption
-
+        -/
         /-let t1 := (M.str.interp_tm t).app dop x  --qqqqq
         let t1' := M.str.carrier.map (Opposite.op f) t1
         let x' := (npow M.str.carrier n).map (Opposite.op f) x
