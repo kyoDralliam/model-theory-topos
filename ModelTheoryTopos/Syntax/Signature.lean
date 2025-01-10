@@ -126,8 +126,37 @@ theorem tm.subst_ren_comp {n2 : Subst m} (f : n1 ⟶ n2) (g : Fin n2 ⟶ Fin n3)
     _ = ren g (subst f t) := by rw [ren_map, subst_map]; simp [CategoryStruct.comp]
 
 
+
+instance : OfNat (Subst m) n where
+  ofNat := tm.substitution.to_kl n
+
+instance : HAdd (Subst m) Nat (Subst m) where
+  hAdd := fun k l => tm.substitution.to_kl (tm.substitution.from_kl k + l)
+
+
+def subst0 {m} {n : Subst m} (a : tm m n) : (n+1) ⟶ n :=
+  Fin.cases a (tm.substitution.ret _)
+
+def lift_subst {n n' : Subst m} (f : n ⟶ n') : (n+1) ⟶ (n'+1) :=
+  Fin.cases (.var 0) (tm.ren Fin.succ ∘ f)
+
+
+theorem subst0_lift_subst {n n' : Subst m} (a : tm m n) (σ : n ⟶ n') :
+  subst0 a ≫ σ = lift_subst σ ≫ subst0 (a.subst σ) := by
+  funext x
+  induction x using Fin.cases
+  · simp [CategoryStruct.comp, subst0, lift_subst, RelativeMonad.bind, tm.subst]
+  · simp [CategoryStruct.comp, subst0, lift_subst, RelativeMonad.bind,
+    <-tm.ren_subst_comp, RelativeMonad.ret, tm.subst]
+    have : subst0 (a.subst σ) ∘ Fin.succ = 𝟙 n' := by
+      funext y
+      simp [subst0]
+      rfl
+    rw [this, tm.subst_id]
+
+
 def subst_fst {m} {H : Subst m ⥤ Type} (t : H.obj (n+1)) (a : tm m n) : H.obj n :=
-  H.map (Fin.cases a (tm.substitution.ret _)) t
+  H.map (subst0 a) t
 
 -- TODO: introduce a proper namespace for substitutions
 -- and define the other usual combinators
@@ -135,12 +164,6 @@ notation t "[" a ".." "]" => (subst_fst t a)
 
 
 abbrev Tm (m : monosig) := RelativeMonad.kleisli.forgetful (tm.substitution (m:=m))
-
-instance : OfNat (Subst m) n where
-  ofNat := tm.substitution.to_kl n
-
-instance : HAdd (Subst m) Nat (Subst m) where
-  hAdd := fun k l => tm.substitution.to_kl (tm.substitution.from_kl k + l)
 
 namespace Example
 -- a simple signature with a nullary operation and a binary operation

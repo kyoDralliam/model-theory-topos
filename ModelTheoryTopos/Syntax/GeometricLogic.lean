@@ -47,9 +47,6 @@ def fml.ren {n n' : RenCtx} (f : n ⟶ n') : fml m n -> fml m n'
 | .eq t u => .eq (t.ren f) (u.ren f)
 | .existsQ φ => .existsQ (φ.ren (lift f))
 
-def lift_subst {n n' : Subst m} (f : n ⟶ n') : (n+1) ⟶ (n'+1) :=
-  Fin.cases (.var 0) (tm.ren Fin.succ ∘ f)
-
 def fml.subst {n n' : Subst m} (f : n ⟶ n') : fml m n → fml m n'
 | .pred p k => .pred p (fun i => (k i).subst f)
 | .true => .true
