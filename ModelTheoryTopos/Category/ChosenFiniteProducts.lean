@@ -63,19 +63,15 @@ namespace CategoryTheory.ChosenFiniteProducts
     nproj x (n+1) i.succ = snd _ _ ≫ (nproj x n i) := by
    simp[nproj ]
 
-
+  @[simp]
   theorem npair_nproj {x y : D} (n : Nat) (k : Fin n → (x ⟶ y)) (i : Fin n) :
     npair x y n k ≫ nproj y n i = k i := by
       induction n with
        | zero => exact (Fin.elim0 i)
        | succ n ih =>
          induction i using Fin.cases with
-         | zero =>
-           simp[nproj,npair]
-         | succ i =>
-           simp[npair]
-           simp[nproj_succ]
-           simp[ih]
+         | zero => simp[nproj,npair]
+         | succ i => simp [npair, nproj_succ, ih]
 
 
 
@@ -158,8 +154,6 @@ namespace CategoryTheory.ChosenFiniteProducts
     map := nlift_diag _ _ n
     map_id := by apply nlift_diag_id
     map_comp := by intros; symm; apply nlift_diag_comp
-
-  -- TODO : get Yiming's version
 
   theorem nproj_natural (x y : D) (n : Nat) (f : x ⟶ y) (i : Fin n) :
     (npow_functor n).map f ≫ nproj y n i = nproj x n i ≫ f := by
