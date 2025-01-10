@@ -855,6 +855,7 @@ namespace InterpPsh
         simp[l]
         intros d' f h
         simp[SubobjectClassifier.existQ_app_arrows,Str.interp_fml,SubobjectClassifier.existπ]
+        let t1 := M.str.interp_tm t --qqqqq
 
         sorry
       | existsQ_elim =>
@@ -877,7 +878,16 @@ namespace InterpPsh
           simp[lift_subst]
           sorry
         simp[h]
-      | ren _ _ => sorry
+      | ren _ _ =>
+        rename_i m fm1 fm2 n σ pf asm
+        simp[InterpPsh.Str.model,fm_ren_subst,subst_interp_fml] at *
+        have := @SubobjectClassifier.precomp_monotone D _ _ (npow M.str.carrier m)
+                (npair (npow M.str.carrier n) M.str.carrier m fun i ↦ M.str.interp_tm (tm.var (σ i)))
+                (M.str.interp_fml fm1) (M.str.interp_fml fm2)
+        simp[SubobjectClassifier.precomp] at this
+        apply this
+        assumption
+
 
  /-
   theorem snd_npair_lift_subst_lemma ():

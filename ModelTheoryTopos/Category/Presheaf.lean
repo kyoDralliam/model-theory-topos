@@ -563,6 +563,17 @@ namespace SubobjectClassifier
     apply this
     assumption
 
+  /-
+  theorem postcomp_monotone {A B: Psh C} (g : A ⟶ B) (φ ψ: B ⟶ prop):
+   φ ≤ ψ → precomp g φ ≤  precomp g ψ := by
+    intro h cop x l c' f asm
+    simp[l] at asm
+    simp[precomp] at *
+    have := h cop (g.app cop x) f
+    apply this
+    assumption
+  -/
+
   theorem existQ_monotone {A B: Psh C} (g : A ⟶ B) (φ ψ: A ⟶ prop):
    φ ≤ ψ → existQ g φ ≤  existQ g ψ := by
     intro h cop x l c' f asm
