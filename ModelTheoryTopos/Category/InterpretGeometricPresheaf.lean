@@ -524,7 +524,11 @@ namespace InterpPsh
      funext
      rename_i x
      simp[lift_subst] --qqqqqqq
-     sorry
+     induction x using Fin.cases with
+     | zero => simp
+     | succ i =>
+       simp[tm.ren]
+
 
 
   theorem interp_ren_succ (L: Str S C) (n : RenCtx) (m : Subst S) (t: tm S m): snd L.carrier (npow L.carrier m) ≫ L.interp_tm t =
@@ -784,7 +788,7 @@ namespace InterpPsh
   noncomputable
   instance {X : Psh C} : Lattice (X ⟶ SubobjectClassifier.prop) := inferInstance
 
-
+  --theorem subst_fst_subst : (subst_fst φ t) = fml.subst (fun i => Fin.cases)
 
   theorem soundness {T : theory} {n : RenCtx} (M:Mod T D) (φ ψ: fml T.sig n)
      (h:Hilbert.proof φ ψ): InterpPsh.Str.model M.str (sequent.mk _ φ ψ) := by
@@ -868,12 +872,16 @@ namespace InterpPsh
         simp[l]
         intros d' f h
         simp[SubobjectClassifier.existQ_app_arrows,Str.interp_fml,SubobjectClassifier.existπ]
-        --let t1 := (M.str.interp_tm t).app (Opposite.op d') x --qqqqq
+        let t1 := (M.str.interp_tm t).app dop x  --qqqqq
+        let t1' := M.str.carrier.map (Opposite.op f) t1
         let x' := (npow M.str.carrier n).map (Opposite.op f) x
-        --let a :  (M.str.carrier ⊗ npow M.str.carrier n).obj (Opposite.op d') := ⟨ t1,x'⟩
-
-
-        sorry
+        let a :  (M.str.carrier ⊗ npow M.str.carrier n).obj (Opposite.op d') := ⟨ t1',x'⟩
+        exists a
+        simp[snd_app]
+        constructor
+        · simp[x'];rfl
+        ·
+          sorry
       | existsQ_elim =>
         rename_i  m ψ0 ψ hp md
         simp[InterpPsh.Str.model] at *
