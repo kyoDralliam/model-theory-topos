@@ -787,8 +787,12 @@ namespace InterpPsh
 
   noncomputable
   instance {X : Psh C} : Lattice (X ⟶ SubobjectClassifier.prop) := inferInstance
+  /-t : tm T.sig n
+φ : (Fml T.sig).obj (n + 1)-/
+  theorem subst_fst_subst (t : tm msig n) (φ: (Fml msig).obj (n + 1)): (subst_fst φ t) = fml.subst (Fin.cases t (fun j => tm.var j)) φ := by
+   simp[subst_fst,Fml,RelativeMonad.ret];rfl
 
-  --theorem subst_fst_subst : (subst_fst φ t) = fml.subst (fun i => Fin.cases)
+
 
   theorem soundness {T : theory} {n : RenCtx} (M:Mod T D) (φ ψ: fml T.sig n)
      (h:Hilbert.proof φ ψ): InterpPsh.Str.model M.str (sequent.mk _ φ ψ) := by
@@ -880,8 +884,18 @@ namespace InterpPsh
         simp[snd_app]
         constructor
         · simp[x'];rfl
-        ·
-          sorry
+        · simp[subst_fst_subst,subst_interp_fml] at h
+          simp[CategoryTheory.Sieve.pullback_eq_top_iff_mem] at h
+          simp only[← CategoryTheory.Sieve.id_mem_iff_eq_top] at h
+          have h1: Sieve.pullback f ((M.str.interp_fml φ).app dop
+        ((npair (npow M.str.carrier n) M.str.carrier (n + 1) fun i ↦
+              M.str.interp_tm (Fin.cases t (fun j ↦ tm.var j) i)).app
+          dop x)) = (M.str.interp_fml φ).app (Opposite.op d') a := by
+            ext d1 g
+            simp[Sieve.pullback]
+            sorry
+          simp[h1] at h
+          assumption
       | existsQ_elim =>
         rename_i  m ψ0 ψ hp md
         simp[InterpPsh.Str.model] at *
