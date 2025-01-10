@@ -859,25 +859,25 @@ namespace InterpPsh
 
         sorry
       | existsQ_elim =>
-        rename_i n φ
-        simp[InterpPsh.Str.model]
-        simp[fm_ren_subst,fml.subst,Str.interp_fml,SubobjectClassifier.existπ]
+        rename_i  m ψ0 ψ hp md
+        simp[InterpPsh.Str.model] at *
+        simp[fm_ren_subst,fml.subst,Str.interp_fml,SubobjectClassifier.existπ,subst_interp_fml] at *
           --   subst_interp_fml]
-        have := @SubobjectClassifier.existQ_precomp_adj _ _ _ _ (snd M.str.carrier (npow M.str.carrier (n + 1)))
-             ((M.str.interp_fml (fml.subst (lift_subst fun i ↦ tm.var (Fin.succ i)) φ)))
+        have := @SubobjectClassifier.existQ_precomp_adj _ _ _ _ (snd M.str.carrier (npow M.str.carrier m))
+           (M.str.interp_fml ψ0) (M.str.interp_fml ψ)
+           --  ((M.str.interp_fml (fml.subst (lift_subst fun i ↦ tm.var (Fin.succ i)) φ)))
         simp[this]
         simp[subst_interp_fml, SubobjectClassifier.precomp]
-        have h : (npair (npow M.str.carrier (n + 1 + 1)) M.str.carrier (n + 1) fun i ↦
-      M.str.interp_tm (lift_subst (fun i ↦ tm.var (Fin.succ i)) i)) =
-              snd M.str.carrier (npow M.str.carrier (n + 1)) := by
-          apply npair_univ'
-          intro i
-          simp[npair_nproj]
-          --simp[lift_subst]
-          simp[snd_nproj]
-          simp[lift_subst]
-          sorry
-        simp[h]
+        have : snd M.str.carrier (npow M.str.carrier m) =
+               npair (npow M.str.carrier (m + 1)) M.str.carrier m fun i ↦ M.str.interp_tm (tm.var i.succ) := by
+               simp[Str.interp_tm]
+               apply npair_univ'
+               intro i
+               have := @npair_nproj (Psh D) _ _ _ _ _ (fun i ↦ nproj M.str.carrier (m + 1) i.succ) i
+               simp[this]
+               simp[nproj_succ]
+        simp[this]
+        assumption
       | ren _ _ =>
         rename_i m fm1 fm2 n σ pf asm
         simp[InterpPsh.Str.model,fm_ren_subst,subst_interp_fml] at *

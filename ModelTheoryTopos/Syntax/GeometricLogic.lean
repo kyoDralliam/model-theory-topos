@@ -255,7 +255,8 @@ namespace Hilbert
       proof (δ.conj (γ[t..])) (φ[t..]) →
       proof (δ.conj (γ[u..])) (φ[u..])
     | existsQ_intro (φ : (Fml _).obj _) : proof (φ[t..]) (.existsQ φ)
-    | existsQ_elim : proof (fml.ren Fin.succ (.existsQ φ)) φ
+    | existsQ_elim : proof  phi (fml.ren Fin.succ psi) -> proof (.existsQ phi) psi
+      --existsQ_elim : proof (fml.ren Fin.succ (.existsQ φ)) φ
     | ren : proof φ ψ -> proof (fml.ren ρ φ) (fml.ren ρ ψ)
 end Hilbert
 
