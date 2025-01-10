@@ -551,6 +551,12 @@ namespace InterpPsh
   simp at *
   simp [eq1,eq2]
 
+  theorem prod_ext' (A B : Type) (a : A) (b : B) (x y: A × B) : x.1 = y.1 -> x.2 = y.2 -> x = y := by
+  intros eq1 eq2
+  cases x
+  simp at *
+  simp [eq1,eq2]
+
   theorem subst_interp_fml (L: Str S C) (n : RenCtx) (m : Subst S) (σ : Fin n → tm S m) (φ: fml S n) :
    L.interp_fml (fml.subst σ φ) =
    npair (npow L.carrier m) L.carrier n (fun i => L.interp_tm (σ i)) ≫ L.interp_fml φ := by
@@ -792,6 +798,20 @@ namespace InterpPsh
   theorem subst_fst_subst (t : tm msig n) (φ: (Fml msig).obj (n + 1)): (subst_fst φ t) = fml.subst (Fin.cases t (fun j => tm.var j)) φ := by
    simp[subst_fst,Fml,RelativeMonad.ret];rfl
 
+  theorem npair_Fin_cases (L: Str msig D) (t : tm msig n):
+  (npair (npow L.carrier n) L.carrier (n + 1) fun i ↦ L.interp_tm (Fin.cases t (fun j ↦ tm.var j) i)) =
+  ChosenFiniteProducts.lift (L.interp_tm t) (𝟙 (npow L.carrier n)) := by
+   apply npair_univ'
+   simp[npair_nproj]
+   intro i
+   induction i using Fin.cases with
+   | zero => simp[nproj]
+   | succ i => simp[nproj_succ,Str.interp_tm]
+
+
+  theorem interp_subst_fst (L: Str msig D) (t : tm msig n) (φ: (Fml msig).obj (n + 1)) :
+    L.interp_fml (subst_fst φ t) = lift (L.interp_tm t) (𝟙 _) ≫ L.interp_fml φ := by
+     simp[subst_interp_fml,subst_fst_subst,npair_Fin_cases]
 
 
   theorem soundness {T : theory} {n : RenCtx} (M:Mod T D) (φ ψ: fml T.sig n)
@@ -883,8 +903,44 @@ namespace InterpPsh
         exists t1x'
         constructor
         · simp[t1x',npair_app_pt,npow_suc_map_snd,snd_app];rfl
-        ·
-          sorry
+        · simp only[subst_fst_subst,subst_interp_fml,
+                    CategoryTheory.Sieve.pullback_eq_top_iff_mem] at h
+          simp only[← CategoryTheory.Sieve.id_mem_iff_eq_top] at h
+          --have := SubobjectClassifier.to_prop_naturality
+          simp only [← SubobjectClassifier.to_prop_naturality] at h
+          simp at h
+          have hh:
+           ((npair (npow M.str.carrier n) M.str.carrier (n + 1) fun i ↦
+            M.str.interp_tm (Fin.cases t (fun j ↦ tm.var j) i)).app
+        (Opposite.op d') ((npow M.str.carrier n).map (Opposite.op f) x)) = t1x':= by
+           have t1x'': t1x = (lift (M.str.interp_tm t) (𝟙 _)).app dop x := sorry
+           simp[t1x',t1x'']
+           have := @types_comp_apply _ _ _ ((npow M.str.carrier n).map (Opposite.op f))
+                  ((npair (npow M.str.carrier n) M.str.carrier (n + 1) fun i ↦ M.str.interp_tm (Fin.cases t (fun j ↦ tm.var j) i)).app
+    (Opposite.op d'))
+           simp only [← this ]
+           have := @types_comp_apply _ _ _ ((ChosenFiniteProducts.lift (M.str.interp_tm t) (𝟙 (npow M.str.carrier n))).app dop)
+            ((npow M.str.carrier (n + 1)).map (Opposite.op f))
+           simp only [← this ]
+
+           sorry
+          --simp[t1x',t1x]
+          --simp at h
+
+          have hh: ((npair (npow M.str.carrier n) M.str.carrier (n + 1) fun i ↦
+            M.str.interp_tm (Fin.cases t (fun j ↦ tm.var j) i)).app
+        (Opposite.op d') ((npow M.str.carrier n).map (Opposite.op f) x)) =
+             ((npow M.str.carrier (n + 1)).map (Opposite.op f) (t1, x)) := by
+              apply prod_ext' _ _
+              · sorry
+              · sorry
+              · simp[npair_app_pt,npow_suc_map_fst,t1]
+                sorry--naturality
+              · simp[npair_app_pt,npow_suc_map_snd,t1]
+                sorry
+          simp[hh] at h
+          assumption
+
         /-let t1 := (M.str.interp_tm t).app dop x  --qqqqq
         let t1' := M.str.carrier.map (Opposite.op f) t1
         let x' := (npow M.str.carrier n).map (Opposite.op f) x
