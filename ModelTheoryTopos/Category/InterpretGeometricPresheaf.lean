@@ -676,7 +676,17 @@ namespace InterpPsh
             · simp [Str.interp_subst, ρ'', npair_app_pt, lift_subst, Str.interp_tm, nproj, fst_app]
             · have : ((L.interp_subst (lift_subst σ)).app _ ρ'').2 = (L.interp_subst σ).app _ ρ''.2 := by sorry
               simp [this]
-              sorry
+
+              let nat := @(L.interp_subst σ).naturality _ _ cop _ (Opposite.op f1)
+              have := types_comp_apply ((npow L.carrier m).map (Opposite.op f1)) ((L.interp_subst σ).app (Opposite.op c')) ρ
+              simp only[← this]
+              have opeq: (Opposite.op f1) = f1.op := rfl
+              simp only[opeq] at nat
+              simp only[opeq]
+              simp only[nat] --very annoying, no idea why it is, weird.
+              simp only[snd_app'] at h1
+              simp[h1]
+              congr--how?????
           simp [Str.interp_subst] at liftsubstρ''
           simp [liftsubstρ'']
           assumption
