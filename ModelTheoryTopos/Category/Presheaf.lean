@@ -88,6 +88,9 @@ namespace ChosenFiniteProducts
     simp [npair_app]
     rfl
 
+  --theorem npow_map_npair (X Y: Psh C) (f:X ⟶ Y): (npow X n).map f = npair _ _ _ (fun i => nproj X n i ≫ f) :=
+  theorem npow_suc_map_fst  (X: Psh C) (c c':Cᵒᵖ ) (f:c ⟶ c') (t: (npow X (n + 1)).obj c): ((npow X (n + 1)).map f t).1 =  X.map f t.1 := rfl
+  theorem npow_suc_map_snd  (X: Psh C) (c c':Cᵒᵖ ) (f:c ⟶ c') (t: (npow X (n + 1)).obj c): ((npow X (n + 1)).map f t).2 =  (npow X n).map f t.2 := rfl
 end ChosenFiniteProducts
 
 namespace Sieve

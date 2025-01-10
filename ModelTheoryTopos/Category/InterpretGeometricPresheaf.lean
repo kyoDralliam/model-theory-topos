@@ -876,7 +876,16 @@ namespace InterpPsh
         simp[l]
         intros d' f h
         simp[SubobjectClassifier.existQ_app_arrows,Str.interp_fml,SubobjectClassifier.existπ]
-        let t1 := (M.str.interp_tm t).app dop x  --qqqqq
+        let t1 := (M.str.interp_tm t).app dop x
+        let t1x : (npow M.str.carrier (n+1)).obj dop := ⟨t1,x⟩
+        let t1x' : (M.str.carrier ⊗ npow M.str.carrier n).obj (Opposite.op d') :=
+                   (npow M.str.carrier (n+1)).map (Opposite.op f) t1x
+        exists t1x'
+        constructor
+        · simp[t1x',npair_app_pt,npow_suc_map_snd,snd_app];rfl
+        ·
+          sorry
+        /-let t1 := (M.str.interp_tm t).app dop x  --qqqqq
         let t1' := M.str.carrier.map (Opposite.op f) t1
         let x' := (npow M.str.carrier n).map (Opposite.op f) x
         let a :  (M.str.carrier ⊗ npow M.str.carrier n).obj (Opposite.op d') := ⟨ t1',x'⟩
@@ -884,8 +893,11 @@ namespace InterpPsh
         simp[snd_app]
         constructor
         · simp[x'];rfl
-        · simp[subst_fst_subst,subst_interp_fml] at h
-          simp[CategoryTheory.Sieve.pullback_eq_top_iff_mem] at h
+        · simp only[subst_fst_subst,subst_interp_fml] at h
+
+          simp only[CategoryTheory.Sieve.pullback_eq_top_iff_mem] at h
+          let t1x : (npow M.str.carrier (n+1)).obj dop := ⟨t1,x⟩
+          have ah := (npow M.str.carrier (n+1)).map f.op t1x
           simp only[← CategoryTheory.Sieve.id_mem_iff_eq_top] at h
           have h1: Sieve.pullback f ((M.str.interp_fml φ).app dop
         ((npair (npow M.str.carrier n) M.str.carrier (n + 1) fun i ↦
@@ -895,7 +907,7 @@ namespace InterpPsh
             simp[Sieve.pullback]
             sorry
           simp[h1] at h
-          assumption
+          assumption-/
       | existsQ_elim =>
         rename_i  m ψ0 ψ hp md
         simp[InterpPsh.Str.model] at *
