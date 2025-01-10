@@ -59,6 +59,9 @@ namespace ChosenFiniteProducts
 
   theorem bin_prod_pointwise (X Y : Psh C) c : (X ⊗  Y).obj c = X.obj c ⊗ Y.obj c := rfl
 
+  theorem fst_app (X Y: Psh C)  (c: Cᵒᵖ) (t : (X ⊗ Y).obj c) :
+    (fst X Y).app c t = t.1 := rfl
+
   theorem snd_app (X Y: Psh C)  (c: C)
     (t1: X.obj (Opposite.op c))
     (t2: Y.obj (Opposite.op c)):
@@ -69,6 +72,17 @@ namespace ChosenFiniteProducts
 
   theorem lift_app_pt (T X Y: Psh C) (f : T ⟶ X) (g : T ⟶ Y) (c : Cᵒᵖ) (t : T.obj c):
     (lift f g).app c t = (f.app c t, g.app c t) := rfl
+
+
+  theorem npair_app (X Y: Psh C) n (k : Fin (n+1) -> (X ⟶ Y)) (c : Cᵒᵖ) :
+    (npair X Y (n+1) k).app c = lift ((k 0).app c) ((npair X Y n (k ∘ Fin.succ)).app c) := by
+    simp [npair, lift_app]
+    rfl
+
+  theorem npair_app_pt (X Y: Psh C) n (k : Fin (n+1) -> (X ⟶ Y)) (c : Cᵒᵖ) (t : X.obj c):
+    (npair X Y (n+1) k).app c t = ((k 0).app c t, (npair X Y n (k ∘ Fin.succ)).app c t) := by
+    simp [npair_app]
+    rfl
 
 end ChosenFiniteProducts
 
@@ -799,7 +813,6 @@ namespace BaseChange
       simp[pb_prod_hom]
       simp[npair_nproj,pb_prod0]
       simp[← Category.assoc]
-      simp[npair_nproj]
       simp[← CategoryTheory.whiskerLeft_comp]
       simp[nlift_nproj]
 
@@ -826,11 +839,9 @@ namespace BaseChange
       simp[Iso.comp_inv_eq]
       apply npair_univ'
       intro i
-      simp[npair_nproj]
       simp[pb_prod_hom]
       simp[nproj_pb_prod0]
       simp[← CategoryTheory.whiskerLeft_comp]
-      simp[npair_nproj]
 
     theorem lift_app (X Y Z:Psh C) (f:X⟶ Y) (g:X⟶ Z) (c: Cᵒᵖ )
     (a : X.obj c):

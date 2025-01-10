@@ -33,6 +33,11 @@ namespace InterpPsh
     | .op o k => (npair _ _ _ (fun i => L.interp_tm (k i))) ≫ L.interp_ops o
 
   noncomputable
+  def interp_subst (L : Str S C) {n m : Subst S} (σ : n ⟶ m) : npow L.carrier m ⟶ npow L.carrier n :=
+    npair (npow L.carrier m) L.carrier n (fun i => L.interp_tm (σ i))
+
+
+  noncomputable
   def interp_fml {S : monosig} (L : Str S C) : fml S n -> (npow L.carrier n ⟶ SubobjectClassifier.prop)
   | .pred p k => (npair _ _ _ (fun i => interp_tm L (k i))) ≫ L.interp_preds p
   | .true => toUnit _ ≫ SubobjectClassifier.top
@@ -542,8 +547,6 @@ namespace InterpPsh
   simp at *
   simp [eq1,eq2]
 
-
-
   theorem subst_interp_fml (L: Str S C) (n : RenCtx) (m : Subst S) (σ : Fin n → tm S m) (φ: fml S n) :
    L.interp_fml (fml.subst σ φ) =
    npair (npow L.carrier m) L.carrier n (fun i => L.interp_tm (σ i)) ≫ L.interp_fml φ := by
@@ -662,15 +665,23 @@ namespace InterpPsh
         simp[SubobjectClassifier.existQ]
         simp[fml.subst,Str.interp_fml,SubobjectClassifier.existπ,SubobjectClassifier.existQ]
         intro ρ' h1 h2
-        cases ρ'
-        rename_i fst snd
-        let ρ'' : (L.carrier ⊗ npow L.carrier m).obj (Opposite.op c') := ⟨fst, (npow L.carrier m).map (Opposite.op f1) ρ⟩
+        let ρ'' : (L.carrier ⊗ npow L.carrier m).obj (Opposite.op c') := ⟨ρ'.1, (npow L.carrier m).map (Opposite.op f1) ρ⟩
         exists ρ''
         constructor
         · simp[ρ'',snd_app]
           rfl
         · simp[ih]
-          have sndh : snd = (npow L.carrier n).map f1.op ((npair (npow L.carrier m) L.carrier n fun i ↦ L.interp_tm (σ i)).app cop ρ) := by
+          have liftsubstρ'' : (L.interp_subst (lift_subst σ)).app _  ρ'' = ρ' := by
+            apply prod_ext
+            · simp [Str.interp_subst, ρ'', npair_app_pt, lift_subst, Str.interp_tm, nproj, fst_app]
+            · have : ((L.interp_subst (lift_subst σ)).app _ ρ'').2 = (L.interp_subst σ).app _ ρ''.2 := by sorry
+              simp [this]
+              sorry
+          simp [Str.interp_subst] at liftsubstρ''
+          simp [liftsubstρ'']
+          assumption
+
+/-          have sndh : snd = (npow L.carrier n).map f1.op ((npair (npow L.carrier m) L.carrier n fun i ↦ L.interp_tm (σ i)).app cop ρ) := by
            have h0 : (CategoryTheory.ChosenFiniteProducts.snd L.carrier (npow L.carrier n)).app (Opposite.op c') (fst, snd) = snd := rfl
            simp[h0] at h1
            assumption
@@ -699,7 +710,7 @@ namespace InterpPsh
            · sorry
           simp[sndeq]
           assumption
-
+-/
 
 
   theorem interp_fml_true (L: Str S C) (n : RenCtx) :  @Str.interp_fml C _ n S L fml.true = ⊤ := by
