@@ -855,7 +855,10 @@ namespace InterpPsh
         simp[l]
         intros d' f h
         simp[SubobjectClassifier.existQ_app_arrows,Str.interp_fml,SubobjectClassifier.existπ]
-        let t1 := M.str.interp_tm t --qqqqq
+        --let t1 := (M.str.interp_tm t).app (Opposite.op d') x --qqqqq
+        let x' := (npow M.str.carrier n).map (Opposite.op f) x
+        --let a :  (M.str.carrier ⊗ npow M.str.carrier n).obj (Opposite.op d') := ⟨ t1,x'⟩
+
 
         sorry
       | existsQ_elim =>
