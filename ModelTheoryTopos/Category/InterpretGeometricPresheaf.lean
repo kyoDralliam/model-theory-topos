@@ -650,14 +650,6 @@ namespace InterpPsh
         simp[SubobjectClassifier.precomp] at this
         simp[sb,st,mm,kk] at this
         assumption
-        --have hh :
-        --SubobjectClassifier.existQ mm
-         -- st ≤
-        --  (npair (npow L.carrier m) L.carrier n fun i ↦ L.interp_tm (σ i)) ≫
-         --  SubobjectClassifier.existQ (snd L.carrier (npow L.carrier n)) (L.interp_fml f) := sorry
-       -- have hh : SubobjectClassifier.existQ mm (st ≫ L.interp_fml f) ≤ sb ≫  SubobjectClassifier.existQ kk (L.interp_fml f)
-
-
 
       · intros cop ρ
         simp[Str.interp_fml,SubobjectClassifier.existπ]
@@ -684,7 +676,7 @@ namespace InterpPsh
               simp only[opeq] at nat
               simp only[opeq]
               simp only[nat] --very annoying, no idea why it is, weird.
-              simp only[snd_app'] at h1
+              simp only[snd_app] at h1
               simp[h1]
               congr--how?????
           simp [Str.interp_subst] at liftsubstρ''

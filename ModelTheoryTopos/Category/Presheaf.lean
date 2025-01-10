@@ -62,14 +62,14 @@ namespace ChosenFiniteProducts
   theorem fst_app (X Y: Psh C)  (c: Cᵒᵖ) (t : (X ⊗ Y).obj c) :
     (fst X Y).app c t = t.1 := rfl
 
-  theorem snd_app' (X Y: Psh C)  (c: Cᵒᵖ) (t : (X ⊗ Y).obj c) :
+  theorem snd_app (X Y: Psh C)  (c: Cᵒᵖ) (t : (X ⊗ Y).obj c) :
     (snd X Y).app c t = t.2:= rfl
 
-
+  /-
   theorem snd_app (X Y: Psh C)  (c: C)
     (t1: X.obj (Opposite.op c))
     (t2: Y.obj (Opposite.op c)):
-    (snd X Y).app (Opposite.op c) (t1, t2) = t2 := rfl
+    (snd X Y).app (Opposite.op c) (t1, t2) = t2 := rfl-/
 
   theorem lift_app (T X Y: Psh C) (f : T ⟶ X) (g : T ⟶ Y) (c : Cᵒᵖ) :
     (lift f g).app c = lift (f.app c) (g.app c) := rfl
