@@ -854,6 +854,13 @@ simp only[CategoryTheory.Sieve.pullback_eq_top_iff_mem] at h
    have := @SubobjectClassifier.lift_eq_eq' D _ _ _ (L.interp_tm t1) (L.interp_tm t2)
    simp only[this]
 
+  theorem interp_tm_eq_app (L: Str msig D) (t1 t2 : tm msig n) (d: Dᵒᵖ) (x: (npow L.carrier n).obj d ):
+   let s: Sieve d.unop := (L.interp_fml (fml.eq t1 t2)).app d x
+   s = ⊤ ↔  (L.interp_tm t1).app d x = (L.interp_tm t2).app d x := by
+   have := @SubobjectClassifier.lift_eq_eq D _ _ _ (L.interp_tm t1) (L.interp_tm t2) d x
+   simp only[Str.interp_fml]
+   assumption
+
   theorem interp_tm_eq_conseq (L: Str msig D) (t1 t2 : tm msig n) ( γ: (Fml msig).obj (n + 1)):
    L.interp_fml (fml.eq t1 t2) =⊤ → (L.interp_fml (subst_fst γ t1)) = (L.interp_fml (subst_fst γ t2)) := by
     simp[interp_subst_fst]
@@ -861,6 +868,21 @@ simp only[CategoryTheory.Sieve.pullback_eq_top_iff_mem] at h
     simp only[this]
     intro h
     simp[h]
+
+  theorem interp_tm_eq_conseq_app (L: Str msig D) (t1 t2 : tm msig n) ( γ: (Fml msig).obj (n + 1))
+        (d: Dᵒᵖ) (x: (npow L.carrier n).obj d ):
+   let s: Sieve d.unop := (L.interp_fml (fml.eq t1 t2)).app d x
+   s =⊤ → (L.interp_fml (subst_fst γ t1)).app d x = (L.interp_fml (subst_fst γ t2)).app d x := by
+    simp[interp_subst_fst]
+    have := interp_tm_eq_app D L t1 t2 d x
+    simp only[this]
+    intro h
+    have h1: ((ChosenFiniteProducts.lift (L.interp_tm t1) (𝟙 (npow L.carrier n))).app d x) =
+      ((ChosenFiniteProducts.lift (L.interp_tm t2) (𝟙 (npow L.carrier n))).app d x) := by
+      simp[ChosenFiniteProducts.lift_app_pt,h]
+    simp[h1]
+
+
 
 
   theorem soundness {T : theory} {n : RenCtx} (M:Mod T D) (φ ψ: fml T.sig n)
@@ -943,6 +965,26 @@ simp only[CategoryTheory.Sieve.pullback_eq_top_iff_mem] at h
         set d := M.str.interp_fml (fml.eq t1 t2) with d_def
         set e := M.str.interp_fml (subst_fst γ t2) with e_def
         set f1 := M.str.interp_fml (subst_fst φ t2) with f1_def
+        have := @SubobjectClassifier.Sieve_le_alt _ _ _ (Lattice.inf a e) f1
+        simp only[this]
+        intros d0 x0 cjae
+        have := @SubobjectClassifier.psh_inf_arrows' _ _ _ a e d0 x0
+        have infeq : (Lattice.inf a e).app = (a ⊓ e).app := rfl
+        simp[infeq] at cjae
+        simp only[this] at cjae
+        have := @inf_eq_top_iff _ _ _ a e
+        simp only[inf_eq_top_iff] at cjae
+        cases cjae
+        rename_i ha he
+        have ad:= @SubobjectClassifier.Sieve_le_alt _ _ _ a d
+        simp[ad] at h1
+        have hd := h1 _ _ ha
+        have beqe : b.app d0 x0 = e.app d0 x0 := sorry
+
+
+
+
+
 
 
         --use subst interp lemmas
