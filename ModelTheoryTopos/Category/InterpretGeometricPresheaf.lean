@@ -979,16 +979,27 @@ simp only[CategoryTheory.Sieve.pullback_eq_top_iff_mem] at h
         have ad:= @SubobjectClassifier.Sieve_le_alt _ _ _ a d
         simp[ad] at h1
         have hd := h1 _ _ ha
-        have beqe : b.app d0 x0 = e.app d0 x0 := sorry
-
-
-
-
-
-
-
-        --use subst interp lemmas
-        sorry
+        have beqe : b.app d0 x0 = e.app d0 x0 := by
+         simp[b_def,e_def]
+         apply interp_tm_eq_conseq_app
+         simp[d_def] at hd
+         assumption
+        have ceqf1 : c.app d0 x0 = f1.app d0 x0 := by
+         simp[c_def,f1_def]
+         apply interp_tm_eq_conseq_app
+         simp[d_def] at hd
+         assumption
+        simp[← ceqf1]
+        have infeq': Lattice.inf a b = a ⊓ b:= rfl
+        simp[infeq'] at h2
+        have abc:= @SubobjectClassifier.Sieve_le_alt _ _ _ (a ⊓ b) c
+        simp[abc] at h2
+        apply h2
+        have := @SubobjectClassifier.psh_inf_arrows' _ _ _ a b d0 x0
+        simp[this,beqe]
+        constructor
+        · assumption
+        · assumption
       | existsQ_intro φ =>
         rename_i n t
         simp[InterpPsh.Str.model]

@@ -144,7 +144,9 @@ namespace SubobjectClassifier
       funext
       simp
 
-  theorem top_app (c: Cᵒᵖ ) (x: (𝟙_ (Psh C)).obj c)  (c' : C) (f : c' ⟶ c.unop): (SubobjectClassifier.top.app c x).arrows f := sorry
+  theorem top_app (c: Cᵒᵖ ) (x: (𝟙_ (Psh C)).obj c)  (c' : C) (f : c' ⟶ c.unop): (SubobjectClassifier.top.app c x).arrows f := by
+  simp[top]
+
 
 
   def bot : 𝟙_ (Psh C) ⟶ prop where
