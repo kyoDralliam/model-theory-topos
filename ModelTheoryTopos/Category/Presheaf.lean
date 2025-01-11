@@ -175,7 +175,10 @@ namespace SubobjectClassifier
       intros Z g
       constructor <;> exact id
 
-  --theorem eq_app (X:Cᵒᵖ ): (SubobjectClassifier.eq).app X
+
+  theorem eq_app {A : Psh C} (c:Cᵒᵖ ) (a: (A⊗ A).obj c) (c': C) (f:c'⟶ c.unop):
+   ((SubobjectClassifier.eq).app c a).arrows f ↔ A.map f.op a.1 = A.map f.op a.2 := by
+    rfl
 
   -- p^* : (B ⟶ prop) -> (A ⟶ prop)
   def precomp {A B : Psh C} (p : A ⟶ B) (ψ : B ⟶ prop) : A ⟶ prop := p ≫ ψ
@@ -263,19 +266,27 @@ namespace SubobjectClassifier
         apply hf ; assumption
 
 
-  theorem lift_app1 {X : Psh C} (f g: X ⟶ prop) (c : Cᵒᵖ) (x: X.obj c):
+  theorem lift_app1 {X Y: Psh C} (f g: X ⟶ Y) (c : Cᵒᵖ) (x: X.obj c):
    ((lift f g).app c x).1  = (lift f g ≫ fst _ _).app c x := by
       have p: ((lift f g).app c x).1  = (lift f g ≫ fst _ _).app c x := by
        simp only[CategoryTheory.ChosenFiniteProducts.lift_fst]
        rfl
       simp[p]
 
-  theorem lift_app2 {X : Psh C} (f g: X ⟶ prop) (c : Cᵒᵖ) (x: X.obj c):
+  theorem lift_app2 {X Y: Psh C} (f g: X ⟶ Y) (c : Cᵒᵖ) (x: X.obj c):
    ((lift f g).app c x).2  = (lift f g ≫ snd _ _).app c x := by
       have p: ((lift f g).app c x).2  = (lift f g ≫ snd _ _).app c x := by
        simp only[CategoryTheory.ChosenFiniteProducts.lift_snd]
        rfl
       simp[p]
+
+  theorem lift_app1' {X Y: Psh C} (f g: X ⟶ Y) (c : Cᵒᵖ) (x: X.obj c):
+   ((lift f g).app c x).1  = f.app c x := by
+      simp[lift_app1,lift_fst]
+
+  theorem lift_app2' {X Y: Psh C} (f g: X ⟶ Y) (c : Cᵒᵖ) (x: X.obj c):
+   ((lift f g).app c x).2  = g.app c x := by
+     simp[lift_app2,lift_snd]
 
 
 
@@ -393,6 +404,9 @@ namespace SubobjectClassifier
       simp
       simp[SubobjectClassifier.bot]
   --sup φ ψ := ChosenFiniteProducts.lift φ ψ ≫ disj
+  theorem psh_top {X: Psh C} :  ⊤ = ChosenFiniteProducts.toUnit X ≫ SubobjectClassifier.top  := rfl
+
+  theorem psh_bot {X: Psh C} :  ⊥ = ChosenFiniteProducts.toUnit X ≫ SubobjectClassifier.bot  := rfl
 
   theorem psh_sup {X: Psh C} (φ ψ: X ⟶ SubobjectClassifier.prop) : φ ⊔ ψ = ChosenFiniteProducts.lift φ ψ ≫ SubobjectClassifier.disj := rfl
 
@@ -411,6 +425,63 @@ namespace SubobjectClassifier
     let s1 : Sieve c.unop := φ.app c x
     let s2 : Sieve c.unop := ψ.app c x
     ((φ ⊓ ψ).app c x) = s1 ⊓ s2 := rfl
+
+  theorem to_prop_top {X: Psh C} (f: X⟶ SubobjectClassifier.prop): f = ⊤ ↔
+   ∀(c: Cᵒᵖ ) (x: X.obj c),
+     let s : Sieve c.unop := f.app c x
+     s = ⊤ := by
+     simp only[psh_top]
+     constructor
+     · intro h
+       simp[h]
+       intros c x
+       simp[top]
+     · intro h
+       ext c x
+       simp[h]
+       rfl
+
+
+  theorem Sieve_eq {c: C} (s1 s2: Sieve c): s1 = s2 ↔ s1.arrows = s2.arrows := by
+    constructor
+    · intros a ; simp[a]
+    · intros a; ext ; simp[a]
+
+  theorem Sieve_eq' {c: C} (s1 s2: Sieve c): s1 = s2 ↔
+  ∀(c': C) (f:c'⟶ c), s1.arrows f = s2.arrows f := by
+    simp[Sieve_eq]
+    constructor
+    · intros a ; simp[a]
+    · intros a; funext; simp[a]
+
+  theorem lift_eq_eq {X A : Psh C} (t1 t2:X ⟶ A) (c: Cᵒᵖ) (x: X.obj c):
+    let s: Sieve c.unop := (ChosenFiniteProducts.lift t1 t2 ≫ SubobjectClassifier.eq).app c x
+    s = ⊤ ↔ t1.app c x= t2.app c x := by
+     simp[psh_top,Sieve_eq',eq_app]
+     simp only[lift_app1',lift_app2']
+     constructor
+     · intro h ; let h1:= h c.unop (𝟙 c.unop);simp at h1; assumption
+     · intro h ; simp[h]
+
+
+  theorem Psh_hom_eq {X Y: Psh C} (f g: X⟶ Y) : f = g ↔
+   ∀(c: Cᵒᵖ )(x: X.obj c), f.app c x = g.app c x := by
+    constructor
+    · intro h; simp[h]
+    · intro h; ext c x; simp[h]
+
+
+  theorem lift_eq_eq' {X A : Psh C} (t1 t2:X ⟶ A):
+    (ChosenFiniteProducts.lift t1 t2 ≫ SubobjectClassifier.eq) = ⊤ ↔ t1 = t2:= by
+     simp only[to_prop_top]
+     simp only[Psh_hom_eq]
+     simp only[lift_eq_eq]
+
+
+
+
+
+
 
   theorem sieve_distr {c: C} (s1 s2 s3: Sieve c) : s1 ⊓ (s2 ⊔ s3) = (s1 ⊓ s2) ⊔ (s1 ⊓ s3) := by
    apply le_antisymm
