@@ -258,8 +258,87 @@ namespace Hilbert
     | existsQ_elim : proof  phi (fml.ren Fin.succ psi) -> proof (.existsQ phi) psi
       --existsQ_elim : proof (fml.ren Fin.succ (.existsQ φ)) φ
     | ren : proof φ ψ -> proof (fml.ren ρ φ) (fml.ren ρ ψ)
+
+
 end Hilbert
 
+
+namespace SyntacticSite
+
+def fml_equiv {T: theory} {n : RenCtx} (φ ψ: fml T.sig n) := Hilbert.proof φ ψ ∧ Hilbert.proof ψ φ
+
+theorem fml_equiv_Equivalence {T: theory} {n : RenCtx} : Equivalence (@fml_equiv T n) where
+  refl := by
+    intro φ
+    simp[fml_equiv]
+    have := @Hilbert.proof.var T n φ
+    assumption
+  symm := by
+   intros φ ψ asm
+   simp[fml_equiv] at *
+   simp[asm]
+  trans := by
+   intro x y z a1 a2
+   simp[fml_equiv] at *
+   constructor
+   · have := @Hilbert.proof.cut T n x y z
+     apply this
+     · simp[a1]
+     · simp[a2]
+   · have := @Hilbert.proof.cut T n z y x
+     apply this
+     · simp[a2]
+     · simp[a1]
+
+structure theory_fml (T: theory) where
+  ctx: RenCtx
+  fml : fml T.sig n
+
+
+def theory_fml_equiv (T: theory) : theory_fml T → theory_fml T → Prop := fun
+  | .mk c1 f1 => fun
+    | .mk c2 f2 =>
+       c1 = c2 ∧
+       let f11 : fml T.sig c1 := f1
+       let f22 : fml T.sig c1 := f2
+       fml_equiv f11 f22
+      /-
+ φ.n = ψ.n ∧
+ let f: fml T.sig φ.n := ψ.fml
+ fml_equiv φ.fml ψ.fml-/
+
+theorem Hilbert_proof_refl {T: theory} (f :fml T.sig n ): Hilbert.proof f f := by
+ have := @Hilbert.proof.var T n f
+ assumption
+
+
+theorem theory_fml_equiv_Equivalence : Equivalence (theory_fml_equiv T) where
+  refl := by
+    intros x; simp[theory_fml_equiv,fml_equiv,Hilbert_proof_refl]
+  symm := sorry /-by
+    intros x y asm
+    simp[theory_fml_equiv] at *
+    cases asm
+    rename_i eq p
+
+    have p' : @fml_equiv T y.ctx x.fml y.fml := p
+    simp[asm,fml_equiv] at *
+    cases asm
+    rename_i l r
+    constructor
+    · assumption
+    · assumption-/
+
+  trans := sorry
+
+--why def works whereas definition does not????
+def theory_fml_Setoid (T: theory): Setoid (theory_fml T) where
+  r := theory_fml_equiv T
+  iseqv := theory_fml_equiv_Equivalence
+
+def fml_class {T: theory} {n : RenCtx} := Quotient (theory_fml_Setoid T)
+
+end SyntacticSite
 namespace Miscellaneous
 
 -- just to show how to use
