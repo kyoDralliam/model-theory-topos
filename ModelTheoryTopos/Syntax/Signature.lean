@@ -83,6 +83,12 @@ theorem tm.ren_map {n1 n2 : RenCtx} (f : n1 ⟶ n2) (t : tm m n1) : tm.ren f t =
 
 abbrev Subst m := (tm.substitution (m:=m)).kl
 
+theorem tm.subst_comp_app {x y z : Subst m} (f : x ⟶ y) (g : y ⟶ z) (i : Fin x) : (f ≫ g) i = (f i).subst g :=
+  rfl
+
+theorem tm.subst_id_app {x : Subst m}  (i : Fin x) : (𝟙 x) i = .var i :=
+  rfl
+
 theorem tm.subst_map {n n' : Subst m} (f : n ⟶ n') (t : tm m n) :
   t.subst f = tm.substitution.bind f t := rfl
 

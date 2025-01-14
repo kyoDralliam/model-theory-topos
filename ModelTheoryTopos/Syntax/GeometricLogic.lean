@@ -262,9 +262,7 @@ namespace Hilbert
       --existsQ_elim : proof (fml.ren Fin.succ (.existsQ φ)) φ
     | ren : proof φ ψ -> proof (fml.ren ρ φ) (fml.ren ρ ψ)
 
-
 end Hilbert
-
 
 namespace SyntacticSite
 
