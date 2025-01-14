@@ -527,7 +527,7 @@ namespace BaseChange
   namespace ChosenFiniteProducts
 
     noncomputable
-    def pb_prod0 (X : Psh D) (n : Nat) : F.op ⋙ npow X n ⟶ npow (F.op ⋙ X) n :=
+    def pb_prod (X : Psh D) (n : Nat) : F.op ⋙ npow X n ⟶ npow (F.op ⋙ X) n :=
       npair _ (F.op ⋙ X) n (fun i => whiskerLeft F.op (nproj X n i))
 
     def ev (c : Cᵒᵖ) : Psh C ⥤ Type where
@@ -537,8 +537,8 @@ namespace BaseChange
     theorem ev_map c {X Y : Psh C} (f : X ⟶ Y) : (ev c).map f = f.app c := rfl
 
     theorem pb_prob0_comm_lemma (X : Psh D) n c :
-     ((pb_prod0 F X n).app c) ≫ (ChosenFiniteProducts.npow_pt (C:=C) (F.op ⋙ X) n c) = ChosenFiniteProducts.npow_pt (C:=D) X n (F.op.obj c) := by
-      let h1 := (pb_prod0 F X n).app c
+     ((pb_prod F X n).app c) ≫ (ChosenFiniteProducts.npow_pt (C:=C) (F.op ⋙ X) n c) = ChosenFiniteProducts.npow_pt (C:=D) X n (F.op.obj c) := by
+      let h1 := (pb_prod F X n).app c
       let h2 := ChosenFiniteProducts.npow_pt (F.op ⋙ X) n c
       let d := F.op.obj c
       let h3 := ChosenFiniteProducts.npow_pt X n d
@@ -548,19 +548,19 @@ namespace BaseChange
         apply npair_univ
         intros i
         rw [Category.assoc, npair_nproj]
-        have := (ev c).map_comp (pb_prod0 F X n) (nproj _ _ i)
+        have := (ev c).map_comp (pb_prod F X n) (nproj _ _ i)
         symm at this
-        rw [ev_map, ev_map, pb_prod0, npair_nproj] at this
-        simp [this, ev_map,pb_prod0 ]
+        rw [ev_map, ev_map, pb_prod, npair_nproj] at this
+        simp [this, ev_map,pb_prod ]
       simp[h1,h2,h3,d] at eq
       exact eq
 
     theorem pb_prod0_succ (X : Psh D) (m : Nat) :
-      pb_prod0 F X (m + 1) =
+      pb_prod F X (m + 1) =
         lift
           (whiskerLeft F.op (ChosenFiniteProducts.fst _ _))
-          (whiskerLeft F.op (ChosenFiniteProducts.snd _ _) ≫ pb_prod0 F X m) := by
-      simp [pb_prod0, npair]
+          (whiskerLeft F.op (ChosenFiniteProducts.snd _ _) ≫ pb_prod F X m) := by
+      simp [pb_prod, npair]
       congr
       simp [<-npair_natural]
       congr
@@ -568,15 +568,13 @@ namespace BaseChange
 
     -- needed ?
     theorem pb_prod0_pair (X : Psh D) (m : Nat) (Y: Cᵒᵖ)
-     (t1: (F.op ⋙ X).obj Y)
-     (tm: (F.op ⋙ npow X m).obj Y):
-     (pb_prod0 F X (m + 1)).app Y (t1, tm) =
-     (t1, (pb_prod0 F X m).app Y tm) := by
+      (t : (F.op ⋙ npow X m.succ).obj Y) :
+      (pb_prod F X (m + 1)).app Y t = (t.1, (pb_prod F X m).app Y t.2) := by
       simp [pb_prod0_succ]
 
 
-    theorem pb_prob_pointwise_inv (X : Psh D) n c : IsIso ((pb_prod0 F X n).app c) := by
-      let h1 := (pb_prod0 F X n).app c
+    theorem pb_prob_pointwise_inv (X : Psh D) n c : IsIso ((pb_prod F X n).app c) := by
+      let h1 := (pb_prod F X n).app c
       let h2 := ChosenFiniteProducts.npow_pt (F.op ⋙ X) n c
       let d := F.op.obj c
       let h3 := ChosenFiniteProducts.npow_pt X n d
@@ -586,51 +584,51 @@ namespace BaseChange
         apply npair_univ
         intros i
         rw [Category.assoc, npair_nproj]
-        have := (ev c).map_comp (pb_prod0 F X n) (nproj _ _ i)
+        have := (ev c).map_comp (pb_prod F X n) (nproj _ _ i)
         symm at this
-        rw [ev_map, ev_map, pb_prod0, npair_nproj] at this
-        simp [this, ev_map,pb_prod0 ]
+        rw [ev_map, ev_map, pb_prod, npair_nproj] at this
+        simp [this, ev_map,pb_prod ]
       have iso2 : IsIso h2 := ChosenFiniteProducts.npow_pt_iso (F.op ⋙ X) n c
       have iso3 : IsIso h3 := ChosenFiniteProducts.npow_pt_iso X n d
       have iso12 : IsIso (h1 ≫ h2) := by rewrite [eq] ; assumption
       apply IsIso.of_isIso_comp_right h1 h2
 
     noncomputable
-    def pb_prod (X : Psh D) (n : Nat) : F.op ⋙ npow X n ≅ npow (F.op ⋙ X) n :=
-      NatIso.ofNatTrans (pb_prod0 F X n) (pb_prob_pointwise_inv F X n)
+    def pb_prod_iso (X : Psh D) (n : Nat) : F.op ⋙ npow X n ≅ npow (F.op ⋙ X) n :=
+      NatIso.ofNatTrans (pb_prod F X n) (pb_prob_pointwise_inv F X n)
 
 
     theorem pb_prod_hom (X : Psh D) (n : Nat):
-      (pb_prod F X n).hom = (pb_prod0 F X n) := rfl
+      (pb_prod_iso F X n).hom = (pb_prod F X n) := rfl
 
     noncomputable
-    def pb_prod'  (n : Nat) : npow_functor n ⋙ (whiskeringLeft _ _ _).obj F.op ≅  (whiskeringLeft _ _ Type).obj F.op ⋙ npow_functor n :=
+    def pb_prod_iso'  (n : Nat) : npow_functor n ⋙ (whiskeringLeft _ _ _).obj F.op ≅  (whiskeringLeft _ _ Type).obj F.op ⋙ npow_functor n :=
       NatIso.ofNatTrans (npow_oplax ((whiskeringLeft _ _ Type).obj F.op)) (by
         intros X
         simp [npow_oplax]
-        have:= NatIso.ofNatTrans' (pb_prod0 F X n) (pb_prob_pointwise_inv F X n)
-        simp [pb_prod0] at this
+        have:= NatIso.ofNatTrans' (pb_prod F X n) (pb_prob_pointwise_inv F X n)
+        simp [pb_prod] at this
         exact this)
 
 
-    theorem nproj_pb_prod0 (X : Psh D)  (n: ℕ ) (i: Fin n):
-      (pb_prod0 F X n)≫ (nproj (F.op ⋙ X) n i) = (whiskerLeft F.op (nproj X n i)):= by
+    theorem nproj_pb_prod (X : Psh D) (n: ℕ ) (i: Fin n):
+      (pb_prod F X n)≫ (nproj (F.op ⋙ X) n i) = (whiskerLeft F.op (nproj X n i)):= by
       ext c a
-      simp[npair_nproj,pb_prod0]
+      simp[npair_nproj,pb_prod]
 
 
     instance nlift_whisker0 (L₁ L₂ : Psh D)  (n : Nat) (k : Fin n → (L₁ ⟶ L₂)):
-      CategoryTheory.whiskerLeft F.op (nlift L₁ L₂ n k) ≫ (pb_prod F L₂ n).hom =
-      (pb_prod F L₁ n).hom ≫ nlift (F.op ⋙ L₁) (F.op ⋙ L₂) n (CategoryTheory.whiskerLeft F.op ∘ k)
+      CategoryTheory.whiskerLeft F.op (nlift L₁ L₂ n k) ≫ (pb_prod_iso F L₂ n).hom =
+      (pb_prod_iso F L₁ n).hom ≫ nlift (F.op ⋙ L₁) (F.op ⋙ L₂) n (CategoryTheory.whiskerLeft F.op ∘ k)
      := by
       apply npair_univ'
       intros
-      simp[nlift_nproj, pb_prod_hom, npair_nproj,pb_prod0]
+      simp[nlift_nproj, pb_prod_hom, npair_nproj,pb_prod]
       simp[← Category.assoc, ← CategoryTheory.whiskerLeft_comp, nlift_nproj]
 
     theorem nlift_whisker  (L₁ L₂ : Psh D)  (n : Nat) (k : Fin n → (L₁ ⟶ L₂)):
-      nlift (F.op ⋙ L₁) (F.op ⋙ L₂) n (fun i => CategoryTheory.whiskerLeft F.op (k i)) ≫ (pb_prod F L₂ n).inv =
-      (pb_prod F L₁ n).inv ≫ CategoryTheory.whiskerLeft F.op (nlift L₁ L₂ n k) := by
+      nlift (F.op ⋙ L₁) (F.op ⋙ L₂) n (fun i => CategoryTheory.whiskerLeft F.op (k i)) ≫ (pb_prod_iso F L₂ n).inv =
+      (pb_prod_iso F L₁ n).inv ≫ CategoryTheory.whiskerLeft F.op (nlift L₁ L₂ n k) := by
       simp [Iso.comp_inv_eq]
       simp [Iso.eq_inv_comp]
       symm
@@ -638,13 +636,13 @@ namespace BaseChange
 
 
     theorem pb_npair_compatible (P : Psh D) (n : Nat) (k: Fin n → (X ⟶  P)):
-     npair (F.op⋙ X) (F.op⋙ P) n (fun i => whiskerLeft F.op (k i)) ≫ (pb_prod F P  n).inv  =
+     npair (F.op⋙ X) (F.op⋙ P) n (fun i => whiskerLeft F.op (k i)) ≫ (pb_prod_iso F P  n).inv  =
      whiskerLeft F.op (npair X P n k)
      := by
       simp[Iso.comp_inv_eq]
       apply npair_univ'
       intros
-      simp[pb_prod_hom, nproj_pb_prod0]
+      simp[pb_prod_hom, nproj_pb_prod]
       simp[← CategoryTheory.whiskerLeft_comp]
 
 

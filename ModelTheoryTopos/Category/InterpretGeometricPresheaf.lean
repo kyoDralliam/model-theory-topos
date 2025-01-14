@@ -111,18 +111,18 @@ namespace InterpPsh
       interp_ops := fun o =>
         let h := L.interp_ops o
         let h' := whiskerLeft F.op h
-        (pb_prod F _ _).inv ≫ h'
+        (pb_prod_iso F _ _).inv ≫ h'
       interp_preds := fun p =>
         let h := L.interp_preds p
         let h' := whiskerLeft F.op h
         let h'' := h' ≫ pb_prop F
-        (pb_prod F _ _).inv ≫ h''
+        (pb_prod_iso F _ _).inv ≫ h''
 
      theorem pb_obj_carrier (L : Str T.sig D) :(pb_obj F T L).carrier = F.op ⋙ L.carrier
      :=rfl
     theorem pb_obj_interp_preds (L : Str T.sig D)  (p: T.sig.preds):
        (pb_obj F T L).interp_preds p =
-       (pb_prod F L.carrier (T.sig.arity_preds p)).inv ≫
+       (pb_prod_iso F L.carrier (T.sig.arity_preds p)).inv ≫
        whiskerLeft F.op (L.interp_preds p) ≫ pb_prop F := by
 
        simp[← Iso.inv_comp_eq]
@@ -152,13 +152,13 @@ namespace InterpPsh
 
     theorem pb_obj_interp_ops (L : Str T.sig D)  (o: T.sig.ops):
        whiskerLeft F.op (L.interp_ops o) =
-       (pb_prod F L.carrier (T.sig.arity_ops o)).hom ≫ (pb_obj F T L).interp_ops o := by
+       (pb_prod_iso F L.carrier (T.sig.arity_ops o)).hom ≫ (pb_obj F T L).interp_ops o := by
        simp[← Iso.inv_comp_eq]
        simp[pb_obj]
 
 
     theorem pb_obj_interp_ops0 (L : Str T.sig D)  (o: T.sig.ops):
-       (pb_prod F L.carrier (T.sig.arity_ops o)).inv ≫ whiskerLeft F.op (L.interp_ops o) =
+       (pb_prod_iso F L.carrier (T.sig.arity_ops o)).inv ≫ whiskerLeft F.op (L.interp_ops o) =
        (pb_obj F T L).interp_ops o := by
        simp[Iso.inv_comp_eq]
        simp[pb_obj]
@@ -167,9 +167,9 @@ namespace InterpPsh
 
     theorem pb_prop_existQ_interp_fml  (f : fml T.sig (m + 1))
      (ih: whiskerLeft F.op (L.interp_fml f) ≫ pb_prop F =
-          (pb_prod F L.carrier (m + 1)).hom ≫ (pb_obj F T L).interp_fml f) :
+          (pb_prod_iso F L.carrier (m + 1)).hom ≫ (pb_obj F T L).interp_fml f) :
       whiskerLeft F.op (SubobjectClassifier.existπ (L.interp_fml f))  ≫ pb_prop F  =
-      (pb_prod F L.carrier m).hom ≫ SubobjectClassifier.existπ ((pb_obj F T L).interp_fml f) := by
+      (pb_prod_iso F L.carrier m).hom ≫ SubobjectClassifier.existπ ((pb_obj F T L).interp_fml f) := by
       simp[SubobjectClassifier.existπ]
 
       simp[pb_prop_existQ]
@@ -189,17 +189,17 @@ namespace InterpPsh
         cases w
         rename_i t1 tm
         simp [snd_app] at h1
-        let a1:= ((pb_prod F L.carrier m).hom).app _ tm
+        let a1:= ((pb_prod_iso F L.carrier m).hom).app _ tm
         exists  ⟨ t1,a1⟩
         simp
         constructor
         · simp[a1]
           simp[h1]
           simp[pb_prod_hom]
-          have := (pb_prod0 F L.carrier m).naturality g.op
+          have := (pb_prod F L.carrier m).naturality g.op
           simp at this
-          have hh : (npow (F.op ⋙ L.carrier) m).map g.op ((pb_prod0 F L.carrier m).app c a) =
-                  ((pb_prod0 F L.carrier m).app (Opposite.op (Opposite.unop c)) ≫ (npow (F.op ⋙ L.carrier) m).map g.op) a :=
+          have hh : (npow (F.op ⋙ L.carrier) m).map g.op ((pb_prod F L.carrier m).app c a) =
+                  ((pb_prod F L.carrier m).app (Opposite.op (Opposite.unop c)) ≫ (npow (F.op ⋙ L.carrier) m).map g.op) a :=
                     by
                      simp
           simp only[hh]
@@ -207,8 +207,8 @@ namespace InterpPsh
           simp
         · simp[a1]
           simp[pb_prod_hom]
-          have e : (t1, (pb_prod0 F L.carrier m).app (Opposite.op Y) tm) =
-           ((pb_prod0 F L.carrier (m + 1)).app (Opposite.op Y) (t1, tm)) := by
+          have e : (t1, (pb_prod F L.carrier m).app (Opposite.op Y) tm) =
+           ((pb_prod F L.carrier (m + 1)).app (Opposite.op Y) (t1, tm)) := by
             simp only[pb_prod0_pair]
           simp[e]
           exact h2
@@ -221,38 +221,38 @@ namespace InterpPsh
         cases w
         rename_i t10 tm0
         simp [snd_app] at h1
-        let a1:= ((pb_prod F L.carrier m).inv).app _ tm0
+        let a1:= ((pb_prod_iso F L.carrier m).inv).app _ tm0
         exists  ⟨ t10,a1⟩
         simp[snd_app]
         constructor
         · simp[a1]
           simp[h1]
           have e0:
-          (npow (F.op ⋙ L.carrier) m).map g.op ((pb_prod0 F L.carrier m).app c a) =
-          (pb_prod F L.carrier m).hom.app (Opposite.op Y)
+          (npow (F.op ⋙ L.carrier) m).map g.op ((pb_prod F L.carrier m).app c a) =
+          (pb_prod_iso F L.carrier m).hom.app (Opposite.op Y)
            ((npow L.carrier m).map (F.map g).op a) := by
            simp[pb_prod_hom]
-           have := (pb_prod0 F L.carrier m).naturality g.op
+           have := (pb_prod F L.carrier m).naturality g.op
            simp at this
-           have hh : (npow (F.op ⋙ L.carrier) m).map g.op ((pb_prod0 F L.carrier m).app c a) =
-                  ((pb_prod0 F L.carrier m).app (Opposite.op (Opposite.unop c)) ≫ (npow (F.op ⋙ L.carrier) m).map g.op) a := by simp
+           have hh : (npow (F.op ⋙ L.carrier) m).map g.op ((pb_prod F L.carrier m).app c a) =
+                  ((pb_prod F L.carrier m).app (Opposite.op (Opposite.unop c)) ≫ (npow (F.op ⋙ L.carrier) m).map g.op) a := by simp
            simp only[hh]
            simp only [← this]
            simp
           simp[e0]
         · simp[a1]
-          --simp[pb_prod_pb_prod0]
-          have e : ((pb_prod0 F L.carrier (m + 1)).app (Opposite.op Y)
-        (t10, (pb_prod F L.carrier m).inv.app (Opposite.op Y) tm0)) =
+          --simp[pb_prod_pb_prod]
+          have e : ((pb_prod F L.carrier (m + 1)).app (Opposite.op Y)
+        (t10, (pb_prod_iso F L.carrier m).inv.app (Opposite.op Y) tm0)) =
            (t10, tm0) := by
            simp
            simp only[pb_prod0_pair F]
-           have e1: (pb_prod0 F L.carrier m).app (Opposite.op Y) ((pb_prod F L.carrier m).inv.app (Opposite.op Y) tm0) =
-                    ((pb_prod F L.carrier m).inv ≫ pb_prod0 F L.carrier m).app (Opposite.op Y) tm0 := by
+           have e1: (pb_prod F L.carrier m).app (Opposite.op Y) ((pb_prod_iso F L.carrier m).inv.app (Opposite.op Y) tm0) =
+                    ((pb_prod_iso F L.carrier m).inv ≫ pb_prod F L.carrier m).app (Opposite.op Y) tm0 := by
                      simp[pb_prod_hom]
 
            simp only[e1]
-           have e11: (pb_prod F L.carrier m).inv ≫ pb_prod0 F L.carrier m = 𝟙 _ := by
+           have e11: (pb_prod_iso F L.carrier m).inv ≫ pb_prod F L.carrier m = 𝟙 _ := by
             simp [<-pb_prod_hom]
            simp only[e11]
            simp
@@ -266,10 +266,10 @@ namespace InterpPsh
 
     def pb_prop_interp_tm (L : Str T.sig D)  (n : ℕ ) (t : tm T.sig n) :
       whiskerLeft F.op (L.interp_tm t) =
-      (pb_prod F _ n).hom ≫ (pb_obj F T L).interp_tm t := by
+      (pb_prod_iso F _ n).hom ≫ (pb_obj F T L).interp_tm t := by
         induction t with
         | var _ =>
-          simp[Str.interp_tm,pb_prod_hom,<-nproj_pb_prod0,pb_obj]
+          simp[Str.interp_tm,pb_prod_hom,<-nproj_pb_prod,pb_obj]
         | op o a a_ih =>
           simp[Str.interp_tm]
           simp[pb_obj_interp_ops]
@@ -283,7 +283,7 @@ namespace InterpPsh
 
     def pb_prop_interp_fml {n : Nat} (L : Str T.sig D) (φ : fml T.sig n) :
       whiskerLeft F.op (L.interp_fml φ) ≫ pb_prop F =
-      (pb_prod F _ n).hom ≫ (pb_obj F T L).interp_fml φ  := by
+      (pb_prod_iso F _ n).hom ≫ (pb_obj F T L).interp_fml φ  := by
         induction φ with
         | @pred m p ts =>
            simp[Str.interp_fml]
@@ -299,7 +299,7 @@ namespace InterpPsh
           simp[pb_prop_top]
           simp[← Category.assoc]
           have a: CategoryTheory.whiskerLeft F.op (toUnit (npow L.carrier m)) =
-            ((pb_prod F L.carrier m).hom ≫ toUnit (npow (pb_obj F T L).carrier m)) :=
+            ((pb_prod_iso F L.carrier m).hom ≫ toUnit (npow (pb_obj F T L).carrier m)) :=
              by
               apply toUnit_unique
           simp only [a]
@@ -309,7 +309,7 @@ namespace InterpPsh
           simp[pb_prop_bot ]
           simp[← Category.assoc]
           have a: CategoryTheory.whiskerLeft F.op (toUnit (npow L.carrier m)) =
-            ((pb_prod F L.carrier m).hom ≫ toUnit (npow (pb_obj F T L).carrier m)) :=
+            ((pb_prod_iso F L.carrier m).hom ≫ toUnit (npow (pb_obj F T L).carrier m)) :=
              by
               apply toUnit_unique
           simp only [a]
@@ -321,7 +321,7 @@ namespace InterpPsh
           have a:
           CategoryTheory.whiskerLeft F.op (ChosenFiniteProducts.lift (L.interp_fml f1) (L.interp_fml f2)) ≫
           (pb_prop F ⊗ pb_prop F) =
-          (pb_prod F L.carrier m).hom ≫
+          (pb_prod_iso F L.carrier m).hom ≫
     ChosenFiniteProducts.lift ((pb_obj F T L).interp_fml f1) ((pb_obj F T L).interp_fml f2)
           := by
             apply hom_ext
@@ -352,7 +352,7 @@ namespace InterpPsh
           have a:
           CategoryTheory.whiskerLeft F.op (ChosenFiniteProducts.lift (L.interp_fml f1) (L.interp_fml f2)) ≫
           (pb_prop F ⊗ pb_prop F) =
-          (pb_prod F L.carrier m).hom ≫
+          (pb_prod_iso F L.carrier m).hom ≫
     ChosenFiniteProducts.lift ((pb_obj F T L).interp_fml f1) ((pb_obj F T L).interp_fml f2)
           := by
             apply hom_ext
@@ -396,7 +396,7 @@ namespace InterpPsh
 
     def pb_prop_interp_fml' {n : Nat} (L : Str T.sig D) (φ : fml T.sig n) :
       (pb_obj F T L).interp_fml φ =
-        (pb_prod F _ n).inv ≫ whiskerLeft F.op (L.interp_fml φ) ≫ pb_prop F := by
+        (pb_prod_iso F _ n).inv ≫ whiskerLeft F.op (L.interp_fml φ) ≫ pb_prop F := by
         simp[Iso.inv_comp_eq,pb_prop_interp_fml]
 
 
@@ -428,7 +428,7 @@ namespace InterpPsh
 
     theorem nlift_diag_whisker (L₁ L₂ : Psh D)  (n : Nat) (f : (L₁ ⟶ L₂)) :
       nlift_diag (F.op ⋙ L₁) (F.op ⋙ L₂) n (CategoryTheory.whiskerLeft F.op f) =
-      (pb_prod F L₁ n).inv ≫ CategoryTheory.whiskerLeft F.op (nlift_diag L₁ L₂ n f) ≫ (pb_prod F L₂ n).hom := by
+      (pb_prod_iso F L₁ n).inv ≫ CategoryTheory.whiskerLeft F.op (nlift_diag L₁ L₂ n f) ≫ (pb_prod_iso F L₂ n).hom := by
      simp[← Category.assoc]
      simp only[← Iso.comp_inv_eq]
      simp[nlift_diag]
