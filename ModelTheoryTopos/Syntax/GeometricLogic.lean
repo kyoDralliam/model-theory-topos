@@ -20,6 +20,10 @@ def fml.existsn : {n' : Nat} -> fml m (n + n') -> fml m n
 | 0, φ => φ
 | _+1, φ => existsn φ.existsQ
 
+def fml.conjn (k : ℕ) (fs: Fin k -> fml m n): fml m n :=
+  match k with
+  | 0 => fml.true
+  | k + 1 => fml.conj (fs 0) (fml.conjn k (fun i => fs (Fin.succ i)))
 
 -- x1, .., xn | φ ⊢ ψ
 structure sequent (m : monosig) where
@@ -264,6 +268,32 @@ end Hilbert
 
 
 namespace SyntacticSite
+#check tm.var
+def fml_incl (n n' : RenCtx)  (φ: fml m n) := φ.ren (Fin.castAdd n')
+def fml_incr (n n' : RenCtx)  (φ: fml m n) := φ.ren (Fin.natAdd n')
+
+instance has_term_NeZero {n: RenCtx} (i: Fin n) : NeZero n where
+  out := by
+   by_contra
+   rename_i h
+   apply Fin.elim0
+   simp[← h]
+   assumption
+
+
+structure functional {T: theory} {n1 n2 : RenCtx} (φ: fml T.sig n1) (ψ : fml T.sig n2) (θ  : fml T.sig (n1 + n2)) where
+ total : @Hilbert.proof T n1 φ (fml.existsn θ)
+ range: @Hilbert.proof T (n1 + n2) θ (fml.conj (fml_incl n1 n2 φ) (fml_incr n2 n1 ψ))
+ unique :
+  @Hilbert.proof T ((n1 + n2) + n2)
+  (fml.conj
+   (fml_incl (n1 + n2) n2 θ)
+   (fml.ren (fun i => if i < n then i else Fin.add (@Fin.ofNat' (n1 + n2 + n2) (has_term_NeZero i) n2) i) (fml_incl (n1 + n2) n2 θ)))
+  (@fml.conjn T.sig ((n1 + n2) + n2) n2
+   (fun i => fml.eq (tm.var (Fin.castAdd n2 (Fin.natAdd n1 i)))
+                    (tm.var (Fin.natAdd (n1 + n2) i))))
+
+
 
 def fml_equiv {T: theory} {n : RenCtx} (φ ψ: fml T.sig n) := Hilbert.proof φ ψ ∧ Hilbert.proof ψ φ
 
@@ -337,6 +367,7 @@ def theory_fml_Setoid (T: theory): Setoid (theory_fml T) where
   iseqv := theory_fml_equiv_Equivalence
 
 def fml_class {T: theory} {n : RenCtx} := Quotient (theory_fml_Setoid T)
+
 
 end SyntacticSite
 namespace Miscellaneous

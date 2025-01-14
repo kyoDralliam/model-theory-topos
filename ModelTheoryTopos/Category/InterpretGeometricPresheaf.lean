@@ -184,10 +184,9 @@ namespace InterpPsh
       constructor
       intros
       · rename_i h
-        cases h
-        rename_i w h
-        cases h
-        rename_i h1 h2
+        rcases h with ⟨ w,h⟩
+        --rename_i w h
+        rcases h with ⟨h1, h2⟩
         cases w
         rename_i t1 tm
         simp [snd_app] at h1
