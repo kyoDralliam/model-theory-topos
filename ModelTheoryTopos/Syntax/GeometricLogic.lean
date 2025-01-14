@@ -305,17 +305,9 @@ theorem fml_equiv_Equivalence {T: theory} {n : RenCtx} : Equivalence (@fml_equiv
    simp[fml_equiv] at *
    simp[asm]
   trans := by
-   intro x y z a1 a2
-   simp[fml_equiv] at *
-   constructor
-   · have := @Hilbert.proof.cut T n x y z
-     apply this
-     · simp[a1]
-     · simp[a2]
-   · have := @Hilbert.proof.cut T n z y x
-     apply this
-     · simp[a2]
-     · simp[a1]
+    intro x y z a1 a2
+    simp[fml_equiv] at *
+    constructor <;> apply Hilbert.proof.cut (τ:=y) <;> simp [a1, a2]
 
 structure theory_fml (T: theory) where
   ctx: RenCtx
