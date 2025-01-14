@@ -195,7 +195,6 @@ namespace InterpPsh
         constructor
         · simp[a1]
           simp[h1]
-          simp[snd_app]
           simp[pb_prod_hom]
           have := (pb_prod0 F L.carrier m).naturality g.op
           simp at this
@@ -527,10 +526,18 @@ namespace InterpPsh
     simp [Str.interp_subst, npow, npair_nproj, Str.interp_tm, nproj_succ]
 
   theorem interp_lift_subst (L: Str S C) {m n: Subst S} (σ : m ⟶ n) :
-    L.interp_subst (lift_subst σ) = 𝟙 _ ⊗ L.interp_subst σ := by sorry
+    L.interp_subst (lift_subst σ) = 𝟙 _ ⊗ L.interp_subst σ := by
+    simp [Str.interp_subst]
+    apply npair_univ'
+    intro i
+    simp
+    induction i using Fin.cases
+    · simp [nproj, lift_subst, Str.interp_tm]
+    · simp [nproj_succ, lift_subst, <-interp_ren_succ]
 
   theorem interp_lift_subst_snd (L: Str S C) {m n: Subst S} (σ : m ⟶ n) {c} {x : (npow L.carrier (n+1)).obj c}:
-    ((L.interp_subst (lift_subst σ)).app c x).2 = (L.interp_subst σ).app c x.2 := by sorry
+    ((L.interp_subst (lift_subst σ)).app c x).2 = (L.interp_subst σ).app c x.2 := by
+    simp [interp_lift_subst]
 
   theorem prod_ext (A B : Type) (a : A) (b : B) (x : A × B) : x.1 = a -> x.2 = b -> x = (a,b) := by
     intros eq1 eq2
@@ -633,7 +640,6 @@ namespace InterpPsh
               let nat := @(L.interp_subst σ).naturality _ _ cop _ f1.op
               have := types_comp_apply ((npow L.carrier m).map f1.op) ((L.interp_subst σ).app (Opposite.op c')) ρ
               simp only[← this, nat]
-              simp only[snd_app] at h1
               simp[h1]
           simp [liftsubstρ'']
           assumption
@@ -760,32 +766,6 @@ namespace InterpPsh
   theorem app_app {X Y Z:Psh D} (f:X ⟶ Y) (g: Y⟶ Z) (d: Dᵒᵖ ) (x: X.obj d):
    g.app _ (f.app _ x) = (f ≫ g).app _ x := rfl
 
-  /- D : Type
-inst✝ : Category.{0, 0} D
-T : theory
-n✝ : RenCtx
-M : Mod T D
-φ✝ ψ : fml T.sig n✝
-n : RenCtx
-f : fml T.sig n
-t1 t2 : tm T.sig n
-φ γ : (Fml T.sig).obj (n + 1)
-p1 : Hilbert.proof f (fml.eq t1 t2)
-p2 : Hilbert.proof (f.conj (subst_fst γ t1)) (subst_fst φ t1)
-h1 : M.str.interp_fml f ≤ M.str.interp_fml (fml.eq t1 t2)
-h2 : Lattice.inf (M.str.interp_fml f) (M.str.interp_fml (subst_fst γ t1)) ≤ M.str.interp_fml (subst_fst φ t1)
-⊢ Lattice.inf (M.str.interp_fml f) (M.str.interp_fml (subst_fst γ t2)) ≤ M.str.interp_fml (subst_fst φ t2)
-simp only[CategoryTheory.Sieve.pullback_eq_top_iff_mem] at h
-        simp only[← CategoryTheory.Sieve.id_mem_iff_eq_top] at h
--/
-  /-theorem to_prop_top {X: Psh D} (f: X⟶ SubobjectClassifier.prop): f = ⊤ ↔
-   ∀(d: Dᵒᵖ ) (x: X.obj d),
-     let s : Sieve d.unop := f.app d x
-     s = ⊤ := by
-     simp[]
-     sorry
-
-  -/
   theorem interp_tm_eq (L: Str msig D) (t1 t2 : tm msig n) :
    L.interp_fml (fml.eq t1 t2) = ⊤ ↔  L.interp_tm t1 = L.interp_tm t2 := by
    simp[Str.interp_fml]
@@ -949,7 +929,6 @@ simp only[CategoryTheory.Sieve.pullback_eq_top_iff_mem] at h
         let a: (M.str.carrier ⊗ npow M.str.carrier n).obj (Opposite.op d') :=
          ((lift (M.str.interp_tm t) (𝟙 _)).app dop ≫ (npow M.str.carrier (n+1)).map (Opposite.op f)) x
         exists a
-        simp[snd_app]
         constructor
         · simp[a,snd_app,npow_suc_map_snd,lift_app_pt] ; rfl
           --snd_app_npow?
@@ -998,18 +977,6 @@ simp only[CategoryTheory.Sieve.pullback_eq_top_iff_mem] at h
         simp[InterpPsh.Str.model,fm_ren_subst,subst_interp_fml] at *
         apply SubobjectClassifier.le_precomp
         assumption
-
-
- /-
-  theorem snd_npair_lift_subst_lemma ():
-   snd L.carrier (npow L.carrier m) ≫ L.interp_tm t =
-   (npair (npow L.carrier (m + 1)) L.carrier (n + 1) fun i ↦ L.interp_tm (lift_subst σ i)) ≫
-      nproj L.carrier (n + 1) i.succ
-      -/
-
-
-
-
 
 
     -- Second part, (-)^* assembles as a 2-functor

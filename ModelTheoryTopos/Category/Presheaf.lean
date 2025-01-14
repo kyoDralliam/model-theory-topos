@@ -39,9 +39,11 @@ namespace ChosenFiniteProducts
 
   theorem bin_prod_pointwise (X Y : Psh C) c : (X ⊗  Y).obj c = X.obj c ⊗ Y.obj c := rfl
 
+  @[simp]
   theorem fst_app (X Y: Psh C)  (c: Cᵒᵖ) (t : (X ⊗ Y).obj c) :
     (fst X Y).app c t = t.1 := rfl
 
+  @[simp]
   theorem snd_app (X Y: Psh C)  (c: Cᵒᵖ) (t : (X ⊗ Y).obj c) :
     (snd X Y).app c t = t.2:= rfl
 
@@ -53,6 +55,17 @@ namespace ChosenFiniteProducts
   theorem lift_app_pt (T X Y: Psh C) (f : T ⟶ X) (g : T ⟶ Y) (c : Cᵒᵖ) (t : T.obj c):
     (lift f g).app c t = (f.app c t, g.app c t) := rfl
 
+  @[simp]
+  theorem tensorHom_app (X X' Y Y': Psh C) (f : X ⟶ X') (g : Y ⟶ Y') (c: Cᵒᵖ) (t : (X ⊗ Y).obj c) :
+    (f ⊗ g).app c t = (f.app c t.1, g.app c t.2) := rfl
+
+  @[simp]
+  theorem whiskerLeft_app (X Y Y': Psh C) (g : Y ⟶ Y') (c: Cᵒᵖ) (t : (X ⊗ Y).obj c) :
+    (X ◁ g).app c t = (t.1, g.app c t.2) := rfl
+
+  @[simp]
+  theorem whiskerRight_app (X X' Y : Psh C) (f : X ⟶ X') (c: Cᵒᵖ) (t : (X ⊗ Y).obj c) :
+    (f ▷  Y).app c t = (f.app c t.1, t.2) := rfl
 
   theorem npair_app (X Y: Psh C) n (k : Fin (n+1) -> (X ⟶ Y)) (c : Cᵒᵖ) :
     (npair X Y (n+1) k).app c = lift ((k 0).app c) ((npair X Y n (k ∘ Fin.succ)).app c) := by
@@ -553,13 +566,13 @@ namespace BaseChange
       congr
 
 
-    theorem pb_prod0_pair (X : Psh D) (m : Nat) (Y: C)
-     (t1: (F.op ⋙ X).obj (Opposite.op Y))
-     (tm: (F.op ⋙ npow X m).obj (Opposite.op Y)):
-     (pb_prod0 F X (m + 1)).app (Opposite.op Y) (t1, tm) =
-     (t1, (pb_prod0 F X m).app (Opposite.op Y) tm) := by
+    -- needed ?
+    theorem pb_prod0_pair (X : Psh D) (m : Nat) (Y: Cᵒᵖ)
+     (t1: (F.op ⋙ X).obj Y)
+     (tm: (F.op ⋙ npow X m).obj Y):
+     (pb_prod0 F X (m + 1)).app Y (t1, tm) =
+     (t1, (pb_prod0 F X m).app Y tm) := by
       simp [pb_prod0_succ]
-      congr
 
 
     theorem pb_prob_pointwise_inv (X : Psh D) n c : IsIso ((pb_prod0 F X n).app c) := by
