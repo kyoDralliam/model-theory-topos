@@ -21,9 +21,11 @@ def fml.existsn : {n' : Nat} -> fml m (n + n') -> fml m n
 | _+1, φ => existsn φ.existsQ
 
 def fml.conjn (k : ℕ) (fs: Fin k -> fml m n): fml m n :=
-  match k with
-  | 0 => fml.true
-  | k + 1 => fml.conj (fs 0) (fml.conjn k (fun i => fs (Fin.succ i)))
+  (List.ofFn fs).foldr .conj .true
+
+def fml.eqs (lhs rhs : Fin k -> tm m n) : fml m n :=
+  fml.conjn k fun i => .eq (lhs i) (rhs i)
+
 
 -- x1, .., xn | φ ⊢ ψ
 structure sequent (m : monosig) where
@@ -265,54 +267,48 @@ end Hilbert
 
 
 namespace SyntacticSite
-#check tm.var
-def fml_incl (n n' : RenCtx)  (φ: fml m n) := φ.ren (Fin.castAdd n')
-def fml_incr (n n' : RenCtx)  (φ: fml m n) := φ.ren (Fin.natAdd n')
 
-instance has_term_NeZero {n: RenCtx} (i: Fin n) : NeZero n where
-  out := by
-   by_contra
-   rename_i h
-   apply Fin.elim0
-   simp[← h]
-   assumption
 
+  namespace R
+    def in10 : Fin n -> Fin (n + k) := Fin.castAdd k
+    def in01 : Fin n -> Fin (k + n) := Fin.natAdd k
+    def in101 : Fin (n + k) -> Fin (n + k + k) :=
+      Fin.addCases (Fin.castAdd k ∘ Fin.castAdd k) (Fin.natAdd (n + k))
+    def in110 : Fin (n + k) -> Fin (n + k + k) := Fin.castAdd k
+    def in001 : Fin k -> Fin (n + k + k) := Fin.natAdd (n+k)
+    def in010 : Fin k -> Fin (n + k + k) :=
+      Fin.castAdd k ∘ Fin.natAdd n
+  end R
 
 structure functional {T: theory} {n1 n2 : RenCtx} (φ: fml T.sig n1) (ψ : fml T.sig n2) (θ  : fml T.sig (n1 + n2)) where
- total : @Hilbert.proof T n1 φ (fml.existsn θ)
- range: @Hilbert.proof T (n1 + n2) θ (fml.conj (fml_incl n1 n2 φ) (fml_incr n2 n1 ψ))
- unique :
-  @Hilbert.proof T ((n1 + n2) + n2)
-  (fml.conj
-   (fml_incl (n1 + n2) n2 θ)
-   (fml.ren (fun i => if i < n then i else Fin.add (@Fin.ofNat' (n1 + n2 + n2) (has_term_NeZero i) n2) i) (fml_incl (n1 + n2) n2 θ)))
-  (@fml.conjn T.sig ((n1 + n2) + n2) n2
-   (fun i => fml.eq (tm.var (Fin.castAdd n2 (Fin.natAdd n1 i)))
-                    (tm.var (Fin.natAdd (n1 + n2) i))))
+ total : Hilbert.proof φ θ.existsn
+ range: Hilbert.proof θ ((φ.ren R.in10).conj (ψ.ren R.in01))
+ unique : Hilbert.proof ((θ.ren R.in101).conj (θ.ren R.in110)) (fml.eqs (tm.var ∘ R.in010) (tm.var ∘ R.in001))
 
 
-
+@[simp]
 def fml_equiv {T: theory} {n : RenCtx} (φ ψ: fml T.sig n) := Hilbert.proof φ ψ ∧ Hilbert.proof ψ φ
 
 theorem fml_equiv_Equivalence {T: theory} {n : RenCtx} : Equivalence (@fml_equiv T n) where
   refl := by
     intro φ
-    simp[fml_equiv]
-    have := @Hilbert.proof.var T n φ
-    assumption
+    simp
+    apply Hilbert.proof.var
   symm := by
-   intros φ ψ asm
-   simp[fml_equiv] at *
-   simp[asm]
+    intros φ ψ asm
+    simp at *
+    simp[asm]
   trans := by
     intro x y z a1 a2
-    simp[fml_equiv] at *
+    simp at *
     constructor <;> apply Hilbert.proof.cut (τ:=y) <;> simp [a1, a2]
 
 structure theory_fml (T: theory) where
   ctx: RenCtx
   fml : fml T.sig n
 
+
+  -- KM: The rest of the definitions in this namespace are not used, are they ?
 
 def theory_fml_equiv (T: theory) : theory_fml T → theory_fml T → Prop := fun
   | .mk c1 f1 => fun
@@ -359,13 +355,3 @@ def fml_class {T: theory} {n : RenCtx} := Quotient (theory_fml_Setoid T)
 
 
 end SyntacticSite
-namespace Miscellaneous
-
--- just to show how to use
-def weaken_fml_for_functional_prop1 (φ : fml m (n1 + n2)) : fml m (n1 + n1 + n2) :=
-  φ.ren (Fin.addCases (Fin.castAdd n2 ∘ Fin.castAdd n1) (Fin.natAdd (n1+n1)))
-
-def weaken_fml_for_functional_prop2 (φ : fml m (n1 + n2)) : fml m (n1 + n1 + n2) :=
-  φ.ren (Fin.addCases (Fin.castAdd n2 ∘ Fin.natAdd n1) (Fin.natAdd (n1+n1)))
-
-end Miscellaneous
