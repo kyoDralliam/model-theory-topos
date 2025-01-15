@@ -41,9 +41,6 @@ namespace InterpPsh
     L.interp_tm (.op o k) = L.interp_subst k ≫ L.interp_ops o :=
     rfl
 
-  #check @fml.below _ _ _ (.infdisj _)
-  #check @fml.brecOn
-
   noncomputable
   def interp_fml {S : monosig} (L : Str S C) (φ : fml S n) : (npow L.carrier n ⟶ SubobjectClassifier.prop) := by
     induction φ with
@@ -413,7 +410,10 @@ namespace InterpPsh
 
           simp[← Category.assoc]
           simp[a]
-        | infdisj _ _ => sorry
+        | infdisj _ ih =>
+          simp
+          simp only [pb_prop_sup]
+          sorry
         | eq t1 t2 =>
           rename_i m
           simp

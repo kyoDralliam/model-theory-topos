@@ -721,7 +721,7 @@ namespace BaseChange
       apply this
       assumption
 
-    theorem pb_prob_sup {X : Psh D} (P : Set (X ⟶ SubobjectClassifier.prop)) :
+    theorem pb_prop_sup {X : Psh D} (P : Set (X ⟶ SubobjectClassifier.prop)) :
       whiskerLeft F.op (SubobjectClassifier.sSup P) ≫ pb_prop F =
       SubobjectClassifier.sSup { (whiskerLeft F.op f ≫ pb_prop F) | (f : X ⟶ SubobjectClassifier.prop) (_h : P f) } := by
       ext c x
