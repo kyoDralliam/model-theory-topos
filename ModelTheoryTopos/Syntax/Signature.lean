@@ -139,12 +139,30 @@ instance : OfNat (Subst m) n where
 instance : HAdd (Subst m) Nat (Subst m) where
   hAdd := fun k l => tm.substitution.to_kl (tm.substitution.from_kl k + l)
 
+instance : HAdd  Nat (Subst m) (Subst m) where
+  hAdd := fun k l => tm.substitution.to_kl (k + tm.substitution.from_kl l)
+
+instance : HAdd  (Subst m) (Subst m) (Subst m) where
+  hAdd := fun k l => tm.substitution.to_kl (tm.substitution.from_kl k + tm.substitution.from_kl l)
+
 
 def subst0 {m} {n : Subst m} (a : tm m n) : (n+1) ⟶ n :=
   Fin.cases a (tm.substitution.ret _)
 
+def substn {m} {n n' : Subst m} (σ : n ⟶ n') : (n+n') ⟶ n' :=
+  Fin.addCases σ (tm.substitution.ret _)
+
 def lift_subst {n n' : Subst m} (f : n ⟶ n') : (n+1) ⟶ (n'+1) :=
   Fin.cases (.var 0) (tm.ren Fin.succ ∘ f)
+
+def liftn_subst {n: Nat} {k k' : Subst m} (f : k ⟶ k') : (n+k) ⟶ (n+k') :=
+  Fin.addCases
+    (fun i ↦ .var (i.castAdd k'))
+    (tm.ren (Fin.natAdd n) ∘ f)
+
+theorem tm.subst_id_ext {n : Subst m} (f : n ⟶ n) (t : tm m n) : f = 𝟙 n → t.subst f = t := by
+  rintro rfl
+  simp [subst_id]
 
 
 theorem subst0_lift_subst {n n' : Subst m} (a : tm m n) (σ : n ⟶ n') :
@@ -154,11 +172,22 @@ theorem subst0_lift_subst {n n' : Subst m} (a : tm m n) (σ : n ⟶ n') :
   · simp [CategoryStruct.comp, subst0, lift_subst, RelativeMonad.bind, tm.subst]
   · simp [CategoryStruct.comp, subst0, lift_subst, RelativeMonad.bind,
     <-tm.ren_subst_comp, RelativeMonad.ret, tm.subst]
-    have : subst0 (a.subst σ) ∘ Fin.succ = 𝟙 n' := by
-      funext y
-      simp [subst0]
-      rfl
-    rw [this, tm.subst_id]
+    symm ; apply tm.subst_id_ext
+    funext y
+    simp [subst0]
+    rfl
+
+
+theorem substn_liftn_subst {n k k' : Subst m} (σ : n ⟶ k) (f : k ⟶ k') :
+  substn σ ≫ f = liftn_subst f ≫ substn (σ ≫ f) := by
+  funext i
+  induction i using Fin.addCases
+  · simp [tm.subst_comp_app, substn, liftn_subst, tm.subst]
+  · simp [tm.subst_comp_app, substn, tm.subst, liftn_subst, <-tm.ren_subst_comp]
+    symm ; apply tm.subst_id_ext
+    funext y
+    simp [substn]
+    rfl
 
 
 def subst_fst {m} {H : Subst m ⥤ Type} (t : H.obj (n+1)) (a : tm m n) : H.obj n :=
