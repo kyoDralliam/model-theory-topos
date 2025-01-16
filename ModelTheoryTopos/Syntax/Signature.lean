@@ -146,19 +146,62 @@ instance : HAdd  (Subst m) (Subst m) (Subst m) where
   hAdd := fun k l => tm.substitution.to_kl (tm.substitution.from_kl k + tm.substitution.from_kl l)
 
 
+namespace Fin
+/-- `castAdd m i` embeds `i : Fin n` in `Fin (n+m)`. See also `Fin.natAdd` and `Fin.addNat`. -/
+@[inline] def castAdd' (n) : Fin m → Fin (n + m) :=
+  castLE <| Nat.le_add_left m n
+
+@[simp] theorem castAdd'_castLT (n : Nat) (i : Fin (n + m)) (hi : i.val < m) :
+    castAdd' n (castLT i hi) = i := rfl
+
+@[simp] theorem coe_castAdd' (m : Nat) (i : Fin n) : (castAdd' m i : Nat) = i := rfl
+
+theorem castAdd'_lt {m : Nat} (n : Nat) (i : Fin m) : (castAdd' n i : Nat) < m := by simp
+
+@[elab_as_elim] def casesAdd {m n : Nat} {motive : Fin (m + n) → Sort u}
+    (left : ∀ i : Fin m, motive (addNat i n)) (right : ∀ i : Fin n, motive (castAdd' m i))
+    (i : Fin (m + n)) : motive i :=
+  if hi : (i : Nat) < n then (castAdd'_castLT m i hi) ▸ (right (castLT i hi))
+  else (addNat_subNat (Nat.le_of_not_lt hi)) ▸ (left _)
+
+@[simp] theorem casesAdd_left {m n : Nat} {motive : Fin (m + n) → Sort _} {left right} (i : Fin m) :
+    casesAdd (motive := motive) left right (addNat i n) = left i := by
+  have : ¬(addNat i n : Nat) < n := Nat.not_lt.2 (le_coe_addNat ..)
+  rw [casesAdd, dif_neg this]; exact eq_of_heq <| (eqRec_heq _ _).trans (by congr 1; simp)
+
+@[simp]
+theorem casesAdd_right {m n : Nat} {motive : Fin (m + n) → Sort _} {left right} (i : Fin n) :
+    casesAdd (motive := motive) left right (castAdd' m i) = right i := by
+  rw [casesAdd, dif_pos (castAdd'_lt _ _)]; rfl
+
+-- @[simp] theorem casesAdd_left_le {m n : Nat} {motive : Fin (m + n) → Sort _} {left right} (i : Fin (m + n)) (h : n ≤ i) :
+--     casesAdd (motive := motive) left right i = left i := by
+--   have : ¬(addNat i n : Nat) < n := Nat.not_lt.2 (le_coe_addNat ..)
+--   rw [casesAdd, dif_neg this]; exact eq_of_heq <| (eqRec_heq _ _).trans (by congr 1; simp)
+
+end Fin
+
 def subst0 {m} {n : Subst m} (a : tm m n) : (n+1) ⟶ n :=
   Fin.cases a (tm.substitution.ret _)
 
-def substn {m} {n n' : Subst m} (σ : n ⟶ n') : (n+n') ⟶ n' :=
-  Fin.addCases σ (tm.substitution.ret _)
+def substn {m} {n n' : Subst m} (σ : n ⟶ n') : (n'+n) ⟶ n' :=
+  Fin.casesAdd (tm.substitution.ret _) σ
+
+-- def substn {m} {n n' : Subst m} (σ : n ⟶ n') : (n+n') ⟶ n' :=
+--   Fin.addCases σ (tm.substitution.ret _)
 
 def lift_subst {n n' : Subst m} (f : n ⟶ n') : (n+1) ⟶ (n'+1) :=
   Fin.cases (.var 0) (tm.ren Fin.succ ∘ f)
 
-def liftn_subst {n: Nat} {k k' : Subst m} (f : k ⟶ k') : (n+k) ⟶ (n+k') :=
-  Fin.addCases
-    (fun i ↦ .var (i.castAdd k'))
-    (tm.ren (Fin.natAdd n) ∘ f)
+def liftn_subst {n: Nat} {k k' : Subst m} (f : k ⟶ k') : (k+n) ⟶ (k'+n) :=
+  Fin.casesAdd
+    (tm.ren (fun i ↦ Fin.addNat i n) ∘ f)
+    (fun i ↦ .var (i.castAdd' k'))
+
+-- def liftn_subst {n: Nat} {k k' : Subst m} (f : k ⟶ k') : (n+k) ⟶ (n+k') :=
+--   Fin.addCases
+--     (fun i ↦ .var (i.castAdd k'))
+--     (tm.ren (Fin.natAdd n) ∘ f)
 
 theorem tm.subst_id_ext {n : Subst m} (f : n ⟶ n) (t : tm m n) : f = 𝟙 n → t.subst f = t := by
   rintro rfl
@@ -177,18 +220,54 @@ theorem subst0_lift_subst {n n' : Subst m} (a : tm m n) (σ : n ⟶ n') :
     simp [subst0]
     rfl
 
+theorem lift_subst_subst0 {n n' : Subst m} (σ : (n+1) ⟶ n') :
+  lift_subst (σ ∘ Fin.succ) ≫ subst0 (σ (0 : Fin (n+1))) = σ := by
+  funext i
+  induction i using Fin.cases
+  · simp [tm.subst_comp_app, lift_subst, subst0, tm.subst]
+  · simp [tm.subst_comp_app, lift_subst, subst0, <-tm.ren_subst_comp]
+    apply tm.subst_id_ext
+    funext y
+    simp [subst0]
+    rfl
+
 
 theorem substn_liftn_subst {n k k' : Subst m} (σ : n ⟶ k) (f : k ⟶ k') :
   substn σ ≫ f = liftn_subst f ≫ substn (σ ≫ f) := by
   funext i
-  induction i using Fin.addCases
-  · simp [tm.subst_comp_app, substn, liftn_subst, tm.subst]
+  induction i using Fin.casesAdd
   · simp [tm.subst_comp_app, substn, tm.subst, liftn_subst, <-tm.ren_subst_comp]
     symm ; apply tm.subst_id_ext
     funext y
     simp [substn]
     rfl
+  · simp [tm.subst_comp_app, substn, liftn_subst, tm.subst]
 
+theorem substn0 (σ : 0 ⟶ k) : substn σ = 𝟙 k := by
+  funext i
+  rw [substn, <-Fin.addNat_zero _ i, Fin.casesAdd_left, Fin.addNat_zero]
+  rfl
+
+theorem substn_at0 (σ : (n+1) ⟶ k) : substn σ (0 : Fin (k + n + 1)) = σ (0 : Fin (n+1)) := by
+  have : (0 : Fin (k + n + 1)) = Fin.castAdd' k (0 : Fin (n+1)) := rfl
+  rw [this, substn, Fin.casesAdd_right]
+
+
+theorem substn_atsucc (σ : (n+1) ⟶ k) : substn (σ ∘ Fin.succ) = substn σ ∘ Fin.succ := by
+  funext i
+  induction i using Fin.casesAdd with
+  | left i =>
+    simp [substn]
+    have : (i.addNat n).succ = i.addNat (n+1) := by ext ; simp [Nat.add_assoc]
+    simp [this]
+  | right i =>
+    simp [substn]
+    have : (Fin.castAdd' k i).succ = Fin.castAdd' k i.succ := by ext ; simp
+    simp [this]
+
+theorem substnsucc (σ : (n+1) ⟶ k) :
+  substn σ = lift_subst (substn (σ ∘ Fin.succ)) ≫ subst0 (σ (0 : Fin (n+1))) := by
+  rw [<-(lift_subst_subst0 (substn σ : ((k+n)+1) ⟶ k)), substn_atsucc, substn_at0]
 
 def subst_fst {m} {H : Subst m ⥤ Type} (t : H.obj (n+1)) (a : tm m n) : H.obj n :=
   H.map (subst0 a) t
