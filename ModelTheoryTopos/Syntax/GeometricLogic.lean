@@ -65,61 +65,64 @@ open CategoryTheory
 theorem fml.ren_id {n : RenCtx} (f : fml m n)
   : fml.ren (𝟙 n) f = f := by
   induction f with
-  | pred => simp [ren] ; funext i ; simp [tm.ren_id]
+  | pred => simp only [ren, pred.injEq, heq_eq_eq, true_and] ; funext i ; simp only [tm.ren_id]
   | true | false => simp [ren]
   | conj φ ψ ihφ ihψ | disj φ ψ ihφ ihψ =>
-    simp [ren] ; constructor <;> simp [ihφ, ihψ]
-  | infdisj φ ih => simp [ren] ; funext i ; apply ih
-  | eq t u => simp [ren, tm.ren_id]
-  | existsQ φ ih => simp [ren, lift_id, ih]
+    simp only [ren, conj.injEq,disj.injEq] ; constructor <;> simp only[ihφ, ihψ]
+  | infdisj φ ih => rw [ren, infdisj.injEq] ; funext i ; exact ih _
+  | eq t u => simp only [ren, tm.ren_id]
+  | existsQ φ ih => rw [ren, lift_id, ih]
 
 theorem fml.ren_comp (f : n1 ⟶ n2) (g : n2 ⟶ n3) (t : fml m n1):
   ren (f ≫ g) t = ren g (ren f t) := by
   induction t generalizing n2 n3 with
-  | pred => simp [ren] ; funext i ; simp [tm.ren_comp]
-  | true | false => simp [ren]
+  | pred => simp only [ren, pred.injEq, heq_eq_eq, true_and] ; funext i ; simp only [tm.ren_comp]
+  | true | false => simp only [ren]
   | conj φ ψ ihφ ihψ | disj φ ψ ihφ ihψ =>
-    simp [ren] ; constructor <;> simp [ihφ, ihψ]
-  | infdisj φ ih => simp [ren] ; funext i ; apply ih
-  | eq t u => simp [ren, tm.ren_comp]
-  | existsQ φ ih => simp [ren, lift_comp, ih]
+    simp only [ren, conj.injEq,disj.injEq] ; constructor <;> simp only [ihφ, ihψ]
+  | infdisj φ ih => simp only [ren, infdisj.injEq] ; funext i ; exact ih _ _ _
+  | eq t u => simp only [ren, tm.ren_comp]
+  | existsQ φ ih => simp only [ren, lift_comp, ih]
 
 theorem lift_subst_id (n : Subst m) : lift_subst (𝟙 n) = 𝟙 (n+1: Subst m) := by
-  funext i ; simp [lift_subst, CategoryStruct.id]
-  induction i using Fin.cases <;> simp [RelativeMonad.ret, tm.ren]
+  funext i ; simp only [lift_subst, CategoryStruct.id]
+  induction i using Fin.cases <;> simp only [RelativeMonad.ret,Fin.cases_zero, Fin.cases_succ, Function.comp_apply,
+    tm.ren]
 
 theorem lift_subst_comp : lift_subst (f ≫ g) = lift_subst f ≫ lift_subst g := by
   funext i ; simp [lift_subst, CategoryStruct.comp]
   induction i using Fin.cases with
-    | zero => simp [RelativeMonad.bind, tm.subst, lift_subst]
+    | zero => simp only [RelativeMonad.bind, Fin.cases_zero, tm.subst, lift_subst]
     | succ i =>
-      simp [RelativeMonad.bind, <-tm.ren_subst_comp, <-tm.subst_ren_comp]
-      congr; ext x; simp [CategoryStruct.comp, tm.ren_map, lift_subst]
+      simp only [RelativeMonad.bind, Fin.cases_succ, Function.comp_apply, ← tm.subst_ren_comp, ←
+        tm.ren_subst_comp]
+      congr; ext x; simp only [CategoryStruct.comp, Function.comp_apply, lift_subst, Fin.cases_succ,
+        tm.ren_map]
       rfl
 
 
 theorem fml.subst_id {n : Subst m} (f : fml m n)
   : subst (𝟙 n) f = f := by
   induction f with
-  | pred => simp [subst] ; funext i ; simp [tm.subst_id]
+  | pred => simp only [subst, pred.injEq, heq_eq_eq, true_and] ; funext i ; simp only [tm.subst_id]
   --  ; simp [tm.subst_id]
-  | true | false => simp [subst]
+  | true | false => simp only [subst]
   | conj φ ψ ihφ ihψ | disj φ ψ ihφ ihψ =>
-    simp [subst] ; constructor <;> simp [ihφ, ihψ]
-  | infdisj φ ih => simp [subst] ; funext i ; apply ih
-  | eq t u => simp [subst, tm.subst_id]
-  | existsQ φ ih => simp [subst, lift_subst_id, ih]
+    simp only [subst, conj.injEq,disj.injEq] ; constructor <;> simp only [ihφ, ihψ]
+  | infdisj φ ih => simp only [subst, infdisj.injEq] ; funext i ; apply ih
+  | eq t u => simp only [subst, tm.subst_id]
+  | existsQ φ ih => simp only [subst, lift_subst_id, ih]
 
 theorem fml.subst_comp {n1 n2 n3 : Subst m} (f : n1 ⟶ n2) (g : n2 ⟶ n3) (t : fml m n1):
   subst (f ≫ g) t = subst g (subst f t) := by
   induction t generalizing n2 n3 with
-  | pred => simp [subst] ; funext i ; simp [tm.subst_comp]
-  | true | false => simp [subst]
+  | pred => simp only [subst, pred.injEq, heq_eq_eq, true_and] ; funext i ; simp only [tm.subst_comp]
+  | true | false => simp only [subst]
   | conj φ ψ ihφ ihψ | disj φ ψ ihφ ihψ =>
-    simp [subst] ; constructor <;> simp [ihφ, ihψ]
-  | infdisj φ ih => simp [subst] ; funext i ; apply ih
-  | eq t u => simp [subst, tm.subst_comp]
-  | existsQ φ ih => simp [subst, lift_subst_comp, ih]
+    simp only [subst, conj.injEq,disj.injEq] ; constructor <;> simp only [ihφ, ihψ]
+  | infdisj φ ih => simp only [subst, infdisj.injEq] ; funext i ; exact ih _ _ _
+  | eq t u => simp only [subst, tm.subst_comp]
+  | existsQ φ ih => simp only [subst, lift_subst_comp, ih]
 
 def Fml m : Subst m ⥤ Type where
   map := fml.subst
@@ -189,15 +192,15 @@ theorem proof.cut {T : theory} n (Δ : FmlCtx T n) ψ (hψ : proof Δ ψ) : fora
     intros _ hsub ; apply disj_elim
     · apply ih ; assumption
     · apply ihl ; try assumption
-      simp ; constructor <;> try assumption
-      · apply var ; simp
+      simp only [List.mem_cons, forall_eq_or_imp] ; constructor <;> try assumption
+      · apply var ; simp only [List.mem_cons, true_or]
       · intros ; apply weaken ; apply hsub ; assumption
-        intros ; simp ; right ; assumption
+        intros ; simp only [List.mem_cons] ; right ; assumption
     · apply ihr ; try assumption
       simp ; constructor <;> try assumption
-      · apply var ; simp
+      · apply var ; simp only [List.mem_cons, true_or]
       · intros ; apply weaken ; apply hsub ; assumption
-        intros ; simp ; right ; assumption
+        intros ; simp only [List.mem_cons] ; right ; assumption
   | infdisj_intro _ _ => sorry
   | infdisj_elim _ _ _ _ => sorry
   | eq_intro => sorry
@@ -218,23 +221,26 @@ theorem sequent.from_proof : proof Γ φ -> (of_formulas Γ φ).derivable := by
   apply proof.cut _ _ _ hΓφ
   clear hΓφ
   induction Γ with
-  | nil => simp
+  | nil => simp only [List.not_mem_nil, IsEmpty.forall_iff, implies_true]
   | cons ψ Γ ih =>
-    simp [of_formulas] ; constructor
-    · apply proof.conj_elim_l ; apply proof.var ; simp ; rfl
-    · intros τ hτ ; apply proof.cut _ _ _ (ih _ hτ) ; simp [of_formulas]
-      apply proof.conj_elim_r ; apply proof.var ; simp ; rfl
+    simp only [List.mem_cons, of_formulas, List.foldr_cons, forall_eq_or_imp] ; constructor
+    · apply proof.conj_elim_l ; apply proof.var ; simp only [List.mem_singleton, fml.conj.injEq,
+      true_and] ; rfl
+    · intros τ hτ ; apply proof.cut _ _ _ (ih _ hτ) ; simp only [of_formulas,
+      List.mem_singleton, forall_eq]
+      apply proof.conj_elim_r ; apply proof.var ; simp only [List.mem_singleton, fml.conj.injEq,
+        and_true] ; rfl
 
 theorem sequent.to_proof : (of_formulas Γ φ).derivable -> proof Γ φ := by
   intros hs ; apply proof.cut _ _ _ hs
   clear hs
   induction Γ with
-  | nil => simp [of_formulas] ; apply proof.true_intro
+  | nil => simp only [of_formulas, List.foldr_nil, List.mem_singleton, forall_eq] ; exact proof.true_intro
   | cons ψ Γ ih =>
-    simp [of_formulas] ; apply proof.conj_intro
-    · apply proof.var ; simp
-    · simp at ih ; apply proof.cut _ _ _ ih
-      intros ; apply proof.var; simp ; right ; assumption
+    simp only [of_formulas, List.foldr_cons, List.mem_singleton, forall_eq] ; apply proof.conj_intro
+    · apply proof.var ; simp only [List.mem_cons, true_or]
+    · simp only [List.mem_singleton, forall_eq] at ih ; apply proof.cut _ _ _ ih
+      intros ; apply proof.var; simp only [List.mem_cons] ; right ; assumption
 
 namespace Hilbert
   inductive proof {T : theory}: {n : RenCtx} → fml T.sig n → fml T.sig n → Prop where
@@ -324,11 +330,11 @@ theorem fml_equiv_Equivalence {T: theory} {n : RenCtx} : Equivalence (@fml_equiv
     apply Hilbert.proof.var
   symm := by
     intros φ ψ asm
-    simp at *
-    simp[asm]
+    simp only [fml_equiv] at *
+    simp only [asm, and_self]
   trans := by
     intro x y z a1 a2
-    simp at *
+    simp only [fml_equiv] at *
     constructor <;> apply Hilbert.proof.cut (τ:=y) <;> simp [a1, a2]
 
 structure theory_fml (T: theory) where
@@ -338,48 +344,48 @@ structure theory_fml (T: theory) where
 
   -- KM: The rest of the definitions in this namespace are not used, are they ?
 
-def theory_fml_equiv (T: theory) : theory_fml T → theory_fml T → Prop := fun
-  | .mk c1 f1 => fun
-    | .mk c2 f2 =>
-       c1 = c2 ∧
-       let f11 : fml T.sig c1 := f1
-       let f22 : fml T.sig c1 := f2
-       fml_equiv f11 f22
-      /-
- φ.n = ψ.n ∧
- let f: fml T.sig φ.n := ψ.fml
- fml_equiv φ.fml ψ.fml-/
+-- def theory_fml_equiv (T: theory) : theory_fml T → theory_fml T → Prop := fun
+--   | .mk c1 f1 => fun
+--     | .mk c2 f2 =>
+--        c1 = c2 ∧
+--        let f11 : fml T.sig c1 := f1
+--        let f22 : fml T.sig c1 := f2
+--        fml_equiv f11 f22
+--       /-
+--  φ.n = ψ.n ∧
+--  let f: fml T.sig φ.n := ψ.fml
+--  fml_equiv φ.fml ψ.fml-/
 
-theorem Hilbert_proof_refl {T: theory} (f :fml T.sig n ): Hilbert.proof f f := by
- have := @Hilbert.proof.var T n f
- assumption
+-- theorem Hilbert_proof_refl {T: theory} (f :fml T.sig n ): Hilbert.proof f f := by
+--  have := @Hilbert.proof.var T n f
+--  assumption
 
 
-theorem theory_fml_equiv_Equivalence : Equivalence (theory_fml_equiv T) where
-  refl := by
-    intros x; simp[theory_fml_equiv,fml_equiv,Hilbert_proof_refl]
-  symm := sorry /-by
-    intros x y asm
-    simp[theory_fml_equiv] at *
-    cases asm
-    rename_i eq p
+-- theorem theory_fml_equiv_Equivalence : Equivalence (theory_fml_equiv T) where
+--   refl := by
+--     intros x; simp[theory_fml_equiv,fml_equiv,Hilbert_proof_refl]
+--   symm := sorry /-by
+--     intros x y asm
+--     simp[theory_fml_equiv] at *
+--     cases asm
+--     rename_i eq p
 
-    have p' : @fml_equiv T y.ctx x.fml y.fml := p
-    simp[asm,fml_equiv] at *
-    cases asm
-    rename_i l r
-    constructor
-    · assumption
-    · assumption-/
+--     have p' : @fml_equiv T y.ctx x.fml y.fml := p
+--     simp[asm,fml_equiv] at *
+--     cases asm
+--     rename_i l r
+--     constructor
+--     · assumption
+--     · assumption-/
 
-  trans := sorry
+--   trans := sorry
 
---why def works whereas definition does not????
-def theory_fml_Setoid (T: theory): Setoid (theory_fml T) where
-  r := theory_fml_equiv T
-  iseqv := theory_fml_equiv_Equivalence
+-- --why def works whereas definition does not????
+-- def theory_fml_Setoid (T: theory): Setoid (theory_fml T) where
+--   r := theory_fml_equiv T
+--   iseqv := theory_fml_equiv_Equivalence
 
-def fml_class {T: theory} {n : RenCtx} := Quotient (theory_fml_Setoid T)
+-- def fml_class {T: theory} {n : RenCtx} := Quotient (theory_fml_Setoid T)
 
 
 end SyntacticSite
