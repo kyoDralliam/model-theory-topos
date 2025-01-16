@@ -41,56 +41,53 @@ namespace InterpPsh
     L.interp_tm (.op o k) = L.interp_subst k ≫ L.interp_ops o :=
     rfl
 
-  noncomputable
-  def interp_fml {S : monosig} (L : Str S C) (φ : fml S n) : (npow L.carrier n ⟶ SubobjectClassifier.prop) := by
-    induction φ with
-    | pred p k => exact (L.interp_subst k ≫ L.interp_preds p)
-    | true => exact (toUnit _ ≫ SubobjectClassifier.top)
-    | false => exact (toUnit _ ≫ SubobjectClassifier.bot)
-    | conj φ ψ ih1 ih2 =>
-      exact (lift ih1 ih2 ≫ SubobjectClassifier.conj)
-    | disj φ ψ ih1 ih2 =>
-      exact (lift ih1 ih2 ≫ SubobjectClassifier.disj)
-    | infdisj φ ih => exact SubobjectClassifier.sSup { (ih n) | (n : Nat) }
-        -- problem with termination
-        -- interp_fml L (φ 0)
-        -- SubobjectClassifier.sSup { (interp_fml L (φ n)) | (n : Nat) }
-    | existsQ φ ih => exact (SubobjectClassifier.existπ ih)
-    | eq t u => exact (lift (L.interp_tm t) (interp_tm L u) ≫ SubobjectClassifier.eq)
-
-  @[simp]
-  theorem interp_fml_on_conj {S : monosig} (L : Str S C) (φ ψ : fml S n) :
-    L.interp_fml (φ.conj ψ) = lift (L.interp_fml φ) (L.interp_fml ψ) ≫ SubobjectClassifier.conj :=
-    rfl
-
-  @[simp]
-  theorem interp_fml_on_disj {S : monosig} (L : Str S C) (φ ψ : fml S n) :
-    L.interp_fml (φ.disj ψ) = lift (L.interp_fml φ) (L.interp_fml ψ) ≫ SubobjectClassifier.disj :=
-    rfl
-
-  @[simp]
-  theorem interp_fml_on_infdisj {S : monosig} (L : Str S C) (φ : Nat → fml S n) :
-    L.interp_fml (.infdisj φ) = SubobjectClassifier.sSup { (L.interp_fml (φ n)) | (n : Nat) } :=
-    rfl
-
-  @[simp]
-  theorem interp_fml_on_existsQ {S : monosig} (L : Str S C) (φ : fml S (n+1)) :
-    L.interp_fml (φ.existsQ) = SubobjectClassifier.existπ (L.interp_fml φ) :=
-    rfl
-
   -- noncomputable
-  -- def interp_fml {S : monosig} (L : Str S C) : fml S n -> (npow L.carrier n ⟶ SubobjectClassifier.prop)
-  -- | .pred p k => L.interp_subst k ≫ L.interp_preds p
-  -- | .true => toUnit _ ≫ SubobjectClassifier.top
-  -- | .false => toUnit _ ≫ SubobjectClassifier.bot
-  -- | .conj φ ψ => lift (L.interp_fml φ) (L.interp_fml ψ) ≫ SubobjectClassifier.conj
-  -- | .disj φ ψ => lift (interp_fml L φ) (interp_fml L ψ) ≫ SubobjectClassifier.disj
-  -- | .infdisj φ => sorry
-  --     -- problem with termination
-  --     -- interp_fml L (φ 0)
-  --     -- SubobjectClassifier.sSup { (interp_fml L (φ n)) | (n : Nat) }
-  -- | .existsQ φ => SubobjectClassifier.existπ (L.interp_fml φ)
-  -- | .eq t u => lift (L.interp_tm t) (interp_tm L u) ≫ SubobjectClassifier.eq
+  -- def interp_fml {S : monosig} (L : Str S C) (φ : fml S n) : (npow L.carrier n ⟶ SubobjectClassifier.prop) := by
+  --   induction φ with
+  --   | pred p k => exact (L.interp_subst k ≫ L.interp_preds p)
+  --   | true => exact (toUnit _ ≫ SubobjectClassifier.top)
+  --   | false => exact (toUnit _ ≫ SubobjectClassifier.bot)
+  --   | conj φ ψ ih1 ih2 =>
+  --     exact (lift ih1 ih2 ≫ SubobjectClassifier.conj)
+  --   | disj φ ψ ih1 ih2 =>
+  --     exact (lift ih1 ih2 ≫ SubobjectClassifier.disj)
+  --   | infdisj φ ih => exact SubobjectClassifier.sSup { (ih n) | (n : Nat) }
+  --       -- problem with termination
+  --       -- interp_fml L (φ 0)
+  --       -- SubobjectClassifier.sSup { (interp_fml L (φ n)) | (n : Nat) }
+  --   | existsQ φ ih => exact (SubobjectClassifier.existπ ih)
+  --   | eq t u => exact (lift (L.interp_tm t) (interp_tm L u) ≫ SubobjectClassifier.eq)
+
+  -- @[simp]
+  -- theorem interp_fml_on_conj {S : monosig} (L : Str S C) (φ ψ : fml S n) :
+  --   L.interp_fml (φ.conj ψ) = lift (L.interp_fml φ) (L.interp_fml ψ) ≫ SubobjectClassifier.conj := by
+  --   rfl
+
+  -- @[simp]
+  -- theorem interp_fml_on_disj {S : monosig} (L : Str S C) (φ ψ : fml S n) :
+  --   L.interp_fml (φ.disj ψ) = lift (L.interp_fml φ) (L.interp_fml ψ) ≫ SubobjectClassifier.disj :=
+  --   rfl
+
+  -- @[simp]
+  -- theorem interp_fml_on_infdisj {S : monosig} (L : Str S C) (φ : Nat → fml S n) :
+  --   L.interp_fml (.infdisj φ) = SubobjectClassifier.sSup { (L.interp_fml (φ n)) | (n : Nat) } :=
+  --   rfl
+
+  -- @[simp]
+  -- theorem interp_fml_on_existsQ {S : monosig} (L : Str S C) (φ : fml S (n+1)) :
+  --   L.interp_fml (φ.existsQ) = SubobjectClassifier.existπ (L.interp_fml φ) :=
+  --   rfl
+
+  noncomputable
+  def interp_fml {S : monosig} {n} (L : Str S C) : fml S n -> (npow L.carrier n ⟶ SubobjectClassifier.prop)
+  | .pred p k => L.interp_subst k ≫ L.interp_preds p
+  | .true => toUnit _ ≫ SubobjectClassifier.top
+  | .false => toUnit _ ≫ SubobjectClassifier.bot
+  | .conj φ ψ => lift (L.interp_fml φ) (L.interp_fml ψ) ≫ SubobjectClassifier.conj
+  | .disj φ ψ => lift (interp_fml L φ) (interp_fml L ψ) ≫ SubobjectClassifier.disj
+  | .infdisj φ => SubobjectClassifier.sSup { (interp_fml L (φ n)) | (n : Nat) }
+  | .existsQ φ => SubobjectClassifier.existπ (L.interp_fml φ)
+  | .eq t u => lift (L.interp_tm t) (interp_tm L u) ≫ SubobjectClassifier.eq
 
 
   theorem interp_fml_conj {S : monosig} (L : Str S C) (φ ψ : fml S n):
@@ -354,7 +351,7 @@ namespace InterpPsh
               apply toUnit_unique
           simp only [a]
         | @conj m f1 f2 ih1 ih2 =>
-          simp
+          simp only [Str.interp_fml]
           simp [pb_prop_conj]
           have a:
           CategoryTheory.whiskerLeft F.op (ChosenFiniteProducts.lift (L.interp_fml f1) (L.interp_fml f2)) ≫
@@ -383,7 +380,7 @@ namespace InterpPsh
           simp[a]
 
         | @disj m f1 f2 ih1 ih2 =>
-          simp
+          simp only [Str.interp_fml]
           simp[pb_prop_disj]
           have a:
           CategoryTheory.whiskerLeft F.op (ChosenFiniteProducts.lift (L.interp_fml f1) (L.interp_fml f2)) ≫
@@ -411,7 +408,7 @@ namespace InterpPsh
           simp[← Category.assoc]
           simp[a]
         | infdisj _ ih =>
-          simp
+          simp only [Str.interp_fml]
           simp only [pb_prop_sup]
           sorry
         | eq t1 t2 =>
@@ -606,7 +603,7 @@ namespace InterpPsh
     | @conj n f1 f2 h1 h2 =>
       have h1:= h1 m σ
       have h2:= h2 m σ
-      simp[fml.subst]
+      simp only [Str.interp_fml, fml.subst]
       have h: ChosenFiniteProducts.lift (L.interp_fml (fml.subst σ f1)) (L.interp_fml (fml.subst σ f2)) =
         (L.interp_subst σ) ≫ ChosenFiniteProducts.lift (L.interp_fml f1) (L.interp_fml f2) := by
        apply hom_ext
@@ -615,11 +612,10 @@ namespace InterpPsh
        · simp[]
          simp[h2]
       simp[h,← Category.assoc]
-    | disj f1 f2 h1 h2 =>
-      rename_i n
+    | @disj n f1 f2 h1 h2 =>
       have h1:= h1 m σ
       have h2:= h2 m σ
-      simp[fml.subst]
+      simp only [Str.interp_fml, fml.subst]
       have h: ChosenFiniteProducts.lift (L.interp_fml (fml.subst σ f1)) (L.interp_fml (fml.subst σ f2)) =
        (L.interp_subst σ) ≫ ChosenFiniteProducts.lift (L.interp_fml f1) (L.interp_fml f2) := by
        apply hom_ext
@@ -629,17 +625,15 @@ namespace InterpPsh
          simp[h2]
       simp[h,← Category.assoc]
     | infdisj _ _ => sorry --need to define semantics first
-    | eq t1 t2 =>
-      rename_i n
+    | @eq n t1 t2 =>
       simp[Str.interp_fml,fml.subst]
       have h : ChosenFiniteProducts.lift (L.interp_tm (tm.subst σ t1)) (L.interp_tm (tm.subst σ t2)) =
       (L.interp_subst σ) ≫ ChosenFiniteProducts.lift (L.interp_tm t1) (L.interp_tm t2) := by
         apply hom_ext <;> simp <;> simp[subst_interp_tm]
       simp[h,← Category.assoc]
-    | existsQ f ih =>
-      rename_i n
+    | @existsQ n f ih =>
       apply le_antisymm
-      · simp[fml.subst,SubobjectClassifier.existπ]
+      · simp only[Str.interp_fml, fml.subst,SubobjectClassifier.existπ]
         simp[ih]
         let sb :=  (npair (npow L.carrier m) L.carrier n fun i ↦ L.interp_tm (σ i))
         let st := (npair (npow L.carrier (m + 1)) L.carrier (n + 1) fun i ↦ L.interp_tm (lift_subst σ i))
@@ -660,7 +654,7 @@ namespace InterpPsh
       · intros cop ρ
         simp[SubobjectClassifier.existπ]
         intro c' f1
-        simp[SubobjectClassifier.existQ]
+        simp only[Str.interp_fml, SubobjectClassifier.existQ]
         simp[fml.subst,SubobjectClassifier.existπ,SubobjectClassifier.existQ]
         intro ρ' h1 h2
         let ρ'' : (L.carrier ⊗ npow L.carrier m).obj (Opposite.op c') := ⟨ρ'.1, (npow L.carrier m).map (Opposite.op f1) ρ⟩
@@ -682,42 +676,11 @@ namespace InterpPsh
           simp [liftsubstρ'']
           assumption
 
-/-          have sndh : snd = (npow L.carrier n).map f1.op ((npair (npow L.carrier m) L.carrier n fun i ↦ L.interp_tm (σ i)).app cop ρ) := by
-           have h0 : (CategoryTheory.ChosenFiniteProducts.snd L.carrier (npow L.carrier n)).app (Opposite.op c') (fst, snd) = snd := rfl
-           simp[h0] at h1
-           assumption
-          have sndeq: ((npair (npow L.carrier (m + 1)) L.carrier (n + 1) fun i ↦ L.interp_tm (lift_subst σ i)).app (Opposite.op c')
-        ρ'') = (fst,snd) := by
-           apply prod_ext
-           ·
-             /-let p1:  (npow L.carrier (m + 1)).obj (Opposite.op c') ⟶ L.carrier.obj (Opposite.op c') ⊗ (npow L.carrier n).obj (Opposite.op c')  := (npair (npow L.carrier (m + 1)) L.carrier (n + 1) fun i ↦ L.interp_tm (lift_subst σ i)).app (Opposite.op c')
-             have : ((npair (npow L.carrier (m + 1)) L.carrier (n + 1) fun i ↦ L.interp_tm (lift_subst σ i)).app (Opposite.op c') ρ'').1 =
-                    (((npair (npow L.carrier (m + 1)) L.carrier (n + 1) fun i ↦ L.interp_tm (lift_subst σ i)).app (Opposite.op c') ≫ (CategoryTheory.ChosenFiniteProducts.snd _ _)) ρ'')
-             have l : (p1 ≫ (CategoryTheory.ChosenFiniteProducts.snd _ _)) ρ'' = snd := by
-              simp[ρ'',p1,npair]
-              have := @types_comp_apply _ _ _
-                   ((ChosenFiniteProducts.lift (L.interp_tm (lift_subst σ 0))
-                    (npair (npow L.carrier (m + 1)) L.carrier n fun i ↦ L.interp_tm (lift_subst σ i.succ))).app
-                     (Opposite.op c'))
-                   (CategoryTheory.ChosenFiniteProducts.snd (L.carrier.obj (Opposite.op c')) ((npow L.carrier n).obj (Opposite.op c')))
-                   ((fst, (npow L.carrier m).map (Opposite.op f1) ρ))
-              rw [←this]
 
-
-              sorry
-             have r:  (p1 ≫ (CategoryTheory.ChosenFiniteProducts.fst _ _)) ρ'' = fst := sorry
-             -/
-             sorry
-           · sorry
-          simp[sndeq]
-          assumption
--/
-
-
-  theorem interp_fml_true (L: Str S C) (n : RenCtx) :  @Str.interp_fml C _ n S L fml.true = ⊤ := by
+  theorem interp_fml_true (L: Str S C) (n : RenCtx) :  L.interp_fml (.true (n:=n)) = ⊤ := by
     simp[Str.interp_fml ,SubobjectClassifier.complete_lattice_to_prop]
 
-  theorem interp_fml_false (L: Str S C) (n : RenCtx) :  @Str.interp_fml C _ n S L fml.false = ⊥ := by
+  theorem interp_fml_false (L: Str S C) (n : RenCtx) : L.interp_fml (.false (n:=n)) = ⊥ := by
     simp[Str.interp_fml ,SubobjectClassifier.complete_lattice_to_prop]
 
   theorem interp_fml_conj (L: Str S C) (n : RenCtx) (φ ψ: fml S n) :
@@ -990,10 +953,9 @@ namespace InterpPsh
            rfl
           simp[hh] at h
           assumption
-      | existsQ_elim =>
-        rename_i  m ψ0 ψ hp md
+      | @existsQ_elim m ψ0 ψ hp md =>
         simp[InterpPsh.Str.model] at *
-        simp[fm_ren_subst,fml.subst,SubobjectClassifier.existπ,subst_interp_fml] at *
+        simp[Str.interp_fml,fm_ren_subst,fml.subst,SubobjectClassifier.existπ,subst_interp_fml] at *
           --   subst_interp_fml]
         have := @SubobjectClassifier.existQ_precomp_adj _ _ _ _ (snd M.str.carrier (npow M.str.carrier m))
            (M.str.interp_fml ψ0) (M.str.interp_fml ψ)
