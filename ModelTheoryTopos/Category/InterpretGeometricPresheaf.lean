@@ -92,8 +92,8 @@ namespace InterpPsh
 
   theorem interp_fml_conj {S : monosig} (L : Str S C) (φ ψ : fml S n):
    L.interp_fml (φ.conj ψ) = (L.interp_fml φ) ⊓ (L.interp_fml ψ) := by
-     simp only[SubobjectClassifier.psh_inf ] ;
-     simp[Str.interp_fml]
+     simp_all only [SubobjectClassifier.prop.eq_1, interp_fml]
+     rfl
 
   def model {S : monosig} (L : Str S C) (s : sequent S) : Prop :=
    L.interp_fml s.premise ≤ L.interp_fml s.concl
@@ -107,19 +107,19 @@ namespace InterpPsh
     Hom := morphism
     id L := {
       map := 𝟙 L.carrier
-      ops_comm := fun o => by simp [nlift_diag_id]
-      preds_comm := fun p => by simp [nlift_diag_id]
+      ops_comm := fun o => by simp only [nlift_diag_id, Category.id_comp, Category.comp_id]
+      preds_comm := fun p => by simp only [SubobjectClassifier.prop.eq_1, nlift_diag_id,
+        Category.id_comp]
       }
     comp f g := {
       map := f.map ≫ g.map
       ops_comm := fun o => by
-        rw [<-nlift_diag_comp]
-        simp [g.ops_comm]
+        rw [<-nlift_diag_comp,Category.assoc, g.ops_comm]
         rw [<-Category.assoc]
-        simp [f.ops_comm]
+        simp only [f.ops_comm, Category.assoc]
       preds_comm := fun p => by
         rw [<-nlift_diag_comp]
-        simp [g.preds_comm, f.preds_comm]
+        simp only [SubobjectClassifier.prop.eq_1, Category.assoc, g.preds_comm, f.preds_comm]
     }
 
   end Str
@@ -162,8 +162,7 @@ namespace InterpPsh
        (pb_prod_iso F L.carrier (T.sig.arity_preds p)).inv ≫
        whiskerLeft F.op (L.interp_preds p) ≫ pb_prop F := by
 
-       simp[← Iso.inv_comp_eq]
-       simp[pb_obj]
+       simp only [SubobjectClassifier.prop.eq_1,pb_obj]
 
 
     def pb_map (L₁ L₂ : Str T.sig D) (f : L₁ ⟶ L₂) :
@@ -171,12 +170,13 @@ namespace InterpPsh
       map := whiskerLeft F.op f.map
       ops_comm := by
         intros o
-        simp [pb_obj, ←CategoryTheory.whiskerLeft_comp,←f.ops_comm, nlift_diag]
-        simp [← Category.assoc, nlift_whisker]
+        simp only [pb_obj, SubobjectClassifier.prop.eq_1, nlift_diag, Category.assoc, ←
+          CategoryTheory.whiskerLeft_comp, ← f.ops_comm]
+        simp only [← Category.assoc, nlift_whisker, CategoryTheory.whiskerLeft_comp]
       preds_comm := by
         intros o
-        simp[pb_obj,← CategoryTheory.whiskerLeft_comp,←f.preds_comm]
-        simp[← Category.assoc, nlift_diag,nlift_whisker]
+        simp only [pb_obj, SubobjectClassifier.prop.eq_1, ← f.preds_comm]
+        simp only [nlift_diag, ← Category.assoc, nlift_whisker, CategoryTheory.whiskerLeft_comp]
 
 
 
@@ -190,15 +190,13 @@ namespace InterpPsh
     theorem pb_obj_interp_ops (L : Str T.sig D)  (o: T.sig.ops):
        whiskerLeft F.op (L.interp_ops o) =
        (pb_prod_iso F L.carrier (T.sig.arity_ops o)).hom ≫ (pb_obj F T L).interp_ops o := by
-       simp[← Iso.inv_comp_eq]
-       simp[pb_obj]
+       simp only [← Iso.inv_comp_eq,pb_obj, SubobjectClassifier.prop.eq_1]
 
 
     theorem pb_obj_interp_ops0 (L : Str T.sig D)  (o: T.sig.ops):
        (pb_prod_iso F L.carrier (T.sig.arity_ops o)).inv ≫ whiskerLeft F.op (L.interp_ops o) =
        (pb_obj F T L).interp_ops o := by
-       simp[Iso.inv_comp_eq]
-       simp[pb_obj]
+       simp only [Iso.inv_comp_eq,pb_obj, SubobjectClassifier.prop.eq_1, Iso.hom_inv_id_assoc]
 
 
 
@@ -207,47 +205,41 @@ namespace InterpPsh
           (pb_prod_iso F L.carrier (m + 1)).hom ≫ (pb_obj F T L).interp_fml f) :
       whiskerLeft F.op (SubobjectClassifier.existπ (L.interp_fml f))  ≫ pb_prop F  =
       (pb_prod_iso F L.carrier m).hom ≫ SubobjectClassifier.existπ ((pb_obj F T L).interp_fml f) := by
-      simp[SubobjectClassifier.existπ]
-
-      simp[pb_prop_existQ]
-      simp[ih]
-
-      simp[pb_obj_carrier]
+      simp only [SubobjectClassifier.prop.eq_1, SubobjectClassifier.existπ,
+      pb_prop_existQ, SubobjectClassifier.prop.eq_1,ih,pb_obj_carrier]
       ext c a
-      simp[pb_prod_hom]
+      simp only [SubobjectClassifier.prop.eq_1, pb_prod_hom, FunctorToTypes.comp]
       ext Y g
-      simp[SubobjectClassifier.existQ_app_arrows]
+      simp only [SubobjectClassifier.existQ_app_arrows, Functor.comp_obj, Functor.op_obj,
+        CategoryTheory.whiskerLeft_app, snd_app, Opposite.op_unop, Functor.comp_map, Functor.op_map,
+        Quiver.Hom.unop_op, SubobjectClassifier.prop.eq_1, FunctorToTypes.comp]
       constructor
       intros
       · rename_i h
         rcases h with ⟨ w,h⟩
-        --rename_i w h
         rcases h with ⟨h1, h2⟩
-        cases w
-        rename_i t1 tm
-        simp [snd_app] at h1
+        cases' w with t1 tm
+        simp only at h1
         let a1:= ((pb_prod_iso F L.carrier m).hom).app _ tm
         exists  ⟨ t1,a1⟩
-        simp
+        simp only [Functor.comp_obj, Functor.op_obj]
         constructor
-        · simp[a1]
-          simp[h1]
-          simp[pb_prod_hom]
+        · simp only [a1,h1,pb_prod_hom]
           have := (pb_prod F L.carrier m).naturality g.op
-          simp at this
+          simp only [Opposite.op_unop, Functor.comp_obj, Functor.op_obj, Functor.comp_map,
+            Functor.op_map, Quiver.Hom.unop_op] at this
           have hh : (npow (F.op ⋙ L.carrier) m).map g.op ((pb_prod F L.carrier m).app c a) =
                   ((pb_prod F L.carrier m).app (Opposite.op (Opposite.unop c)) ≫ (npow (F.op ⋙ L.carrier) m).map g.op) a :=
                     by
-                     simp
-          simp only[hh]
-          simp only [← this]
-          simp
-        · simp[a1]
-          simp[pb_prod_hom]
+                     simp only [Opposite.op_unop, Functor.comp_obj, Functor.op_obj,
+                       types_comp_apply]
+          simp only[hh,← this]
+          simp only [types_comp_apply]
+        · simp only [a1,pb_prod_hom]
           have e : (t1, (pb_prod F L.carrier m).app (Opposite.op Y) tm) =
            ((pb_prod F L.carrier (m + 1)).app (Opposite.op Y) (t1, tm)) := by
             simp only[pb_prod0_pair]
-          simp[e]
+          simp only [e, Functor.op_obj]
           exact h2
       intros
       · rename_i h
@@ -257,44 +249,39 @@ namespace InterpPsh
         rename_i h1 h2
         cases w
         rename_i t10 tm0
-        simp [snd_app] at h1
+        simp only at h1
         let a1:= ((pb_prod_iso F L.carrier m).inv).app _ tm0
         exists  ⟨ t10,a1⟩
-        simp[snd_app]
+        simp only
         constructor
-        · simp[a1]
-          simp[h1]
+        · simp only [a1,h1]
           have e0:
           (npow (F.op ⋙ L.carrier) m).map g.op ((pb_prod F L.carrier m).app c a) =
           (pb_prod_iso F L.carrier m).hom.app (Opposite.op Y)
            ((npow L.carrier m).map (F.map g).op a) := by
-           simp[pb_prod_hom]
+           simp only [Opposite.op_unop, pb_prod_hom]
            have := (pb_prod F L.carrier m).naturality g.op
-           simp at this
+           simp only [Opposite.op_unop, Functor.comp_obj, Functor.op_obj, Functor.comp_map,
+             Functor.op_map, Quiver.Hom.unop_op] at this
            have hh : (npow (F.op ⋙ L.carrier) m).map g.op ((pb_prod F L.carrier m).app c a) =
                   ((pb_prod F L.carrier m).app (Opposite.op (Opposite.unop c)) ≫ (npow (F.op ⋙ L.carrier) m).map g.op) a := by simp
-           simp only[hh]
-           simp only [← this]
-           simp
-          simp[e0]
-        · simp[a1]
-          --simp[pb_prod_pb_prod]
+           simp only[hh,← this]
+           simp only [types_comp_apply]
+          simp only [e0, FunctorToTypes.hom_inv_id_app_apply]
+        · simp only [a1]
           have e : ((pb_prod F L.carrier (m + 1)).app (Opposite.op Y)
         (t10, (pb_prod_iso F L.carrier m).inv.app (Opposite.op Y) tm0)) =
            (t10, tm0) := by
-           simp
-           simp only[pb_prod0_pair F]
+           simp only [Functor.op_obj, Functor.comp_obj,pb_prod0_pair F]
            have e1: (pb_prod F L.carrier m).app (Opposite.op Y) ((pb_prod_iso F L.carrier m).inv.app (Opposite.op Y) tm0) =
                     ((pb_prod_iso F L.carrier m).inv ≫ pb_prod F L.carrier m).app (Opposite.op Y) tm0 := by
-                     simp[pb_prod_hom]
+                     simp only [FunctorToTypes.comp]
 
            simp only[e1]
            have e11: (pb_prod_iso F L.carrier m).inv ≫ pb_prod F L.carrier m = 𝟙 _ := by
-            simp [<-pb_prod_hom]
-           simp only[e11]
-           simp
-          --sorry --may need to define the inverse by induction
-          simp[e]
+            simp only [← pb_prod_hom, Iso.inv_hom_id]
+           simp only[e11,Functor.op_obj, NatTrans.id_app, types_id_apply]
+          simp only [e, Functor.comp_obj, Functor.op_obj]
           exact h2
 
 
@@ -306,16 +293,17 @@ namespace InterpPsh
       (pb_prod_iso F _ n).hom ≫ (pb_obj F T L).interp_tm t := by
         induction t with
         | var _ =>
-          simp[Str.interp_tm,pb_prod_hom,<-nproj_pb_prod,pb_obj]
+          simp only [Str.interp_tm, ← nproj_pb_prod, pb_obj, SubobjectClassifier.prop.eq_1,
+            pb_prod_hom]
         | op o a a_ih =>
-          simp[Str.interp_tm]
-          simp[pb_obj_interp_ops]
-          simp[← Category.assoc]
+          simp only [Str.interp_tm, CategoryTheory.whiskerLeft_comp,
+          pb_obj_interp_ops,← Category.assoc]
           congr 1
-          simp[<-pb_npair_compatible]
+          simp only [← pb_npair_compatible, Category.assoc, Iso.inv_hom_id, Category.comp_id]
           apply npair_univ
-          intros
-          simp [a_ih, pb_obj]
+          intro i
+          simp_all only [pb_obj, SubobjectClassifier.prop.eq_1, Category.assoc, npair_nproj]
+
 
 
     def pb_prop_interp_fml {n : Nat} (L : Str T.sig D) (φ : fml T.sig n) :
@@ -323,18 +311,15 @@ namespace InterpPsh
       (pb_prod_iso F _ n).hom ≫ (pb_obj F T L).interp_fml φ  := by
         induction φ with
         | @pred m p ts =>
-           simp[Str.interp_fml]
-           simp[pb_obj_interp_preds, Str.interp_subst]
-           simp[← pb_npair_compatible]
-           simp[pb_prop_interp_tm]
-           simp[npair_natural]
-           simp[pb_obj]
+           simp only [SubobjectClassifier.prop.eq_1, Str.interp_fml,
+             CategoryTheory.whiskerLeft_comp, Category.assoc,
+             pb_obj_interp_preds, Str.interp_subst,← pb_npair_compatible,
+             pb_prop_interp_tm,npair_natural,pb_obj]
         | true =>
           rename_i m
-          --simp it does not do anything, why do not report error either?
-          simp[Str.interp_fml]
-          simp[pb_prop_top]
-          simp[← Category.assoc]
+          simp only [SubobjectClassifier.prop, Str.interp_fml, CategoryTheory.whiskerLeft_comp,
+            Category.assoc,pb_prop_top ]
+          simp only [← Category.assoc]
           have a: CategoryTheory.whiskerLeft F.op (toUnit (npow L.carrier m)) =
             ((pb_prod_iso F L.carrier m).hom ≫ toUnit (npow (pb_obj F T L).carrier m)) :=
              by
@@ -342,17 +327,17 @@ namespace InterpPsh
           simp only [a]
         | false =>
           rename_i m
-          simp[Str.interp_fml]
-          simp[pb_prop_bot ]
-          simp[← Category.assoc]
+          simp only [SubobjectClassifier.prop.eq_1, Str.interp_fml, CategoryTheory.whiskerLeft_comp,
+            Category.assoc,pb_prop_bot ]
+          simp only [← Category.assoc]
           have a: CategoryTheory.whiskerLeft F.op (toUnit (npow L.carrier m)) =
             ((pb_prod_iso F L.carrier m).hom ≫ toUnit (npow (pb_obj F T L).carrier m)) :=
              by
               apply toUnit_unique
           simp only [a]
         | @conj m f1 f2 ih1 ih2 =>
-          simp only [Str.interp_fml]
-          simp [pb_prop_conj]
+          simp only [Str.interp_fml,SubobjectClassifier.prop.eq_1, CategoryTheory.whiskerLeft_comp, Category.assoc,
+            pb_prop_conj]
           have a:
           CategoryTheory.whiskerLeft F.op (ChosenFiniteProducts.lift (L.interp_fml f1) (L.interp_fml f2)) ≫
           (pb_prop F ⊗ pb_prop F) =
@@ -376,12 +361,11 @@ namespace InterpPsh
               simp only[lift_snd]
               simp[ih2]
 
-          simp[← Category.assoc]
-          simp[a]
+          simp only [← Category.assoc, comp_lift,a]
 
         | @disj m f1 f2 ih1 ih2 =>
-          simp only [Str.interp_fml]
-          simp[pb_prop_disj]
+          simp only [Str.interp_fml,SubobjectClassifier.prop.eq_1, CategoryTheory.whiskerLeft_comp, Category.assoc,
+            pb_prop_disj]
           have a:
           CategoryTheory.whiskerLeft F.op (ChosenFiniteProducts.lift (L.interp_fml f1) (L.interp_fml f2)) ≫
           (pb_prop F ⊗ pb_prop F) =
@@ -389,21 +373,10 @@ namespace InterpPsh
     ChosenFiniteProducts.lift ((pb_obj F T L).interp_fml f1) ((pb_obj F T L).interp_fml f2)
           := by
             apply hom_ext
-            · simp only[Category.assoc]
-              simp only[tensorHom_fst]
-              simp only[lift_fst]
-              simp only[whiskerLeft_lift]
-              simp only[← Category.assoc]
-              simp only[lift_fst]
-              simp[ih1]
-
-            · simp only[Category.assoc]
-              simp only[tensorHom_snd]
-              simp only[lift_snd]
-              simp only[whiskerLeft_lift]
-              simp only[← Category.assoc]
-              simp only[lift_snd]
-              simp[ih2]
+            · simp only[Category.assoc,tensorHom_fst,lift_fst,whiskerLeft_lift]
+              simp only[← Category.assoc,lift_fst,SubobjectClassifier.prop, ih1]
+            · simp only[Category.assoc,tensorHom_snd,lift_snd,whiskerLeft_lift]
+              simp only[← Category.assoc,lift_snd,SubobjectClassifier.prop, ih2]
 
           simp[← Category.assoc]
           simp[a]
@@ -413,37 +386,27 @@ namespace InterpPsh
           sorry
         | eq t1 t2 =>
           rename_i m
-          simp
-          simp[Str.interp_fml]
-          simp[pb_prop_eq]
-          simp[whiskerLeft_lift]
-          simp[pb_prop_interp_tm]
-          simp[← comp_lift]
+          simp only [Str.interp_fml, SubobjectClassifier.prop.eq_1, CategoryTheory.whiskerLeft_comp,
+            Category.assoc,pb_prop_eq,whiskerLeft_lift,pb_prop_interp_tm,← comp_lift]
         | existsQ f ih =>
-          rename_i m
-          simp
-          simp[Str.interp_fml]
-          --simp[SubobjectClassifier.existπ]
+          simp only [SubobjectClassifier.prop.eq_1, Str.interp_fml]
           have := pb_prop_existQ_interp_fml F T f ih
           exact this
-         -- simp[SubobjectClassifier.existQ]
 
     -- def pb_prop_preserves_entailment (φ ψ : SubobjectClassifier.prop (C:=D))
 
     def pb_prop_interp_fml' {n : Nat} (L : Str T.sig D) (φ : fml T.sig n) :
       (pb_obj F T L).interp_fml φ =
         (pb_prod_iso F _ n).inv ≫ whiskerLeft F.op (L.interp_fml φ) ≫ pb_prop F := by
-        simp[Iso.inv_comp_eq,pb_prop_interp_fml]
+        simp only [SubobjectClassifier.prop.eq_1, pb_prop_interp_fml, Iso.inv_hom_id_assoc]
 
 
 
     def pb_prop_preserves_interp (L : Str T.sig D) (s : sequent T.sig) :
-       L.model s → (pb_obj F T L).model s := by
-      intros h
-      simp [Str.model, pb_prop_interp_fml']
-      apply SubobjectClassifier.le_iso
-      apply pb_prop_le F
-      apply h
+       L.model s → (pb_obj F T L).model s :=
+        fun h ↦ by
+          simp only [Str.model, SubobjectClassifier.prop.eq_1, pb_prop_interp_fml']
+          exact SubobjectClassifier.le_iso _ _ _ (pb_prop_le F _ _ h)
 
 
 
@@ -458,34 +421,31 @@ namespace InterpPsh
       str := (pullback F T).obj M.str
       valid := by
         intros a ax
-        simp[pullback]
+        simp only [pullback]
         have := M.valid a ax
         exact (pb_prop_preserves_interp F T M.str a this)
 
     theorem nlift_diag_whisker (L₁ L₂ : Psh D)  (n : Nat) (f : (L₁ ⟶ L₂)) :
       nlift_diag (F.op ⋙ L₁) (F.op ⋙ L₂) n (CategoryTheory.whiskerLeft F.op f) =
       (pb_prod_iso F L₁ n).inv ≫ CategoryTheory.whiskerLeft F.op (nlift_diag L₁ L₂ n f) ≫ (pb_prod_iso F L₂ n).hom := by
-     simp[← Category.assoc]
-     simp only[← Iso.comp_inv_eq]
-     simp[nlift_diag]
-     simp[nlift_whisker]
+     simp only [← Category.assoc,← Iso.comp_inv_eq,nlift_diag,nlift_whisker]
 
     def pb_morphism {X Y : Mod T D} (f : X ⟶ Y) :
      pb_model F T X ⟶ pb_model F T Y where
        map := CategoryTheory.whiskerLeft F.op f.map
        ops_comm := by
-        simp[pb_model,pullback,pb_obj_carrier]
-        simp[nlift_diag_whisker]
-        simp[← pb_obj_interp_ops0]
-        simp[← CategoryTheory.whiskerLeft_comp]
-        simp[f.ops_comm]
+        simp only [pb_model, pullback, pb_obj_carrier,
+        nlift_diag_whisker, Category.assoc,
+        ← pb_obj_interp_ops0, Iso.hom_inv_id_assoc, Category.assoc,
+        Iso.cancel_iso_inv_left,
+        ← CategoryTheory.whiskerLeft_comp, f.ops_comm, implies_true]
        preds_comm := by
-        simp[pb_model,pullback,pb_obj_carrier]
-        simp[nlift_diag_whisker]
-        simp[pb_obj_interp_preds]
-        simp[← Category.assoc]
-        simp[← CategoryTheory.whiskerLeft_comp]
-        simp[f.preds_comm]
+        simp only [pb_model, pullback, pb_obj_carrier, SubobjectClassifier.prop.eq_1
+              ,nlift_diag_whisker, Category.assoc,pb_obj_interp_preds]
+        simp only[← Category.assoc]
+        simp only [Category.assoc, Iso.hom_inv_id, Category.comp_id, ←
+          CategoryTheory.whiskerLeft_comp, Iso.cancel_iso_inv_left]
+        simp only [f.preds_comm, implies_true]
 
     noncomputable
     def pullback_Mod : Mod T D ⥤ Mod T C where
@@ -497,59 +457,54 @@ namespace InterpPsh
    L.interp_tm (tm.subst σ t) = L.interp_subst σ ≫ L.interp_tm t := by
      induction t with
      | var i =>
-      simp[Str.interp_subst, tm.subst,Str.interp_tm,npair_nproj]
+      simp only [tm.subst, Str.interp_subst, Str.interp_tm, npair_nproj]
      | op o a a_ih =>
-      simp [tm.subst]
       have h1 : L.interp_subst (fun i => (a i).subst σ) = L.interp_subst σ ≫ L.interp_subst a := by
        apply npair_univ
-       intro i
-       simp[Str.interp_subst, a_ih,  npair_nproj]
-      simp [<-Category.assoc, <-h1]
+       simp only [a_ih, Str.interp_subst, Category.assoc, npair_nproj, implies_true]
+      simp only [Str.interp_tm_op, ← Category.assoc, <- h1]
       rfl
 
   theorem interp_subst_comp {L : Str S C} {x y z : Subst S} (σ : x ⟶ y) (τ : y ⟶ z) :
     L.interp_subst τ ≫ L.interp_subst σ = L.interp_subst (σ ≫ τ) := by
       symm
       apply npair_univ
-      intros
-      simp [tm.subst_comp_app, subst_interp_tm, Str.interp_subst, npair_nproj]
+      simp only [tm.subst_comp_app, subst_interp_tm, Str.interp_subst, Category.assoc, npair_nproj,
+      implies_true]
+
 
   -- This lemma has nothing to do here
   theorem ren_subst  (f : n ⟶ n') (t: tm S n): (tm.ren f t) = tm.subst (fun i => tm.var (f i)) t := by
    induction t with
    | var _ =>
-     simp[tm.ren,tm.subst]
-   | op o _ _ =>
-     rename_i a ih
-     simp[tm.ren,tm.subst,ih]
+     rw[tm.ren,tm.subst]
+   | op o a ih =>
+     simp only[tm.ren,tm.subst,ih]
 
   -- This lemma has nothing to do here
   theorem fm_ren_subst  (f : n ⟶ n') (φ: fml S n): (fml.ren f φ) = fml.subst (fun i => tm.var (f i)) φ := by
    induction φ generalizing n' with
    | pred p _ =>
-     simp[fml.ren,fml.subst,ren_subst];rfl
-   | true => simp[fml.ren,fml.subst]
-   | false => simp[fml.ren,fml.subst]
-   | conj _ _ _ _ =>
-     rename_i h1 h2
-     simp[fml.ren,fml.subst,h1,h2]
-   | disj _ _ _ _ =>
-     rename_i h1 h2
-     simp[fml.ren,fml.subst,h1,h2]
+     simp only [fml.ren, ren_subst, fml.subst, fml.pred.injEq, heq_eq_eq, true_and];rfl
+   | true => simp only [fml.ren, fml.subst]
+   | false => simp only [fml.ren, fml.subst]
+   | conj _ _ h1 h2 =>
+     simp only [fml.ren, h1, h2, fml.subst]
+   | disj _ _ h1 h2 =>
+     simp only [fml.ren, h1, h2, fml.subst]
    | infdisj _ _ => sorry
    | eq _ _ =>
-     simp[fml.ren,fml.subst,ren_subst];constructor;rfl;rfl
-   | existsQ _ _ =>
-     rename_i m a h
-     simp[fml.ren,fml.subst,h,lift_subst,_root_.lift]
+     simp only [fml.ren, ren_subst, fml.subst, fml.eq.injEq]
+     exact ⟨by rfl, by rfl⟩
+   | existsQ _ h =>
+     simp only [fml.ren, h, _root_.lift, fml.subst, fml.existsQ.injEq]
      congr
-     funext
-     rename_i x
-     simp[lift_subst] --qqqqqqq
+     funext x
+     simp only [lift_subst] --qqqqqqq
      induction x using Fin.cases with
      | zero => simp
      | succ i =>
-       simp[tm.ren]
+       simp only [Fin.cases_succ, Function.comp_apply, tm.ren]
 
 
 
