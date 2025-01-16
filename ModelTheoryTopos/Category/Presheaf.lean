@@ -273,11 +273,13 @@ namespace SubobjectClassifier
     sInf := SubobjectClassifier.sInf
     le_sup_left := by intros ; simp only [prop, not_forall, Classical.not_imp, FunctorToTypes.comp,
       ChosenFiniteProducts.lift_app_pt,disj, prop, le_sup_left, implies_true]
-    le_sup_right := by intros ; simp ; simp only [disj, prop, le_sup_right, implies_true]
+    le_sup_right := by intros ; simp only [prop, not_forall, Classical.not_imp, FunctorToTypes.comp,
+      ChosenFiniteProducts.lift_app_pt,disj, prop, le_sup_right, implies_true]
     sup_le := by
       intros _ _ _ h1 h2 c x
-      simp[disj, h1 c x, h2 c x]
-    inf_le_left := by intros ; simp ; simp[conj]
+      simp only [prop, disj, FunctorToTypes.comp, ChosenFiniteProducts.lift_app_pt, sup_le_iff,
+        h1 c x, h2 c x, and_self]
+    inf_le_left := by intros ; simp ; simp only [conj, prop, inf_le_left, implies_true]
     inf_le_right := by intros ; simp ; simp[conj]
     le_inf := by
       intros _ _ _ h1 h2 c x
