@@ -25,9 +25,10 @@ namespace ChosenFiniteProducts
 
 
   theorem npow_pt_succ : npow_pt X (n+1) d = lift (fst _ _) (snd _ _ ≫ npow_pt (C:=C) X n d) := by
-    simp [npow_pt, npair]; apply hom_ext <;> simp [nproj]
+    simp only [npow_pt, npair, Fin.coe_eq_castSucc, Fin.coeSucc_eq_succ]; apply hom_ext <;> simp only [nproj,
+      Nat.succ_eq_add_one, Fin.succRecOn_zero, Fin.succRecOn_succ, NatTrans.comp_app, lift_fst]
     · rfl
-    · simp [npair_natural] ;rfl
+    · simp only [npair_natural, lift_snd] ;rfl
 
   theorem npow_pt_iso X n d : IsIso (npow_pt (C:=C) X n d) := by
     induction n with
@@ -35,7 +36,8 @@ namespace ChosenFiniteProducts
       | succ n ih =>
         exists (𝟙 (X.obj d) ⊗ inv (npow_pt X n d)) ; constructor
         · rw [npow_pt_succ, lift_map] ; apply hom_ext <;> simp <;> rfl
-        · simp [npow_pt_succ, npow]
+        · simp only [npow, id_tensorHom, npow_pt_succ, comp_lift, whiskerLeft_fst,
+          whiskerLeft_snd_assoc, IsIso.inv_hom_id, Category.comp_id, lift_fst_snd]
 
   theorem bin_prod_pointwise (X Y : Psh C) c : (X ⊗  Y).obj c = X.obj c ⊗ Y.obj c := rfl
 
@@ -69,12 +71,12 @@ namespace ChosenFiniteProducts
 
   theorem npair_app (X Y: Psh C) n (k : Fin (n+1) -> (X ⟶ Y)) (c : Cᵒᵖ) :
     (npair X Y (n+1) k).app c = lift ((k 0).app c) ((npair X Y n (k ∘ Fin.succ)).app c) := by
-    simp [npair, lift_app]
+    simp only [npair, Fin.coe_eq_castSucc, Fin.coeSucc_eq_succ, lift_app]
     rfl
 
   theorem npair_app_pt (X Y: Psh C) n (k : Fin (n+1) -> (X ⟶ Y)) (c : Cᵒᵖ) (t : X.obj c):
     (npair X Y (n+1) k).app c t = ((k 0).app c t, (npair X Y n (k ∘ Fin.succ)).app c t) := by
-    simp [npair_app]
+    simp only [npair_app]
     rfl
 
   theorem npow_suc_map_fst  (X: Psh C) (c c':Cᵒᵖ ) (f:c ⟶ c') (t: (npow X (n + 1)).obj c): ((npow X (n + 1)).map f t).1 =  X.map f t.1 := rfl
@@ -92,7 +94,7 @@ def entails (S R : Sieve X) : Sieve X where
   downward_closed := by
     intros Y Z f h g Z' g'
     rw [<- Category.assoc]
-    apply h
+    exact (h _ _)
 
 end Sieve
 
@@ -105,11 +107,11 @@ namespace SubobjectClassifier
     map h x := x.pullback h.unop
     map_id := by
       intro
-      simp [Sieve.pullback_id]
+      simp only [unop_id, Sieve.pullback_id]
       rfl
     map_comp := by
       intros
-      simp [Sieve.pullback_comp]
+      simp only [unop_comp, Sieve.pullback_comp]
       rfl
 
   def entail : prop (C:=C) ⊗ prop ⟶ prop where
@@ -124,26 +126,26 @@ namespace SubobjectClassifier
         apply h Z' g'
       · have := h Z' g'
         rw [<-Category.assoc] at this
-        apply this
+        exact this
 
   def top : 𝟙_ (Psh C) ⟶ prop where
     app X := fun _ => (⊤ : Sieve X.unop)
     naturality X Y f := by
       funext
-      simp
+      simp only [prop, types_comp_apply, Sieve.pullback_top]
 
   theorem top_app (c: Cᵒᵖ) (x: (𝟙_ (Psh C)).obj c) (c' : C) (f : c' ⟶ c.unop)
     : (SubobjectClassifier.top.app c x).arrows f := by
-    simp[top]
+    simp only [prop, top, Sieve.top_apply]
 
 
   def bot : 𝟙_ (Psh C) ⟶ prop where
     app X := fun _ => (⊥ : Sieve X.unop)
     naturality X Y f := by
       funext
-      simp [Sieve.ext_iff]
+      simp only [prop, types_comp_apply, Sieve.ext_iff, Sieve.pullback_apply]
       intros
-      constructor <;> apply False.elim
+      constructor <;> exact False.elim
 
   def conj : prop (C:=C) ⊗ prop  ⟶ prop where
     app X := fun p => (p.1 ⊓ p.2: Sieve X.unop)
@@ -157,11 +159,12 @@ namespace SubobjectClassifier
         arrows :=  fun Y f => A.map f.op as.1 = A.map f.op as.2
         downward_closed := by
           intros _ _ _ eq _
-          simp [eq]
+          simp only [Opposite.op_unop, op_comp, FunctorToTypes.map_comp_apply, eq]
       }
     naturality X Y f := by
       funext as
-      simp [Sieve.ext_iff]
+      simp only [prop, Opposite.op_unop, types_comp_apply, Sieve.ext_iff, Sieve.pullback_apply,
+        op_comp, Quiver.Hom.op_unop, FunctorToTypes.map_comp_apply]
       intros Z g
       constructor <;> exact id
 
@@ -184,14 +187,15 @@ namespace SubobjectClassifier
           constructor
           · calc p.app (Opposite.op Z) a' = (A.map g.op ≫ p.app _) a := rfl
             _ = (p.app _ ≫ B.map g.op) a := by rw [p.naturality g.op]
-            _ = B.map (g ≫ f).op b := by simp [eq]
+            _ = B.map (g ≫ f).op b := by simp only [types_comp_apply, eq, Opposite.op_unop,
+              op_comp, FunctorToTypes.map_comp_apply]
           · have eq : φ.app _ a' = prop.map g.op (φ.app _ a) := by
               calc φ.app _ a' = (A.map g.op ≫ φ.app _) a := rfl
               _ = (φ.app _ ≫ prop.map g.op) a := by rw [φ.naturality g.op]
               _ = prop.map g.op (φ.app _ a) := rfl
-            simp [eq]
+            simp only [prop, eq, Quiver.Hom.unop_op, Sieve.pullback_apply, Category.id_comp]
             have := (φ.app _ a).downward_closed h g
-            simp at this
+            simp only [prop, Category.comp_id] at this
             exact this
       }
 
@@ -212,15 +216,17 @@ namespace SubobjectClassifier
       funext x
       rw [Sieve.ext_iff]
       intros Ξ f ; constructor
-      · simp ; intros p hp hf
+      · simp only [prop, exists_prop, types_comp_apply, Sieve.sSup_apply, Set.mem_setOf_eq,
+        exists_exists_and_eq_and, Sieve.pullback_apply, forall_exists_index, and_imp] ; intros p hp hf
         exists p ; constructor ; assumption
         rw [<-types_comp_apply (X.map g) (p.app Δ), p.naturality g] at hf
-        simp at hf
+        simp only [types_comp_apply, Sieve.pullback_apply] at hf
         exact hf
-      · simp ; intros p hp hf
+      · simp only [prop, exists_prop, types_comp_apply, Sieve.pullback_apply, Sieve.sSup_apply,
+        Set.mem_setOf_eq, exists_exists_and_eq_and, forall_exists_index, and_imp] ; intros p hp hf
         exists p ; constructor ; assumption
         rw [<-types_comp_apply (X.map g) (p.app Δ), p.naturality g]
-        simp
+        simp only [types_comp_apply, Sieve.pullback_apply]
         exact hf
 
   def sInf {X : Psh C} (P : Set (X ⟶ prop)) : X ⟶ prop where
@@ -232,15 +238,17 @@ namespace SubobjectClassifier
       funext x
       rw [Sieve.ext_iff]
       intros Ξ f ; constructor
-      · simp ; intros hf p hp
+      · simp only [prop, exists_prop, types_comp_apply, Sieve.sInf_apply, Set.mem_setOf_eq,
+        forall_exists_index, and_imp, forall_apply_eq_imp_iff₂, Sieve.pullback_apply] ; intros hf p hp
         have := hf p hp
         rw [<-types_comp_apply (X.map g) (p.app Δ), p.naturality g] at this
-        simp at this
+        simp only [types_comp_apply, Sieve.pullback_apply] at this
         exact this
-      · simp ; intros hf p hp
+      · simp only [prop, exists_prop, types_comp_apply, Sieve.pullback_apply, Sieve.sInf_apply,
+        Set.mem_setOf_eq, forall_exists_index, and_imp, forall_apply_eq_imp_iff₂] ; intros hf p hp
         rw [<-types_comp_apply (X.map g) (p.app Δ), p.naturality g]
-        simp
-        apply hf ; assumption
+        simp only [types_comp_apply, Sieve.pullback_apply]
+        exact hf _ hp
 
 
   noncomputable
@@ -250,19 +258,22 @@ namespace SubobjectClassifier
       lhs ≤ (g.app Γ x : Sieve Γ.unop)
     le_refl := by intros f Γ x ; apply le_refl
     le_trans := by
-      intros f g h fg gh Γ x ; eapply le_trans
-      · apply fg
-      · apply gh
+      intros f g h fg gh Γ x ;
+     -- exact le_trans (gh _ _) (fg _ _)
+      eapply le_trans
+      · exact fg _ _
+      · exact gh _ _
     le_antisymm := by
-      intros f g fg gf ; ext Γ x ; simp [prop] ; apply le_antisymm <;> aesop
+      intros f g fg gf ; ext Γ x ; simp only [prop] ; apply le_antisymm <;> simp_all only [prop]
     top := ChosenFiniteProducts.toUnit _ ≫ SubobjectClassifier.top
     bot := ChosenFiniteProducts.toUnit _ ≫ SubobjectClassifier.bot
     sup φ ψ := ChosenFiniteProducts.lift φ ψ ≫ disj
     inf φ ψ := ChosenFiniteProducts.lift φ ψ ≫ conj
     sSup := SubobjectClassifier.sSup
     sInf := SubobjectClassifier.sInf
-    le_sup_left := by intros ; simp ; simp[disj]
-    le_sup_right := by intros ; simp ; simp [disj]
+    le_sup_left := by intros ; simp only [prop, not_forall, Classical.not_imp, FunctorToTypes.comp,
+      ChosenFiniteProducts.lift_app_pt,disj, prop, le_sup_left, implies_true]
+    le_sup_right := by intros ; simp ; simp only [disj, prop, le_sup_right, implies_true]
     sup_le := by
       intros _ _ _ h1 h2 c x
       simp[disj, h1 c x, h2 c x]
