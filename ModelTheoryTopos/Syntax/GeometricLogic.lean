@@ -262,6 +262,36 @@ namespace Hilbert
       --existsQ_elim : proof (fml.ren Fin.succ (.existsQ φ)) φ
     | ren : proof φ ψ -> proof (fml.ren ρ φ) (fml.ren ρ ψ)
 
+  variable {T : theory}
+
+  def proof.existn_intro {n k : Subst T.sig} (σ : n ⟶ k) (ψ : fml T.sig k) (φ : fml T.sig (k + n)) :
+    proof ψ (φ.subst (substn σ)) -> proof ψ φ.existsn := by
+    induction n generalizing ψ with
+    | zero => simp only [substn0, fml.existsn] ; intros; rw [<-φ.subst_id]; assumption
+    | succ i ih =>
+      simp only [substnsucc, fml.existsn, fml.subst_comp]
+      intros h
+      apply ih (σ ∘ Fin.succ)
+      simp only [fml.subst]
+      apply cut h
+      apply existsQ_intro
+
+  def proof.existn_elim {n k : Subst T.sig} (σ : n ⟶ k) (ψ : fml T.sig k) (φ : fml T.sig (k + n)) :
+    proof φ (ψ.ren (fun i ↦ i.addNat n)) -> proof φ.existsn ψ  := by
+    induction n generalizing ψ with
+    | zero =>
+      simp only [fml.existsn, Fin.addNat_zero]
+      intros
+      rw [<-(fml.ren_id ψ)]
+      assumption
+    | succ i ih =>
+      simp only [fml.existsn]
+      intros
+      apply ih (σ ∘ Fin.succ)
+      apply existsQ_elim
+      rw [<-fml.ren_comp]
+      assumption
+
 end Hilbert
 
 namespace SyntacticSite
