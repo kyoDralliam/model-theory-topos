@@ -25,6 +25,16 @@ namespace CategoryTheory.ChosenFiniteProducts
     | 0 => toUnit x
     | n+1 => lift (k 0) (npair x y n (fun i => k (i+1)))
 
+  theorem npair_succ {x y : D} {n : Nat} (k : Fin (n+1) → (x ⟶ y)) :
+    npair x y (n+1) k = lift (k 0) (npair x y n (fun i ↦ k (i+1))) := by
+    rfl
+
+  -- theorem npair_succ {x y : D} {n : Nat} (k : Fin (n+1) → (x ⟶ y)) :
+  --   npair x y (n+1) k = lift (k 0) (npair x y n (k ∘ Fin.succ)) := by
+  --   have : k ∘ Fin.succ = fun (i : Fin n) ↦ k (i+1) := by funext i ; simp
+  --   rw [this]
+  --   rfl
+
   theorem npair_univ {x y : D} (n : Nat) (k : Fin n → (x ⟶ y)) (f : x ⟶ npow y n)
     (h : forall i : Fin n, k i = f ≫ nproj y n i) :
     npair x y n k = f := by

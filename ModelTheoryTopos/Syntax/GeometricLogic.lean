@@ -62,6 +62,32 @@ def fml.subst {n n' : Subst m} (f : n ⟶ n') : fml m n → fml m n'
 | .eq t u => .eq (t.subst f) (u.subst f)
 | .existsQ φ => .existsQ (φ.subst (lift_subst f))
 
+theorem fml.ren_to_subst  (f : n ⟶ n') (φ: fml S n):
+  (fml.ren f φ) = fml.subst (fun i => tm.var (f i)) φ := by
+  induction φ generalizing n' with
+  | pred p _ =>
+    simp only [fml.ren, tm.ren_to_subst, fml.subst, fml.pred.injEq, heq_eq_eq, true_and];rfl
+  | true => simp only [fml.ren, fml.subst]
+  | false => simp only [fml.ren, fml.subst]
+  | conj _ _ h1 h2 =>
+    simp only [fml.ren, h1, h2, fml.subst]
+  | disj _ _ h1 h2 =>
+    simp only [fml.ren, h1, h2, fml.subst]
+  | infdisj _ ih =>
+    simp only [fml.ren, fml.subst, ih]
+  | eq _ _ =>
+    simp only [fml.ren, tm.ren_to_subst, fml.subst, fml.eq.injEq]
+    exact ⟨by rfl, by rfl⟩
+  | existsQ _ ih =>
+    simp only [fml.ren, fml.subst, ih]
+    congr
+    funext i
+    simp [lift_subst, _root_.lift]
+    induction i using Fin.cases with
+    | zero => simp
+    | succ i =>
+      simp only [Fin.cases_succ, Function.comp_apply, tm.ren]
+
 open CategoryTheory
 
 theorem fml.ren_id {n : RenCtx} (f : fml m n)

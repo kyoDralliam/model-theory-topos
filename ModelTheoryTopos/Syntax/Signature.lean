@@ -97,6 +97,13 @@ theorem tm.subst_id_app {x : Subst m}  (i : Fin x) : (𝟙 x) i = .var i :=
 theorem tm.subst_map {n n' : Subst m} (f : n ⟶ n') (t : tm m n) :
   t.subst f = tm.substitution.bind f t := rfl
 
+theorem tm.ret_var m (n : Subst m) : (tm.substitution (m:=m)).ret n = tm.var := rfl
+
+theorem tm.ren_to_subst {n n' : RenCtx} (f : n ⟶ n') (t : tm m n) :
+  t.ren f = t.subst (tm.var ∘ f) := by
+  rw [tm.ren_map, tm.subst_map]
+  rfl
+
 -- it would have probably been simpler to do the proof directly..
 theorem tm.subst_id (n : Subst m) (t : tm m n) : t.subst (𝟙 n) = t := by
   calc

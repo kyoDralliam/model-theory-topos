@@ -8,6 +8,8 @@ import Mathlib.CategoryTheory.Monoidal.Types.Basic
 import Mathlib.CategoryTheory.Functor.Category
 import Mathlib.CategoryTheory.Sites.Sieves
 import Mathlib.CategoryTheory.Whiskering
+import Mathlib.Order.Hom.CompleteLattice
+import ModelTheoryTopos.Misc
 import ModelTheoryTopos.Category.ChosenFiniteProducts
 import ModelTheoryTopos.Category.NatIso
 
@@ -249,6 +251,7 @@ namespace SubobjectClassifier
         rw [<-types_comp_apply (X.map g) (p.app Δ), p.naturality g]
         simp only [types_comp_apply, Sieve.pullback_apply]
         exact hf _ hp
+
 
 
   noncomputable
@@ -532,12 +535,135 @@ namespace SubobjectClassifier
     f ≤ g -> φ.inv ≫ f ≤ φ.inv ≫ g := by
     apply le_precomp
 
+  theorem iso_hom_precomp_monotone {X Y : Psh C} (φ : X ≅ Y) : Monotone (precomp φ.hom) := by
+    apply le_precomp
+
+  theorem iso_inv_precomp_monotone {X Y : Psh C} (φ : X ≅ Y) : Monotone (precomp φ.inv) := by
+    apply le_iso
+
+  open OrderIso in
+  def precomp_order_iso {X Y : Psh C} (φ : X ≅ Y) : (Y ⟶ prop) ≃o (X ⟶ prop) :=
+    let f : (X ⟶ prop) →o (Y ⟶ prop) := ⟨precomp φ.inv, iso_inv_precomp_monotone φ⟩
+    let g : (Y ⟶ prop) →o (X ⟶ prop) := ⟨precomp φ.hom, iso_hom_precomp_monotone φ⟩
+    OrderIso.ofHomInv g f (by ext ; simp [f, g]) (by ext ; simp [f, g])
+
+  theorem precomp_order_iso_app {X Y : Psh C} (φ : X ≅ Y) (f : Y ⟶ prop):
+    (precomp_order_iso φ) f = φ.hom ≫ f := by rfl
+
+  theorem precomp_order_iso_toFun {X Y : Psh C} (φ : X ≅ Y) (f : Y ⟶ prop):
+    (precomp_order_iso φ).toFun f = φ.hom ≫ f := by rfl
+
+  theorem precomp_order_iso_invFun {X Y : Psh C} (φ : X ≅ Y) (f : X ⟶ prop):
+    (precomp_order_iso φ).invFun f = φ.inv ≫ f := by rfl
+
+  def Sieve.ext' (c : Cᵒᵖ) {R S : Sieve c.unop} (h : ∀ ⦃c'⦄ (f : c ⟶ c'), R f.unop ↔ S f.unop) : R = S := by
+    apply Sieve.ext
+    intros Y f
+    apply h ⟨f⟩
+
+  /- another simple instance of Beck-Chevalley done by hand
+    (applied to the pullback-square corresponding to the cospan θ : B' -> B <- A : p) -/
+  theorem precomp_existQ_iso {A B B' : Psh C} (p : A ⟶ B) (θ : B' ≅ B) (φ : A ⟶ prop) :
+    θ.hom ≫ existQ p φ = existQ (p ≫ θ.inv) φ := by
+    ext c b'
+    apply Sieve.ext' ; intros Y f
+    simp [existQ]
+    have := congrFun (θ.hom.naturality f) b'
+    simp only [types_comp_apply] at this
+    rw [<-this]
+    constructor
+    · rintro ⟨a, ⟨eq,_⟩⟩
+      exists a
+      constructor
+      · rw [eq, <-Iso.app_hom, <-Iso.app_inv]
+        simp?
+      · assumption
+    · rintro ⟨a, ⟨eq,_⟩⟩
+      exists a
+      constructor
+      · rw [<-eq, <-Iso.app_hom, <-Iso.app_inv]
+        simp?
+      · assumption
+
+  theorem existQ_iso {A A' B : Psh C} (p : A' ⟶ B) (θ : A' ≅ A) (φ : A ⟶ prop) :
+    existQ (θ.inv ≫ p) φ = existQ p (θ.hom ≫ φ) := by
+    ext c b
+    apply Sieve.ext' ; intros Y f
+    simp [existQ]
+    constructor
+    · rintro ⟨a, ⟨eq,_⟩⟩
+      exists (θ.inv.app Y a)
+      constructor; assumption
+      simp? ; assumption
+    · rintro ⟨a, ⟨eq,_⟩⟩
+      exists (θ.hom.app Y a)
+      constructor; simp? ; assumption
+      assumption
+
+
+  theorem precomp_existsπ_iso {A B B' : Psh C} (θ : B' ≅ B) (φ : A ⊗ B ⟶ prop) :
+    θ.hom ≫ existπ φ = existπ (A ◁ θ.hom ≫ φ) := by
+    rw [existπ, precomp_existQ_iso]
+    have : snd A B ≫ θ.inv = A ◁ θ.inv ≫ snd A B' :=  by simp
+    let θ' : A ⊗ B' ≅ A ⊗ B := ⟨A ◁ θ.hom, A ◁ θ.inv, by simp , by simp⟩
+    simp only [existπ, this]
+    rw [existQ_iso _ θ']
+
+  def forallQ {A B : Psh C} (p : A ⟶ B) (φ : A ⟶ prop) : B ⟶ prop where
+    app c b := {
+      arrows Y f := forall (Z : C) (g : Z ⟶ Y) (a : A.obj (Opposite.op Z)),
+        p.app _ a = B.map (f.op ≫ g.op) b -> (φ.app _ a).arrows (𝟙 _)
+      downward_closed := by
+        intros Y' Y f h fY Z g a eq
+        apply h Z (g ≫ fY) a
+        simp [eq]
+    }
+
+  def precomp_forallQ_adj {A B : Psh C} (p : A ⟶ B) :
+    GaloisConnection (precomp p) (forallQ p) := by
+    simp only[GaloisConnection, le_to_prop_le_to_prop_id]
+    intros φ ψ
+    constructor
+    · intros l _ x h Z g a eq
+      apply l
+      simp [precomp, eq]
+      have := congrFun (φ.naturality g.op) x
+      simp at this
+      simp [this]
+      have := (φ.app _ x).downward_closed h g
+      simp at this
+      assumption
+    · intros l _ x h
+      apply l _ (p.app _ x) h _ (𝟙 _)
+      simp
+
+  local instance precomp_sSupHom {A B : Psh C} (p : A ⟶ B) : sSupHom (B ⟶ prop) (A ⟶ prop) :=
+    GaloisConnection.sSupHomLeft (precomp_forallQ_adj p)
+
+  def precomp_iSup {A B : Psh C} (p : A ⟶ B) {I} (f : I -> (B ⟶ prop)) :
+    p ≫ (⨆ i, f i) = ⨆ i, p ≫ (f i) := by
+    calc p ≫ ⨆ i, f i = (precomp_sSupHom p) (⨆ i, f i) := by rfl
+                    _ = ⨆ i, (precomp_sSupHom p) (f i) := by
+                          apply map_iSup (precomp_sSupHom p) f
+                    _  = ⨆ i, p ≫ f i  := by rfl
 end SubobjectClassifier
 
 namespace BaseChange
   variable {C D : Type} [Category C] [Category D] (F : Functor C D)
 
   namespace ChosenFiniteProducts
+
+    noncomputable
+    def pb_prod_pair (X Y : Psh D) : F.op ⋙ (X ⊗ Y) ⟶ (F.op ⋙ X) ⊗ (F.op ⋙ Y) :=
+      ChosenFiniteProducts.lift
+        (whiskerLeft F.op (ChosenFiniteProducts.fst _ _))
+        (whiskerLeft F.op (ChosenFiniteProducts.snd _ _))
+
+    noncomputable
+    def pb_prod_pair_iso (X Y : Psh D) : F.op ⋙ (X ⊗ Y) ≅ (F.op ⋙ X) ⊗ (F.op ⋙ Y) :=
+      NatIso.ofNatTrans_pt_inv
+        (pb_prod_pair F X Y)
+        (fun c xy ↦ xy)
 
     noncomputable
     def pb_prod (X : Psh D) (n : Nat) : F.op ⋙ npow X n ⟶ npow (F.op ⋙ X) n :=
@@ -549,8 +675,9 @@ namespace BaseChange
 
     theorem ev_map c {X Y : Psh C} (f : X ⟶ Y) : (ev c).map f = f.app c := rfl
 
-    theorem pb_prob0_comm_lemma (X : Psh D) n c :
-     ((pb_prod F X n).app c) ≫ (ChosenFiniteProducts.npow_pt (C:=C) (F.op ⋙ X) n c) = ChosenFiniteProducts.npow_pt (C:=D) X n (F.op.obj c) := by
+    theorem pb_prod_comm_lemma (X : Psh D) n c :
+     ((pb_prod F X n).app c) ≫ (ChosenFiniteProducts.npow_pt (C:=C) (F.op ⋙ X) n c) =
+     ChosenFiniteProducts.npow_pt (C:=D) X n (F.op.obj c) := by
       let h1 := (pb_prod F X n).app c
       let h2 := ChosenFiniteProducts.npow_pt (F.op ⋙ X) n c
       let d := F.op.obj c
@@ -568,22 +695,34 @@ namespace BaseChange
       simp[h1,h2,h3,d] at eq
       exact eq
 
-    theorem pb_prod0_succ (X : Psh D) (m : Nat) :
-      pb_prod F X (m + 1) =
-        lift
-          (whiskerLeft F.op (ChosenFiniteProducts.fst _ _))
-          (whiskerLeft F.op (ChosenFiniteProducts.snd _ _) ≫ pb_prod F X m) := by
+    theorem pb_prod_succ (X : Psh D) (m : Nat) :
+      pb_prod F X (m + 1) = pb_prod_pair F X _ ≫ (_ ◁ pb_prod F X m) := by
       simp [pb_prod, npair]
       congr
       simp [<-npair_natural]
       congr
 
+    theorem pb_prod_succ' (X : Psh D) (m : Nat) :
+      (pb_prod_pair_iso F X _).inv ≫ pb_prod F X (m + 1) = (_ ◁ pb_prod F X m) := by
+        rw [Iso.inv_comp_eq]
+        apply pb_prod_succ
 
-    -- needed ?
-    theorem pb_prod0_pair (X : Psh D) (m : Nat) (Y: Cᵒᵖ)
-      (t : (F.op ⋙ npow X m.succ).obj Y) :
-      (pb_prod F X (m + 1)).app Y t = (t.1, (pb_prod F X m).app Y t.2) := by
-      simp [pb_prod0_succ]
+    -- theorem pb_prod_succ (X : Psh D) (m : Nat) :
+    --   pb_prod F X (m + 1) =
+    --     lift
+    --       (whiskerLeft F.op (ChosenFiniteProducts.fst _ _))
+    --       (whiskerLeft F.op (ChosenFiniteProducts.snd _ _) ≫ pb_prod F X m) := by
+    --   simp [pb_prod, npair]
+    --   congr
+    --   simp [<-npair_natural]
+    --   congr
+
+
+    -- -- needed ?
+    -- theorem pb_prod0_pair (X : Psh D) (m : Nat) (Y: Cᵒᵖ)
+    --   (t : (F.op ⋙ npow X m.succ).obj Y) :
+    --   (pb_prod F X (m + 1)).app Y t = (t.1, (pb_prod F X m).app Y t.2) := by
+    --   simp [pb_prod0_succ]
 
 
     theorem pb_prob_pointwise_inv (X : Psh D) n c : IsIso ((pb_prod F X n).app c) := by
@@ -610,18 +749,17 @@ namespace BaseChange
     def pb_prod_iso (X : Psh D) (n : Nat) : F.op ⋙ npow X n ≅ npow (F.op ⋙ X) n :=
       NatIso.ofNatTrans (pb_prod F X n) (pb_prob_pointwise_inv F X n)
 
-
     theorem pb_prod_hom (X : Psh D) (n : Nat):
       (pb_prod_iso F X n).hom = (pb_prod F X n) := rfl
 
-    noncomputable
-    def pb_prod_iso'  (n : Nat) : npow_functor n ⋙ (whiskeringLeft _ _ _).obj F.op ≅  (whiskeringLeft _ _ Type).obj F.op ⋙ npow_functor n :=
-      NatIso.ofNatTrans (npow_oplax ((whiskeringLeft _ _ Type).obj F.op)) (by
-        intros X
-        simp [npow_oplax]
-        have:= NatIso.ofNatTrans' (pb_prod F X n) (pb_prob_pointwise_inv F X n)
-        simp [pb_prod] at this
-        exact this)
+    -- noncomputable
+    -- def pb_prod_iso'  (n : Nat) : npow_functor n ⋙ (whiskeringLeft _ _ _).obj F.op ≅  (whiskeringLeft _ _ Type).obj F.op ⋙ npow_functor n :=
+    --   NatIso.ofNatTrans (npow_oplax ((whiskeringLeft _ _ Type).obj F.op)) (by
+    --     intros X
+    --     simp [npow_oplax]
+    --     have:= NatIso.ofNatTrans' (pb_prod F X n) (pb_prob_pointwise_inv F X n)
+    --     simp [pb_prod] at this
+    --     exact this)
 
 
     theorem nproj_pb_prod (X : Psh D) (n: ℕ ) (i: Fin n):
@@ -676,33 +814,43 @@ namespace BaseChange
         let x'' : Sieve (F.obj c.unop) := x
         (Sieve.functorPullback F x'' : Sieve _)
 
-    def pb_prop_top :
-      whiskerLeft F.op SubobjectClassifier.top ≫ pb_prop F  =
-      SubobjectClassifier.top := by
-      ext x ⟨⟩
+    theorem pb_prop_le {X : Psh D} (φ ψ : X ⟶ SubobjectClassifier.prop) :
+      φ ≤ ψ → (whiskerLeft F.op φ ≫ pb_prop F) ≤ (whiskerLeft F.op ψ ≫ pb_prop F) := by
+      intros h Ξ x lhs Δ f
+      apply h _ x (F.map f)
+
+    @[simp]
+    def map_pred {X : Psh D} (φ : X ⟶ SubobjectClassifier.prop) :
+      (F.op ⋙ X) ⟶ SubobjectClassifier.prop :=
+        whiskerLeft F.op φ ≫ pb_prop F
+
+    theorem map_pred_comp {X Y: Psh D} (f : X ⟶ Y) (φ : Y ⟶ SubobjectClassifier.prop) :
+      map_pred F (f ≫ φ) = whiskerLeft F.op f ≫ map_pred F φ := by
+      simp only [map_pred, CategoryTheory.whiskerLeft_comp]
       rfl
 
-    def pb_prop_bot :
-      whiskerLeft F.op SubobjectClassifier.bot ≫ pb_prop F  =
-      SubobjectClassifier.bot := by
-      ext x ⟨⟩
+    def map_pred_mon {X : Psh D} : (X ⟶ SubobjectClassifier.prop) →o ((F.op ⋙ X) ⟶ SubobjectClassifier.prop) where
+      toFun φ := map_pred F φ
+      monotone' x y := by apply pb_prop_le
+
+    def pb_prop_top {X : Psh D} : map_pred (X:=X) F ⊤ = ⊤ := by
+      ext x
       rfl
 
-    def pb_prop_conj :
-      whiskerLeft F.op SubobjectClassifier.conj ≫ pb_prop F  =
-      (pb_prop F ⊗ pb_prop F) ≫ SubobjectClassifier.conj := by
-      ext x ⟨φ , ψ⟩
+    def pb_prop_bot {X : Psh D} : map_pred (X:=X) F ⊥ = ⊥ := by
+      ext x
       rfl
 
-    def pb_prop_disj :
-      whiskerLeft F.op SubobjectClassifier.disj ≫ pb_prop F  =
-      (pb_prop F ⊗ pb_prop F) ≫ SubobjectClassifier.disj := by
-      ext x ⟨φ , ψ⟩
+    def pb_prop_conj : map_pred F (φ ⊓ ψ) = map_pred F φ ⊓ map_pred F ψ := by
+      ext x
+      rfl
+
+    def pb_prop_disj : map_pred F (φ ⊔ ψ) = map_pred F φ ⊔ map_pred F ψ := by
+      ext x
       rfl
 
     def pb_prop_eq (X : Psh D) :
-      whiskerLeft F.op (SubobjectClassifier.eq (A:=X)) ≫ pb_prop F =
-      SubobjectClassifier.eq (A:=F.op ⋙ X) := by
+      map_pred F (SubobjectClassifier.eq (A:=X)) = (SubobjectClassifier.eq (A:=F.op ⋙ X)) := by
         ext x ⟨a1 , a2⟩
         apply CategoryTheory.Sieve.arrows_ext
         simp[CategoryTheory.whiskerLeft,pb_prop,
@@ -711,8 +859,8 @@ namespace BaseChange
         simp[Presieve.functorPullback]
 
     theorem pb_prop_existQ {A B : Psh D} (p: A⟶ B) (φ: A ⟶ SubobjectClassifier.prop):
-      whiskerLeft F.op (SubobjectClassifier.existQ p φ)  ≫ pb_prop F =
-      SubobjectClassifier.existQ (whiskerLeft F.op p) ((whiskerLeft F.op φ) ≫ pb_prop F) := by
+      map_pred F (SubobjectClassifier.existQ p φ) =
+      SubobjectClassifier.existQ (whiskerLeft F.op p) (map_pred F φ) := by
         ext c a
         simp
         ext Y f
@@ -720,36 +868,40 @@ namespace BaseChange
         simp[pb_prop]
         simp[SubobjectClassifier.existQ_app_arrows]
 
-    theorem pb_prop_le {X : Psh D} (φ ψ : X ⟶ SubobjectClassifier.prop) :
-      φ ≤ ψ → (whiskerLeft F.op φ ≫ pb_prop F) ≤ (whiskerLeft F.op ψ ≫ pb_prop F) := by
-      intros h Ξ x lhs Δ f
-      apply h _ x (F.map f)
+    theorem pb_prop_existπ {A B : Psh D} (φ: A ⊗ B ⟶ SubobjectClassifier.prop):
+      map_pred F (SubobjectClassifier.existπ φ) =
+      SubobjectClassifier.existπ ((ChosenFiniteProducts.pb_prod_pair_iso F A B).inv ≫ map_pred F φ) := by
+        rw [SubobjectClassifier.existπ, pb_prop_existQ]
+        rfl
 
-    theorem prop_le_precomp {X : Psh D} (φ ψ : X ⟶ SubobjectClassifier.prop) (G: Y ⟶ X):
-      φ ≤ ψ → G ≫ φ ≤ G ≫ ψ := by
-      intros hyp dop x lhs
-      simp[lhs]
-      intros d' f h
-      have := hyp dop (G.app dop x) f
-      apply this
-      assumption
+    -- use SubobjectClassifier.le_precomp
+    -- theorem prop_le_precomp {X : Psh D} (φ ψ : X ⟶ SubobjectClassifier.prop) (G: Y ⟶ X):
+    --   φ ≤ ψ → G ≫ φ ≤ G ≫ ψ := by
+    --   apply SubobjectClassifier.le_precomp
 
     theorem pb_prop_sup {X : Psh D} (P : Set (X ⟶ SubobjectClassifier.prop)) :
-      whiskerLeft F.op (SubobjectClassifier.sSup P) ≫ pb_prop F =
-      SubobjectClassifier.sSup { (whiskerLeft F.op f ≫ pb_prop F) | (f : X ⟶ SubobjectClassifier.prop) (_h : P f) } := by
+      whiskerLeft F.op (sSup P) ≫ pb_prop F = sSup (map_pred F '' P) := by
       ext c x
-      simp [pb_prop, SubobjectClassifier.sSup]
+      simp [pb_prop, sSup, SubobjectClassifier.sSup]
       apply Sieve.ext
       intros
       simp ; constructor
-      · rintro ⟨f , ⟨_,_⟩⟩
+      · rintro ⟨φ, ⟨⟨f, ⟨_, eqφ⟩⟩, _⟩⟩
+        simp [Sieve.sup]
         exists (whiskerLeft F.op f ≫ pb_prop F)
         constructor
         · exists f
-        · simp [pb_prop]; assumption
-      · rintro ⟨f', ⟨⟨f, ⟨_, _⟩⟩, _⟩⟩
+        · simp [pb_prop, eqφ]; assumption
+      · rintro ⟨φ, ⟨⟨f', ⟨⟨f,⟨_,_⟩⟩, eqφ⟩⟩, _⟩⟩
+        simp [Sieve.sup]
+        exists f
         aesop
 
+    open SubobjectClassifier in
+    theorem pb_prop_iSup {X : Psh D} {I} (f : I -> (X ⟶ SubobjectClassifier.prop)) :
+      map_pred F (⨆ i : I, f i) = ⨆ i : I, (map_pred F (f i)) := by
+        rw [map_pred, iSup, pb_prop_sup F (Set.range fun i ↦ f i),<-Set.range_comp]
+        rfl
   end SubobjectClassifier
 
 end BaseChange
