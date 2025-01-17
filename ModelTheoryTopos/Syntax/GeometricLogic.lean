@@ -68,32 +68,6 @@ def fml.subst {n n' : Subst m} (f : n ⟶ n') : fml m n → fml m n'
 | .eq t u => .eq (t.subst f) (u.subst f)
 | .existsQ φ => .existsQ (φ.subst (lift_subst f))
 
-theorem fml.ren_to_subst  (f : n ⟶ n') (φ: fml S n):
-  (fml.ren f φ) = fml.subst (fun i => tm.var (f i)) φ := by
-  induction φ generalizing n' with
-  | pred p _ =>
-    simp only [fml.ren, tm.ren_to_subst, fml.subst, fml.pred.injEq, heq_eq_eq, true_and];rfl
-  | true => simp only [fml.ren, fml.subst]
-  | false => simp only [fml.ren, fml.subst]
-  | conj _ _ h1 h2 =>
-    simp only [fml.ren, h1, h2, fml.subst]
-  | disj _ _ h1 h2 =>
-    simp only [fml.ren, h1, h2, fml.subst]
-  | infdisj _ ih =>
-    simp only [fml.ren, fml.subst, ih]
-  | eq _ _ =>
-    simp only [fml.ren, tm.ren_to_subst, fml.subst, fml.eq.injEq]
-    exact ⟨by rfl, by rfl⟩
-  | existsQ _ ih =>
-    simp only [fml.ren, fml.subst, ih]
-    congr
-    funext i
-    simp [lift_subst, _root_.lift]
-    induction i using Fin.cases with
-    | zero => simp
-    | succ i =>
-      simp only [Fin.cases_succ, Function.comp_apply, tm.ren]
-
 open CategoryTheory
 
 theorem fml.ren_id {n : RenCtx} (f : fml m n)
@@ -402,12 +376,19 @@ theorem Hilbert.proof.conjn  {T: theory} {k : ℕ} {n : RenCtx} (φ: fml T.sig n
        intro i
        have := h (Fin.succ i)
        assumption
-     rw[fml.conjn]
-     sorry
+     rw[fml.conjn_succ]
+     apply Hilbert.proof.conj_intro
+     · apply h
+     · assumption
 
 theorem Hilbert.proof.eqs  {T: theory} {k : ℕ} {n : RenCtx} (φ: fml T.sig n) (ts1 ts2: Fin k → tm T.sig n):
  (∀ (i: Fin k), Hilbert.proof φ (fml.eq  (ts1 i) (ts2 i))) →
-  Hilbert.proof φ (fml.eqs ts1 ts2) := sorry
+  Hilbert.proof φ (fml.eqs ts1 ts2) := by
+  simp only[fml.eqs]
+  intro h
+  apply Hilbert.proof.conjn
+  assumption
+
   /-induction k with
   | zero => simp only [IsEmpty.forall_iff, fml.eqs, fml.conjn, Fin.foldr_zero,
     Hilbert.proof.true_intro, imp_self]
