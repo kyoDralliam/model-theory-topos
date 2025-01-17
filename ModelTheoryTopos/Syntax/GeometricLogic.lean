@@ -24,6 +24,12 @@ def fml.existsn : {n' : Nat} -> fml m (n + n') -> fml m n
 def fml.conjn {k : ℕ} (fs: Fin k -> fml m n): fml m n :=
   Fin.foldr k (.conj ∘ fs) .true
 
+theorem fml.conjn_succ {k : ℕ} (fs: Fin (k + 1) -> fml m n):
+   fml.conjn fs = fml.conj (fs ((0 : Fin (k + 1)))) (fml.conjn (fs ∘ Fin.succ)) := by
+    rw[fml.conjn,Fin.foldr_succ]
+    simp only [Function.comp_apply, conj.injEq, true_and]
+    rw[fml.conjn]
+    congr
 
 def fml.eqs (lhs rhs : Fin k -> tm m n) : fml m n :=
   fml.conjn  fun i => .eq (lhs i) (rhs i)
@@ -384,12 +390,44 @@ theorem fml.subst_eqs :
 
 
 
+theorem Hilbert.proof.conjn  {T: theory} {k : ℕ} {n : RenCtx} (φ: fml T.sig n) (fs: Fin k → fml T.sig n) :
+ (∀ (i: Fin k), Hilbert.proof φ (fs i)) → Hilbert.proof φ (fml.conjn fs) := by
+   induction k with
+   | zero =>
+     simp only [IsEmpty.forall_iff, fml.conjn, Fin.foldr_zero, Hilbert.proof.true_intro, imp_self]
+   | succ n1 ih =>
+     intro h
+     have h1 : Hilbert.proof φ (fml.conjn (fs ∘ Fin.succ)) := by
+       apply ih (fs ∘ Fin.succ)
+       intro i
+       have := h (Fin.succ i)
+       assumption
+     rw[fml.conjn]
+     sorry
+
+theorem Hilbert.proof.eqs  {T: theory} {k : ℕ} {n : RenCtx} (φ: fml T.sig n) (ts1 ts2: Fin k → tm T.sig n):
+ (∀ (i: Fin k), Hilbert.proof φ (fml.eq  (ts1 i) (ts2 i))) →
+  Hilbert.proof φ (fml.eqs ts1 ts2) := sorry
+  /-induction k with
+  | zero => simp only [IsEmpty.forall_iff, fml.eqs, fml.conjn, Fin.foldr_zero,
+    Hilbert.proof.true_intro, imp_self]
+  | succ n1 ih =>
+
+    sorry-/
+
+
+
 theorem id_rep_functional  {T: theory} {n : RenCtx} (φ: fml T.sig n) :
   functional φ φ (id_rep φ) where
     total := by
       apply Hilbert.proof.existn_intro (fun i => tm.var i)
-      rw[id_rep,fml.subst]
-      sorry
+      rw[id_rep,fml.subst,fml.subst_eqs]
+      apply Hilbert.proof.conj_intro
+      · sorry
+      · apply Hilbert.proof.eqs
+        intro i
+
+        sorry
     range := sorry
     unique := sorry
 @[simp]
