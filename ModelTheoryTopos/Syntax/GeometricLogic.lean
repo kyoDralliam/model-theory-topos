@@ -21,11 +21,12 @@ def fml.existsn : {n' : Nat} -> fml m (n + n') -> fml m n
 | 0, φ => φ
 | _+1, φ => existsn φ.existsQ
 
-def fml.conjn (k : ℕ) (fs: Fin k -> fml m n): fml m n :=
-  (List.ofFn fs).foldr .conj .true
+def fml.conjn {k : ℕ} (fs: Fin k -> fml m n): fml m n :=
+  Fin.foldr k (.conj ∘ fs) .true
+
 
 def fml.eqs (lhs rhs : Fin k -> tm m n) : fml m n :=
-  fml.conjn k fun i => .eq (lhs i) (rhs i)
+  fml.conjn  fun i => .eq (lhs i) (rhs i)
 
 
 -- x1, .., xn | φ ⊢ ψ
@@ -319,7 +320,44 @@ structure functional {T: theory} {n1 n2 : RenCtx} (φ: fml T.sig n1) (ψ : fml T
  range: Hilbert.proof θ ((φ.ren R.in10).conj (ψ.ren R.in01))
  unique : Hilbert.proof ((θ.ren R.in101).conj (θ.ren R.in110)) (fml.eqs (tm.var ∘ R.in010) (tm.var ∘ R.in001))
 
+def id_rep {T: theory} {n : RenCtx} (φ: fml T.sig n) : fml T.sig (n+n) :=
+ (φ.ren R.in10).conj
+ (fml.eqs (tm.var ∘ R.in10) (tm.var ∘ R.in01))
 
+#check fml.eqs
+#check substn
+#check tm.subst
+
+---def foo {n1 n2: RenCtx} ()
+
+theorem fml.subst_conjn {k n n': RenCtx} (σ : Fin n -> tm m n') (fs: Fin k -> fml m n):
+ fml.subst σ (fml.conjn fs) = fml.conjn (fun i => fml.subst σ (fs i)) := by
+  --simp[fml.conjn]
+   induction k generalizing n with
+   | zero =>
+     simp only [fml.conjn, List.ofFn, Fin.foldr,
+          Nat.zero_eq,Fin.foldr.loop,List.foldr,fml.subst]
+   | succ n1 ih =>
+     have := ih σ
+     simp only[fml.conjn,fml.subst, List.foldr,List.ofFn]
+     sorry
+
+
+theorem fml.subst_eqs :
+  fml.subst σ (fml.eqs ts1 ts2) =
+  fml.eqs (fun i => tm.subst σ (ts1 i)) (fun i => tm.subst σ (ts2 i)) := by
+   simp[fml.subst,fml.eqs]
+   sorry
+
+
+theorem id_rep_functional  {T: theory} {n : RenCtx} (φ: fml T.sig n) :
+  functional φ φ (id_rep φ) where
+    total := by
+      apply Hilbert.proof.existn_intro (fun i => tm.var i)
+      rw[id_rep,fml.subst]
+      sorry
+    range := sorry
+    unique := sorry
 @[simp]
 def fml_equiv {T: theory} {n : RenCtx} (φ ψ: fml T.sig n) := Hilbert.proof φ ψ ∧ Hilbert.proof ψ φ
 
