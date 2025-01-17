@@ -347,13 +347,15 @@ theorem fml.subst_conjn {k n n': RenCtx} (σ : Fin n -> tm m n') (fs: Fin k -> f
      simp only[fml.subst_conj]
      congr
 
-
+theorem fml.subst_eq:
+  fml.subst σ (fml.eq t1 t2) = fml.eq (tm.subst σ t1) (tm.subst σ t2) := rfl
 
 theorem fml.subst_eqs :
   fml.subst σ (fml.eqs ts1 ts2) =
   fml.eqs (fun i => tm.subst σ (ts1 i)) (fun i => tm.subst σ (ts2 i)) := by
-   simp[fml.subst,fml.eqs]
-   sorry
+   simp only[fml.subst,fml.eqs]
+   simp only[fml.subst_conjn,fml.subst_eq]
+
 
 
 theorem id_rep_functional  {T: theory} {n : RenCtx} (φ: fml T.sig n) :
