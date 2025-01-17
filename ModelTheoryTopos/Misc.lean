@@ -1,7 +1,6 @@
 import Mathlib.Order.Hom.CompleteLattice
 import Mathlib.Order.GaloisConnection
 
-#check Fin.addCases
 
 namespace Fin
 /-- `castAdd' m i` embeds `i : Fin m` in `Fin (n+m)`. See also `Fin.natAdd` and `Fin.addNat`. -/

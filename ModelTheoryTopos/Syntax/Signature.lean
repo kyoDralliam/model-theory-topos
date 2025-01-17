@@ -175,8 +175,8 @@ theorem subst0_lift_subst {n n' : Subst m} (a : tm m n) (σ : n ⟶ n') :
   subst0 a ≫ σ = lift_subst σ ≫ subst0 (a.subst σ) := by
   funext x
   induction x using Fin.cases
-  · simp only [CategoryStruct.comp, RelativeMonad.bind, Function.comp_apply, subst0,
-    Fin.cases_zero, tm.subst]
+  · simp only [CategoryStruct.comp, RelativeMonad.bind, Function.comp_apply,
+      subst0, lift_subst, Fin.cases_zero, tm.subst]
   · simp only [CategoryStruct.comp, RelativeMonad.bind, Function.comp_apply, tm.subst, Fin.eta,
     lift_subst, Fin.cases_succ, ← tm.ren_subst_comp]
     symm ; apply tm.subst_id_ext
@@ -188,7 +188,7 @@ theorem lift_subst_subst0 {n n' : Subst m} (σ : (n+1) ⟶ n') :
   lift_subst (σ ∘ Fin.succ) ≫ subst0 (σ (0 : Fin (n+1))) = σ := by
   funext i
   induction i using Fin.cases
-  · simp only [tm.subst_comp_app, tm.subst, subst0, Fin.cases_zero]
+  · simp only [tm.subst_comp_app, tm.subst, subst0, Fin.cases_zero, lift_subst]
   · simp only [tm.subst_comp_app, lift_subst, Fin.cases_succ, Function.comp_apply, ←
     tm.ren_subst_comp]
     apply tm.subst_id_ext
