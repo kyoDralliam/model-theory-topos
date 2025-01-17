@@ -1,6 +1,7 @@
 import Mathlib.Data.List.Defs
 import Mathlib.CategoryTheory.Category.Basic
 import Mathlib.CategoryTheory.Types
+import ModelTheoryTopos.Misc
 import ModelTheoryTopos.Category.RelativeMonad
 
 structure monosig where
@@ -137,6 +138,10 @@ theorem tm.subst_ren_comp {n2 : Subst m} (f : n1 ⟶ n2) (g : Fin n2 ⟶ Fin n3)
     _ = ren g (subst f t) := by rw [ren_map, subst_map]; simp only [RelativeMonad.functor_eq,
       CategoryStruct.comp, Function.comp_apply]
 
+theorem tm.subst_id_ext {n : Subst m} (f : n ⟶ n) (t : tm m n) : f = 𝟙 n → t.subst f = t := by
+  rintro rfl
+  simp [subst_id]
+
 
 
 instance : OfNat (Subst m) n where
@@ -151,51 +156,11 @@ instance : HAdd  Nat (Subst m) (Subst m) where
 instance : HAdd  (Subst m) (Subst m) (Subst m) where
   hAdd := fun k l => tm.substitution.to_kl (tm.substitution.from_kl k + tm.substitution.from_kl l)
 
-
-namespace Fin
-/-- `castAdd m i` embeds `i : Fin n` in `Fin (n+m)`. See also `Fin.natAdd` and `Fin.addNat`. -/
-@[inline] def castAdd' (n) : Fin m → Fin (n + m) :=
-  castLE <| Nat.le_add_left m n
-
-@[simp] theorem castAdd'_castLT (n : Nat) (i : Fin (n + m)) (hi : i.val < m) :
-    castAdd' n (castLT i hi) = i := rfl
-
-@[simp] theorem coe_castAdd' (m : Nat) (i : Fin n) : (castAdd' m i : Nat) = i := rfl
-
-theorem castAdd'_lt {m : Nat} (n : Nat) (i : Fin m) : (castAdd' n i : Nat) < m := by simp only [coe_castAdd',
-  is_lt]
-
-@[elab_as_elim] def casesAdd {m n : Nat} {motive : Fin (m + n) → Sort u}
-    (left : ∀ i : Fin m, motive (addNat i n)) (right : ∀ i : Fin n, motive (castAdd' m i))
-    (i : Fin (m + n)) : motive i :=
-  if hi : (i : Nat) < n then (castAdd'_castLT m i hi) ▸ (right (castLT i hi))
-  else (addNat_subNat (Nat.le_of_not_lt hi)) ▸ (left _)
-
-@[simp] theorem casesAdd_left {m n : Nat} {motive : Fin (m + n) → Sort _} {left right} (i : Fin m) :
-    casesAdd (motive := motive) left right (addNat i n) = left i := by
-  have : ¬(addNat i n : Nat) < n := Nat.not_lt.2 (le_coe_addNat ..)
-  rw [casesAdd, dif_neg this]; exact eq_of_heq <| (eqRec_heq _ _).trans (by congr 1; simp)
-
-@[simp]
-theorem casesAdd_right {m n : Nat} {motive : Fin (m + n) → Sort _} {left right} (i : Fin n) :
-    casesAdd (motive := motive) left right (castAdd' m i) = right i := by
-  rw [casesAdd, dif_pos (castAdd'_lt _ _)]; rfl
-
--- @[simp] theorem casesAdd_left_le {m n : Nat} {motive : Fin (m + n) → Sort _} {left right} (i : Fin (m + n)) (h : n ≤ i) :
---     casesAdd (motive := motive) left right i = left i := by
---   have : ¬(addNat i n : Nat) < n := Nat.not_lt.2 (le_coe_addNat ..)
---   rw [casesAdd, dif_neg this]; exact eq_of_heq <| (eqRec_heq _ _).trans (by congr 1; simp)
-
-end Fin
-
 def subst0 {m} {n : Subst m} (a : tm m n) : (n+1) ⟶ n :=
   Fin.cases a (tm.substitution.ret _)
 
 def substn {m} {n n' : Subst m} (σ : n ⟶ n') : (n'+n) ⟶ n' :=
   Fin.casesAdd (tm.substitution.ret _) σ
-
--- def substn {m} {n n' : Subst m} (σ : n ⟶ n') : (n+n') ⟶ n' :=
---   Fin.addCases σ (tm.substitution.ret _)
 
 def lift_subst {n n' : Subst m} (f : n ⟶ n') : (n+1) ⟶ (n'+1) :=
   Fin.cases (.var 0) (tm.ren Fin.succ ∘ f)
@@ -204,15 +169,6 @@ def liftn_subst {n: Nat} {k k' : Subst m} (f : k ⟶ k') : (k+n) ⟶ (k'+n) :=
   Fin.casesAdd
     (tm.ren (fun i ↦ Fin.addNat i n) ∘ f)
     (fun i ↦ .var (i.castAdd' k'))
-
--- def liftn_subst {n: Nat} {k k' : Subst m} (f : k ⟶ k') : (n+k) ⟶ (n+k') :=
---   Fin.addCases
---     (fun i ↦ .var (i.castAdd k'))
---     (tm.ren (Fin.natAdd n) ∘ f)
-
-theorem tm.subst_id_ext {n : Subst m} (f : n ⟶ n) (t : tm m n) : f = 𝟙 n → t.subst f = t := by
-  rintro rfl
-  rw [subst_id]
 
 
 theorem subst0_lift_subst {n n' : Subst m} (a : tm m n) (σ : n ⟶ n') :

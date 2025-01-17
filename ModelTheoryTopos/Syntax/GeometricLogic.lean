@@ -1,6 +1,7 @@
 import Mathlib.Data.List.Defs
 import Mathlib.CategoryTheory.Category.Basic
 import Mathlib.CategoryTheory.Types
+import ModelTheoryTopos.Misc
 import ModelTheoryTopos.Syntax.Signature
 
 
@@ -303,16 +304,15 @@ end Hilbert
 namespace SyntacticSite
 
 
-  namespace R
-    def in10 : Fin n -> Fin (n + k) := Fin.castAdd k
-    def in01 : Fin n -> Fin (k + n) := Fin.natAdd k
-    def in101 : Fin (n + k) -> Fin (n + k + k) :=
-      Fin.addCases (Fin.castAdd k ∘ Fin.castAdd k) (Fin.natAdd (n + k))
-    def in110 : Fin (n + k) -> Fin (n + k + k) := Fin.castAdd k
-    def in001 : Fin k -> Fin (n + k + k) := Fin.natAdd (n+k)
-    def in010 : Fin k -> Fin (n + k + k) :=
-      Fin.castAdd k ∘ Fin.natAdd n
-  end R
+namespace R
+abbrev in10 (i : Fin n) : Fin (n + k) := i.addNat k
+abbrev in01 (i : Fin n) : Fin (k + n) := i.castAdd' k
+abbrev in101 : Fin (n + k) -> Fin (n + k + k) :=
+  Fin.casesAdd (in10 ∘ in10) in01
+abbrev in110 : Fin (n + k) -> Fin (n + k + k) := in10
+abbrev in001 : Fin k -> Fin (n + k + k) := in01
+abbrev in010 : Fin k -> Fin (n + k + k) := in10 ∘ in01
+end R
 
 structure functional {T: theory} {n1 n2 : RenCtx} (φ: fml T.sig n1) (ψ : fml T.sig n2) (θ  : fml T.sig (n1 + n2)) where
  total : Hilbert.proof φ θ.existsn
@@ -340,52 +340,6 @@ theorem fml_equiv_Equivalence {T: theory} {n : RenCtx} : Equivalence (@fml_equiv
 structure theory_fml (T: theory) where
   ctx: RenCtx
   fml : fml T.sig n
-
-
-  -- KM: The rest of the definitions in this namespace are not used, are they ?
-
--- def theory_fml_equiv (T: theory) : theory_fml T → theory_fml T → Prop := fun
---   | .mk c1 f1 => fun
---     | .mk c2 f2 =>
---        c1 = c2 ∧
---        let f11 : fml T.sig c1 := f1
---        let f22 : fml T.sig c1 := f2
---        fml_equiv f11 f22
---       /-
---  φ.n = ψ.n ∧
---  let f: fml T.sig φ.n := ψ.fml
---  fml_equiv φ.fml ψ.fml-/
-
--- theorem Hilbert_proof_refl {T: theory} (f :fml T.sig n ): Hilbert.proof f f := by
---  have := @Hilbert.proof.var T n f
---  assumption
-
-
--- theorem theory_fml_equiv_Equivalence : Equivalence (theory_fml_equiv T) where
---   refl := by
---     intros x; simp[theory_fml_equiv,fml_equiv,Hilbert_proof_refl]
---   symm := sorry /-by
---     intros x y asm
---     simp[theory_fml_equiv] at *
---     cases asm
---     rename_i eq p
-
---     have p' : @fml_equiv T y.ctx x.fml y.fml := p
---     simp[asm,fml_equiv] at *
---     cases asm
---     rename_i l r
---     constructor
---     · assumption
---     · assumption-/
-
---   trans := sorry
-
--- --why def works whereas definition does not????
--- def theory_fml_Setoid (T: theory): Setoid (theory_fml T) where
---   r := theory_fml_equiv T
---   iseqv := theory_fml_equiv_Equivalence
-
--- def fml_class {T: theory} {n : RenCtx} := Quotient (theory_fml_Setoid T)
 
 
 end SyntacticSite
