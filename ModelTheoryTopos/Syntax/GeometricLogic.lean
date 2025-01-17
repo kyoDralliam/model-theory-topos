@@ -329,18 +329,24 @@ def id_rep {T: theory} {n : RenCtx} (φ: fml T.sig n) : fml T.sig (n+n) :=
 #check tm.subst
 
 ---def foo {n1 n2: RenCtx} ()
+theorem fml.subst_conj {n n': RenCtx} (σ : Fin n -> tm m n') (φ ψ: fml m n) :
+ fml.subst σ (fml.conj φ ψ) = fml.conj (fml.subst σ φ) (fml.subst σ ψ) := rfl
 
 theorem fml.subst_conjn {k n n': RenCtx} (σ : Fin n -> tm m n') (fs: Fin k -> fml m n):
  fml.subst σ (fml.conjn fs) = fml.conjn (fun i => fml.subst σ (fs i)) := by
   --simp[fml.conjn]
    induction k generalizing n with
    | zero =>
-     simp only [fml.conjn, List.ofFn, Fin.foldr,
-          Nat.zero_eq,Fin.foldr.loop,List.foldr,fml.subst]
+     simp only [fml.conjn,  Fin.foldr,
+          Nat.zero_eq,Fin.foldr.loop,fml.subst]
    | succ n1 ih =>
-     have := ih σ
-     simp only[fml.conjn,fml.subst, List.foldr,List.ofFn]
-     sorry
+     have := ih σ (fs ∘ Fin.succ)--(fun i => fs (Fin.castAdd 1 i))
+     simp only[fml.conjn,fml.subst]
+     simp only[Fin.foldr_succ]
+     simp only [Nat.succ_eq_add_one, Function.comp_apply]
+     simp only[fml.subst_conj]
+     congr
+
 
 
 theorem fml.subst_eqs :
