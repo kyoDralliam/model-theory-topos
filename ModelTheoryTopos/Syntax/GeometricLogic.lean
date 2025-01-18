@@ -353,21 +353,32 @@ structure functional {T: theory} {n1 n2 : RenCtx} (φ: fml T.sig n1) (ψ : fml T
  range: Hilbert.proof θ ((φ.ren R.in10).conj (ψ.ren R.in01))
  unique : Hilbert.proof ((θ.ren R.in101).conj (θ.ren R.in110)) (fml.eqs (tm.var ∘ R.in010) (tm.var ∘ R.in001))
 
+
+/-namespace Example
+
+  def phi : fml S 1 := fml.existsQ (.eq (.var 0) (.var 1))
+
+  def psi : (Fml S).obj 2 := .eq (.var (0 : Fin 2)) (.var (1 : Fin 2))
+
+  def proof_phi : Hilbert.proof (T:=T) .true phi := by
+    simp only [phi]
+    apply Hilbert.proof.cut (τ:=psi[(.var 0)..])
+    · apply Hilbert.proof.eq_intro
+    · apply Hilbert.proof.existsQ_intro
+
+end Example
+
+
+-/
 def id_rep {T: theory} {n : RenCtx} (φ: fml T.sig n) : fml T.sig (n+n) :=
  (φ.ren R.in10).conj
  (fml.eqs (tm.var ∘ R.in10) (tm.var ∘ R.in01))
 
-#check fml.eqs
-#check substn
-#check tm.subst
-
----def foo {n1 n2: RenCtx} ()
 theorem fml.subst_conj {n n': RenCtx} (σ : Fin n -> tm m n') (φ ψ: fml m n) :
  fml.subst σ (fml.conj φ ψ) = fml.conj (fml.subst σ φ) (fml.subst σ ψ) := rfl
 
 theorem fml.subst_conjn {k n n': RenCtx} (σ : Fin n -> tm m n') (fs: Fin k -> fml m n):
  fml.subst σ (fml.conjn fs) = fml.conjn (fun i => fml.subst σ (fs i)) := by
-  --simp[fml.conjn]
    induction k generalizing n with
    | zero =>
      simp only [fml.conjn,  Fin.foldr,
@@ -416,12 +427,68 @@ theorem Hilbert.proof.eqs  {T: theory} {k : ℕ} {n : RenCtx} (φ: fml T.sig n) 
   apply Hilbert.proof.conjn
   assumption
 
-  /-induction k with
-  | zero => simp only [IsEmpty.forall_iff, fml.eqs, fml.conjn, Fin.foldr_zero,
-    Hilbert.proof.true_intro, imp_self]
-  | succ n1 ih =>
 
-    sorry-/
+namespace Example
+
+  def phi : fml S 1 := fml.existsQ (.eq (.var 0) (.var 1))
+
+  def psi : (Fml S).obj 2 := .eq (.var (0 : Fin 2)) (.var (1 : Fin 2))
+
+  def proof_phi : Hilbert.proof (T:=T) .true phi := by
+    simp only [phi]
+    apply Hilbert.proof.cut (τ:=psi[(.var 0)..])
+    · apply Hilbert.proof.eq_intro
+    · apply Hilbert.proof.existsQ_intro
+
+end Example
+theorem substn_left {m} {n n' : Subst m} (σ : n ⟶ n') (a: Fin n'):
+  substn σ (Fin.addNat a n) = .var a := by
+   simp only [substn, Fin.casesAdd_left]
+   rfl
+
+theorem substn_right {m} {n n' : Subst m} (σ : n ⟶ n') (a: Fin n):
+  substn σ (Fin.castAdd' n' a ) = σ a := by
+   simp only [substn, Fin.casesAdd_right]
+
+theorem tm.subst_ren_id {T: theory} {n: RenCtx} (t: tm T.sig n):
+ (.subst (substn fun i ↦ tm.var i) (tm.ren R.in10 t)) = t := by
+   induction t with
+   | var a => simp only [tm.ren, R.in10, tm.subst, substn_left]
+   | op o σ ih =>
+    simp only [tm.ren, tm.subst, tm.op.injEq, heq_eq_eq, true_and]
+    ext
+    simp only [ih]
+
+-- theorem tm.subst_ren_id' {T: theory} {n k: RenCtx} (t: tm T.sig n):
+--  (.subst (substn fun i ↦ foo i) (tm.ren (@R.in10 n k) t)) = t := sorry
+
+theorem Subst_comp_o {S: monosig} {n m k: Subst S}  (f : Fin n -> Fin k) (g : k ⟶ m) :
+  ( tm.var ∘ f) ≫ g = g ∘ f := rfl
+
+theorem Subst_comp_o' {S: monosig} {n m k: Subst S}  (f : Fin n -> Fin k) (g : k ⟶ m) :
+  (fun i => tm.var (f i)) ≫ g = g ∘ f := rfl
+
+
+theorem fml.subst_ren_id {T: theory} {n: Subst T.sig} (φ: fml T.sig n):
+ (fml.subst (substn fun i ↦ tm.var i) (fml.ren R.in10 φ)) = φ := by
+      simp[fml.ren_to_subst,<-fml.subst_comp]
+      have := @SyntacticSite.Subst_comp_o' T.sig _ _ _ (@R.in10 n n) (substn tm.var)
+      let v : emb.obj n → tm T.sig n:= @tm.var T.sig n
+      have h0: (fun i ↦ tm.var i) = @tm.var T.sig n:= rfl
+      simp [emb]
+      simp only[h0]
+      simp[this]
+      have := @fml.subst_id T.sig n
+      let ff : n ⟶ n := ((@substn T.sig n n tm.var) ∘  (@R.in10 n n) )
+      have h : ff = 𝟙 n := by
+       funext
+       simp[ff,substn_left,R.in10]
+       rfl
+      simp[ff] at h
+      simp[h]
+      apply this
+
+
 
 
 
@@ -431,13 +498,14 @@ theorem id_rep_functional  {T: theory} {n : RenCtx} (φ: fml T.sig n) :
       apply Hilbert.proof.existn_intro (fun i => tm.var i)
       rw[id_rep,fml.subst,fml.subst_eqs]
       apply Hilbert.proof.conj_intro
-      · sorry
+      · simp[fml.subst_ren_id]; apply Hilbert.proof.var
       · apply Hilbert.proof.eqs
         intro i
-
         sorry
     range := sorry
     unique := sorry
+
+
 @[simp]
 def fml_equiv {T: theory} {n : RenCtx} (φ ψ: fml T.sig n) := Hilbert.proof φ ψ ∧ Hilbert.proof ψ φ
 
