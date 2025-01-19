@@ -180,6 +180,19 @@ theorem subst0_substn {n : Subst m} (a : tm m n) :
   | succ i =>
     simp only [subst0, Fin.cases_succ, substn];rfl
 
+theorem subst0_substn' {n : Subst m} (σ : 1 ⟶ n) (a : tm m n) :
+a = σ (0 : Fin 1) -> subst0 a = substn σ := by
+ intro h
+ simp[h]
+ funext x
+ induction x using Fin.cases with
+  | zero =>
+    simp only [subst0, Fin.cases_zero, substn]
+    rfl
+  | succ i =>
+    simp only [subst0, Fin.cases_succ, substn];rfl
+
+
 
 theorem substn_left {m} {n n' : Subst m} (σ : n ⟶ n') (a: Fin n'):
   substn σ (Fin.addNat a n) = .var a := by
@@ -276,14 +289,39 @@ theorem substnsucc' (σ : (n+1) ⟶ k) :
   funext i
   induction i using Fin.cases with
   | zero =>
+    simp only [substn_at0, tm.subst_comp_app, subst0, Fin.cases_zero, ← tm.ren_subst_comp]
+    symm; apply tm.subst_id_ext
+    funext i; simp only [Function.comp_apply, substn, Fin.casesAdd_left]
+    rfl
+  | succ i =>
+    simp only [Nat.add_eq, tm.subst_comp_app, subst0, Fin.cases_succ, tm.subst]
+    rw [substn_atsucc]
+    rfl
+
+
+abbrev scons {k n : Subst S} (a : tm S n) (σ : k ⟶ n) : (k+1) ⟶ n :=
+  Fin.cases a σ
+
+
+theorem substnsucc'' (σ : Fin n ⟶ tm m k) (t: tm m k):
+  substn (scons t σ ) = subst0 (t.ren (fun i => i.addNat n)) ≫ substn σ := by
+  funext i
+  induction i using Fin.cases with
+  | zero =>
     simp [tm.subst_comp_app, subst0, substn_at0, <-tm.ren_subst_comp]
     symm; apply tm.subst_id_ext
     funext i; simp [substn]
     rfl
   | succ i =>
-    simp [tm.subst_comp_app, subst0, RelativeMonad.ret, tm.subst]
-    rw [substn_atsucc]
-    rfl
+    simp [tm.subst_comp_app,subst0,tm.subst]
+    have := substn_atsucc (scons t σ)
+    have h : substn (scons t σ) i.succ = (substn (scons t σ) ∘ Fin.succ) i := rfl
+    rw [h]
+    rw[← this]
+    congr
+
+
+
 
 class ScopedSubstitution (T : Nat -> Type u) (F : Nat -> Type v) where
   ssubst : forall {k n : Nat} (σ : Fin k → T n), F k -> F n
@@ -299,6 +337,8 @@ instance : ScopedSubstitution (tm S) (tm S) where
 -- TODO: introduce a proper namespace for substitutions
 -- and define the other usual combinators
 -- notation t "[" a ".." "]" => (subst_fst t a)
+
+
 
 
 abbrev Tm (m : monosig) := RelativeMonad.kleisli.forgetful (tm.substitution (m:=m))

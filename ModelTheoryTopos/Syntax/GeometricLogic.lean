@@ -342,6 +342,13 @@ namespace Hilbert
       rw [<-fml.ren_comp]
       assumption
 
+  -- theorem subst_fst_subst0 {n: Subst m} (a: tm m n) (f: (Fml S).obj (n+1)):
+  --  subst_fst f a = fml.subst (subst0 a) f := sorry
+
+  theorem eq_elim_subst0 : proof δ (.eq t u) →
+      proof (δ.conj (.subst (subst0 t) γ)) (.subst (subst0 t) φ) →
+      proof (δ.conj (.subst (subst0 u) γ)) (.subst (subst0 u) φ) := sorry
+
 end Hilbert
 
 namespace SyntacticSite
@@ -379,6 +386,9 @@ end Example
 
 
 -/
+
+
+
 def id_rep {T: theory} {n : RenCtx} (φ: fml T.sig n) : fml T.sig (n+n) :=
  (φ.ren R.in10).conj
  (fml.eqs (tm.var ∘ R.in10) (tm.var ∘ R.in01))
@@ -428,6 +438,9 @@ theorem Hilbert.proof.conjn  {T: theory} {k : ℕ} {n : RenCtx} (φ: fml T.sig n
      · apply h
      · assumption
 
+theorem Hilbert.proof.conjn'  {T: theory} {k : ℕ} {n : RenCtx} (φ: fml T.sig n) (fs: Fin k → fml T.sig n) :
+  Hilbert.proof φ (fml.conjn fs)  → (∀ (i: Fin k), Hilbert.proof φ (fs i)) := sorry
+
 theorem Hilbert.proof.eqs  {T: theory} {k : ℕ} {n : RenCtx} (φ: fml T.sig n) (ts1 ts2: Fin k → tm T.sig n):
  (∀ (i: Fin k), Hilbert.proof φ (fml.eq  (ts1 i) (ts2 i))) →
   Hilbert.proof φ (fml.eqs ts1 ts2) := by
@@ -435,6 +448,20 @@ theorem Hilbert.proof.eqs  {T: theory} {k : ℕ} {n : RenCtx} (φ: fml T.sig n) 
   intro h
   apply Hilbert.proof.conjn
   assumption
+
+
+theorem Hilbert.proof.eqs'  {T: theory} {k : ℕ} {n : RenCtx} (φ: fml T.sig n) (ts1 ts2: Fin k → tm T.sig n):
+  Hilbert.proof φ (fml.eqs ts1 ts2) →
+  (∀ (i: Fin k), Hilbert.proof φ (fml.eq  (ts1 i) (ts2 i))) := by
+  simp only[fml.eqs]
+  intro h i
+
+  sorry
+
+
+theorem Hilbert.proof.eqs_iff  {T: theory} {k : ℕ} {n : RenCtx} (φ: fml T.sig n) (ts1 ts2: Fin k → tm T.sig n):
+  Hilbert.proof φ (fml.eqs ts1 ts2) ↔
+  (∀ (i: Fin k), Hilbert.proof φ (fml.eq  (ts1 i) (ts2 i))) := sorry
 
 theorem Hilbert.any_eq_intro {T: theory} {n : RenCtx} (φ: fml T.sig n) (t: tm T.sig n):
  Hilbert.proof φ (.eq t t) := by
@@ -455,34 +482,51 @@ theorem fml.substn_zero (ts:  0 ⟶  n') : (fml.subst (substn ts) f) = f := by
   simp only[substn0]
   apply fml.subst_id
 
-
-#check (1 + (2+ 3)) = 1+ 2 + 3
+-- theorem subst_fst_subst0 : subst_fst t = tm.subst (subst0 t) := sorry
+-- #check subst0
+-- #check subst_fst
 theorem Hilbert.eqs_elim {T: theory} {n' n : Subst T.sig}  (δ : fml T.sig n')  (φ γ: fml T.sig (n'+n)) (ts1 ts2:  n ⟶  n'):
  Hilbert.proof δ (.eqs ts1 ts2) →
  Hilbert.proof (δ.conj (.subst (substn ts1) γ)) (.subst (substn ts1) φ) →
  Hilbert.proof (δ.conj (.subst (substn ts2) γ)) (.subst (substn ts2) φ) := by
      induction n  with
      | zero =>
-       sorry
-     | succ n1 ih => sorry
-       --intros h1 h2
-       --have f1 : fml T.sig (n' + n1)  := (φ[(ts1 (0: Fin n1.succ))..])
-      --  have :=
-      --   ih (φ[(ts1 (0: Fin n1.succ))..])
-      --      (γ[(ts2 (0: Fin n1.succ))..]) (ts1 ∘ Fin.succ) (ts2 ∘ Fin.succ)
-      --  sorry
-  -- induction n with
-  -- | zero =>
-  --   simp only[fml.substn_zero]
-  --   intros h1 h2
-  --   assumption
-  -- | succ n ih =>
-  --   intros h1 h2
-  --   sorry
+       simp only[fml.substn_zero]
+       intros h1 h2
+       assumption
+     | succ n1 ih =>
+       intros h1 h2
+       simp[substnsucc'] at *
+       simp[fml.subst_comp] at *
+       apply ih _ _ (ts1 ∘ Fin.succ) (ts2 ∘ Fin.succ)
+       · simp[Hilbert.proof.eqs_iff] at *
+         intro i
+         apply h1
+       · simp[← fml.subst_comp] at *
+         --have := @substnsucc'
+         simp only[← substnsucc'] at *
+         simp only[← substnsucc'']
+         simp only[substnsucc] at *
+         simp only [fml.subst_comp] at *
+         set γ' := (fml.subst (lift_subst (substn (ts1 ∘ Fin.succ))) γ)
+         set φ' := (fml.subst (lift_subst (substn (ts1 ∘ Fin.succ))) φ)
+         have h10 : Hilbert.proof δ (fml.eq (ts1 (0:Fin n1.succ)) ( ts2 (0:Fin n1.succ))) := by
+           simp[Hilbert.proof.eqs_iff] at h1
+           exact h1 0
+         have := @Hilbert.eq_elim_subst0 T _ δ (ts1 (0: Fin n1.succ)) (ts2 (0: Fin n1.succ)) γ' φ' h10 h2
+         set si := (scons (ts2 (0:Fin n1.succ)) (ts1 ∘ Fin.succ))
+         have t20 : si (0:Fin n1.succ) = ts2 (0:Fin n1.succ) := by
+           simp[si]
+         simp[t20]
+         have geq: γ' = (fml.subst (lift_subst (substn (si ∘ Fin.succ))) γ) := by
+          simp[γ']
+          congr --????? how?????
+         have peq: φ' = (fml.subst (lift_subst (substn (si ∘ Fin.succ))) φ) := by
+          simp[φ']
+          congr
+         simp[← geq,← peq]
+         assumption
 
-
---  proof (δ.conj (γ[t..])) (φ[t..]) →
---       proof (δ.conj (γ[u..])) (φ[u..])
 
 -- namespace Example
 
