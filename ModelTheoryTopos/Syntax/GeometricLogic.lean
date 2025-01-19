@@ -435,9 +435,6 @@ theorem Hilbert.any_eq_intro {T: theory} {n : RenCtx} (φ: fml T.sig n) (t: tm T
   · apply Hilbert.proof.true_intro
   · apply Hilbert.proof.eq_intro
 
-#check substn
-#check subst_fst
-#check Hilbert.proof.eq_elim
 theorem tm.substn_zero (ts:  0 ⟶  n') : (tm.subst (substn ts) t) = t := by
   induction t with
   | var a => simp only [tm.subst, substn, Nat.add_zero];rfl
@@ -447,7 +444,10 @@ theorem tm.substn_zero (ts:  0 ⟶  n') : (tm.subst (substn ts) t) = t := by
     funext
     simp only [ih]
 
-theorem fml.substn_zero (ts:  0 ⟶  n') : (fml.subst (substn ts) f) = f := sorry
+theorem fml.substn_zero (ts:  0 ⟶  n') : (fml.subst (substn ts) f) = f := by
+  simp only[substn0]
+  apply fml.subst_id
+
 
 theorem Hilbert.eqs_elim {T: theory} {n' n : Subst T.sig}  (δ : fml T.sig n')  (φ γ: fml T.sig (n'+n)) (ts1 ts2:  n ⟶  n'):
  Hilbert.proof δ (.eqs ts1 ts2) →
