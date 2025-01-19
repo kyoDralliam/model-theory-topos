@@ -449,18 +449,29 @@ theorem fml.substn_zero (ts:  0 ⟶  n') : (fml.subst (substn ts) f) = f := by
   apply fml.subst_id
 
 
+#check (1 + (2+ 3)) = 1+ 2 + 3
 theorem Hilbert.eqs_elim {T: theory} {n' n : Subst T.sig}  (δ : fml T.sig n')  (φ γ: fml T.sig (n'+n)) (ts1 ts2:  n ⟶  n'):
  Hilbert.proof δ (.eqs ts1 ts2) →
  Hilbert.proof (δ.conj (.subst (substn ts1) γ)) (.subst (substn ts1) φ) →
  Hilbert.proof (δ.conj (.subst (substn ts2) γ)) (.subst (substn ts2) φ) := by
-  induction n with
-  | zero =>
-    simp only[fml.substn_zero]
-    intros h1 h2
-    assumption
-  | succ n ih =>
-    intros h1 h2
-    sorry
+     induction n  with
+     | zero =>
+       sorry
+     | succ n1 ih => sorry
+       --intros h1 h2
+       --have f1 : fml T.sig (n' + n1)  := (φ[(ts1 (0: Fin n1.succ))..])
+      --  have :=
+      --   ih (φ[(ts1 (0: Fin n1.succ))..])
+      --      (γ[(ts2 (0: Fin n1.succ))..]) (ts1 ∘ Fin.succ) (ts2 ∘ Fin.succ)
+      --  sorry
+  -- induction n with
+  -- | zero =>
+  --   simp only[fml.substn_zero]
+  --   intros h1 h2
+  --   assumption
+  -- | succ n ih =>
+  --   intros h1 h2
+  --   sorry
 
 
 --  proof (δ.conj (γ[t..])) (φ[t..]) →
