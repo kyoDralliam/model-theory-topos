@@ -435,6 +435,37 @@ theorem Hilbert.any_eq_intro {T: theory} {n : RenCtx} (φ: fml T.sig n) (t: tm T
   · apply Hilbert.proof.true_intro
   · apply Hilbert.proof.eq_intro
 
+#check substn
+#check subst_fst
+#check Hilbert.proof.eq_elim
+theorem tm.substn_zero (ts:  0 ⟶  n') : (tm.subst (substn ts) t) = t := by
+  induction t with
+  | var a => simp only [tm.subst, substn, Nat.add_zero];rfl
+  | op o σ ih =>
+    simp only [tm.subst, substn]
+    congr
+    funext
+    simp only [ih]
+
+theorem fml.substn_zero (ts:  0 ⟶  n') : (fml.subst (substn ts) f) = f := sorry
+
+theorem Hilbert.eqs_elim {T: theory} {n' n : Subst T.sig}  (δ : fml T.sig n')  (φ γ: fml T.sig (n'+n)) (ts1 ts2:  n ⟶  n'):
+ Hilbert.proof δ (.eqs ts1 ts2) →
+ Hilbert.proof (δ.conj (.subst (substn ts1) γ)) (.subst (substn ts1) φ) →
+ Hilbert.proof (δ.conj (.subst (substn ts2) γ)) (.subst (substn ts2) φ) := by
+  induction n with
+  | zero =>
+    simp only[fml.substn_zero]
+    intros h1 h2
+    assumption
+  | succ n ih =>
+    intros h1 h2
+    sorry
+
+
+--  proof (δ.conj (γ[t..])) (φ[t..]) →
+--       proof (δ.conj (γ[u..])) (φ[u..])
+
 -- namespace Example
 
 --   def phi : fml S 1 := fml.existsQ (.eq (.var 0) (.var 1))
@@ -448,14 +479,14 @@ theorem Hilbert.any_eq_intro {T: theory} {n : RenCtx} (φ: fml T.sig n) (t: tm T
 --     · apply Hilbert.proof.existsQ_intro
 
 -- end Example
-theorem substn_left {m} {n n' : Subst m} (σ : n ⟶ n') (a: Fin n'):
-  substn σ (Fin.addNat a n) = .var a := by
-   simp only [substn, Fin.casesAdd_left]
-   rfl
+-- theorem substn_left {m} {n n' : Subst m} (σ : n ⟶ n') (a: Fin n'):
+--   substn σ (Fin.addNat a n) = .var a := by
+--    simp only [substn, Fin.casesAdd_left]
+--    rfl
 
-theorem substn_right {m} {n n' : Subst m} (σ : n ⟶ n') (a: Fin n):
-  substn σ (Fin.castAdd' n' a ) = σ a := by
-   simp only [substn, Fin.casesAdd_right]
+-- theorem substn_right {m} {n n' : Subst m} (σ : n ⟶ n') (a: Fin n):
+--   substn σ (Fin.castAdd' n' a ) = σ a := by
+--    simp only [substn, Fin.casesAdd_right]
 
 theorem tm.subst_ren_id {T: theory} {n: RenCtx} (t: tm T.sig n):
  (.subst (substn fun i ↦ tm.var i) (tm.ren R.in10 t)) = t := by
@@ -510,7 +541,12 @@ theorem id_rep_functional  {T: theory} {n : RenCtx} (φ: fml T.sig n) :
         intro i
         simp [R.in10,R.in01,tm.subst,substn_left,substn_right]--some simp lemmas maybe
         apply Hilbert.any_eq_intro
-    range := sorry
+    range := by
+      simp[id_rep]
+      apply Hilbert.proof.conj_intro
+      · apply Hilbert.proof.conj_elim_l
+      #check Hilbert.proof.eq_elim
+      · sorry
     unique := sorry
 
 

@@ -169,6 +169,33 @@ def subst0 {m} {n : Subst m} (a : tm m n) : (n+1) ⟶ n :=
 def substn {m} {n n' : Subst m} (σ : n ⟶ n') : (n'+n) ⟶ n' :=
   Fin.casesAdd (tm.substitution.ret _) σ
 
+
+theorem subst0_substn {n : Subst m} (a : tm m n) :
+ subst0 a = substn (fun _ => a) := by
+  funext x
+  induction x using Fin.cases with
+  | zero =>
+    simp only [subst0, Fin.cases_zero, substn]
+    rfl
+  | succ i =>
+    simp only [subst0, Fin.cases_succ, substn];rfl
+
+
+theorem substn_left {m} {n n' : Subst m} (σ : n ⟶ n') (a: Fin n'):
+  substn σ (Fin.addNat a n) = .var a := by
+   simp only [substn, Fin.casesAdd_left]
+   rfl
+
+-- theorem substn_left' {m} {n n' : Subst m} (σ : n ⟶ n') (a: Fin n'):
+--   substn σ (Fin.addNat a n) = .var a := by
+--    simp only [substn, Fin.casesAdd_left]
+--    rfl
+
+theorem substn_right {m} {n n' : Subst m} (σ : n ⟶ n') (a: Fin n):
+  substn σ (Fin.castAdd' n' a ) = σ a := by
+   simp only [substn, Fin.casesAdd_right]
+
+
 def lift_subst {n n' : Subst m} (f : n ⟶ n') : (n+1) ⟶ (n'+1) :=
   Fin.cases (.var 0) (tm.ren Fin.succ ∘ f)
 
