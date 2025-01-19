@@ -285,13 +285,20 @@ theorem substnsucc' (σ : (n+1) ⟶ k) :
     rw [substn_atsucc]
     rfl
 
+class ScopedSubstitution (T : Nat -> Type u) (F : Nat -> Type v) where
+  ssubst : forall {k n : Nat} (σ : Fin k → T n), F k -> F n
 
-def subst_fst {m} {H : Subst m ⥤ Type} (t : H.obj (n+1)) (a : tm m n) : H.obj n :=
-  H.map (subst0 a) t
+notation t "[" a ".." "]" => (ScopedSubstitution.ssubst (subst0 a) t)
+
+instance : ScopedSubstitution (tm S) (tm S) where
+  ssubst σ t := tm.subst σ t
+
+-- def subst_fst {m} {H : Subst m ⥤ Type} (t : H.obj (n+1)) (a : tm m n) : H.obj n :=
+--   H.map (subst0 a) t
 
 -- TODO: introduce a proper namespace for substitutions
 -- and define the other usual combinators
-notation t "[" a ".." "]" => (subst_fst t a)
+-- notation t "[" a ".." "]" => (subst_fst t a)
 
 
 abbrev Tm (m : monosig) := RelativeMonad.kleisli.forgetful (tm.substitution (m:=m))
@@ -305,9 +312,9 @@ def magma : monosig where
   arity_preds := Empty.elim
 
 
-def v0 : (Tm magma).obj 1 := .var (0 : Fin 1)
-def ε : (Tm magma).obj n := .op true Fin.elim0
-def mult (t u : (Tm magma).obj n) : (Tm magma).obj n :=
+def v0 : tm magma 1 := .var (0 : Fin 1)
+def ε : tm magma n := .op true Fin.elim0
+def mult (t u : tm magma n) : tm magma n :=
   .op false (fun i : Fin 2 => [ t , u ][i])
 
 #check v0[ε..]

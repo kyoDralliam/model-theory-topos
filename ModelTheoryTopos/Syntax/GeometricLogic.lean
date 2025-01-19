@@ -94,6 +94,9 @@ theorem fml.ren_to_subst  (f : n ⟶ n') (φ: fml S n):
     | succ i =>
       simp only [Fin.cases_succ, Function.comp_apply, tm.ren]
 
+instance : ScopedSubstitution (tm S) (fml S) where
+  ssubst σ t := fml.subst σ t
+
 
 open CategoryTheory
 
@@ -179,6 +182,10 @@ instance: HAppend (List (fml m n)) ((Ctx m).obj n) (List (fml m n)) where
 
 abbrev FmlCtx (T : theory) n := List (fml T.sig n)
 
+instance : ScopedSubstitution (tm T.sig) (FmlCtx T) where
+  ssubst σ t := (Ctx T.sig).map σ t
+
+
 inductive proof {T : theory}: {n : RenCtx} → FmlCtx T n → fml T.sig n → Prop where
   | axiom : s ∈ T.axioms -> proof Γ (s.premise.subst σ) -> proof Γ (s.concl.subst σ)
   -- | cut : (forall φ, φ ∈ Δ -> proof Γ φ) -> proof Δ ψ -> proof Γ ψ
@@ -196,7 +203,7 @@ inductive proof {T : theory}: {n : RenCtx} → FmlCtx T n → fml T.sig n → Pr
   | infdisj_elim : proof Γ (.infdisj φ) →
     (forall k, proof (φ k :: Γ) ξ) → proof Γ ξ
   | eq_intro : proof Γ (.eq t t)
-  | eq_elim (φ : (Fml _).obj _) (Γ : (Ctx _).obj _) : proof Δ (.eq t u) →
+  | eq_elim (φ : fml _ _) (Γ : FmlCtx _ _) : proof Δ (.eq t u) →
     proof (Δ ++ Γ[t..]) (φ[t..]) →
     proof (Δ ++ Γ[u..]) (φ[u..])
   | existsQ_intro (φ : (Fml _).obj _) : proof Γ (φ[t..]) → proof Γ (.existsQ φ)
