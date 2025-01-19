@@ -305,6 +305,8 @@ namespace Hilbert
 
   variable {T : theory}
 
+
+
   def proof.existn_intro {n k : Subst T.sig} (σ : n ⟶ k) (ψ : fml T.sig k) (φ : fml T.sig (k + n)) :
     proof ψ (φ.subst (substn σ)) -> proof ψ φ.existsn := by
     induction n generalizing ψ with
@@ -427,20 +429,25 @@ theorem Hilbert.proof.eqs  {T: theory} {k : ℕ} {n : RenCtx} (φ: fml T.sig n) 
   apply Hilbert.proof.conjn
   assumption
 
+theorem Hilbert.any_eq_intro {T: theory} {n : RenCtx} (φ: fml T.sig n) (t: tm T.sig n):
+ Hilbert.proof φ (.eq t t) := by
+  apply @Hilbert.proof.cut _ _ _ .true
+  · apply Hilbert.proof.true_intro
+  · apply Hilbert.proof.eq_intro
 
-namespace Example
+-- namespace Example
 
-  def phi : fml S 1 := fml.existsQ (.eq (.var 0) (.var 1))
+--   def phi : fml S 1 := fml.existsQ (.eq (.var 0) (.var 1))
 
-  def psi : (Fml S).obj 2 := .eq (.var (0 : Fin 2)) (.var (1 : Fin 2))
+--   def psi : (Fml S).obj 2 := .eq (.var (0 : Fin 2)) (.var (1 : Fin 2))
 
-  def proof_phi : Hilbert.proof (T:=T) .true phi := by
-    simp only [phi]
-    apply Hilbert.proof.cut (τ:=psi[(.var 0)..])
-    · apply Hilbert.proof.eq_intro
-    · apply Hilbert.proof.existsQ_intro
+--   def proof_phi : Hilbert.proof (T:=T) .true phi := by
+--     simp only [phi]
+--     apply Hilbert.proof.cut (τ:=psi[(.var 0)..])
+--     · apply Hilbert.proof.eq_intro
+--     · apply Hilbert.proof.existsQ_intro
 
-end Example
+-- end Example
 theorem substn_left {m} {n n' : Subst m} (σ : n ⟶ n') (a: Fin n'):
   substn σ (Fin.addNat a n) = .var a := by
    simp only [substn, Fin.casesAdd_left]
@@ -498,10 +505,11 @@ theorem id_rep_functional  {T: theory} {n : RenCtx} (φ: fml T.sig n) :
       apply Hilbert.proof.existn_intro (fun i => tm.var i)
       rw[id_rep,fml.subst,fml.subst_eqs]
       apply Hilbert.proof.conj_intro
-      · simp[fml.subst_ren_id]; apply Hilbert.proof.var
+      · simp only [fml.subst_ren_id]; apply Hilbert.proof.var
       · apply Hilbert.proof.eqs
         intro i
-        sorry
+        simp [R.in10,R.in01,tm.subst,substn_left,substn_right]--some simp lemmas maybe
+        apply Hilbert.any_eq_intro
     range := sorry
     unique := sorry
 
