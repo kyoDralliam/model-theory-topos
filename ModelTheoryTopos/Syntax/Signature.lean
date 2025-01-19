@@ -270,6 +270,22 @@ theorem substnsucc (σ : (n+1) ⟶ k) :
   substn σ = lift_subst (substn (σ ∘ Fin.succ)) ≫ subst0 (σ (0 : Fin (n+1))) := by
   rw [<-(lift_subst_subst0 (substn σ : ((k+n)+1) ⟶ k)), substn_atsucc, substn_at0]
 
+
+theorem substnsucc' (σ : (n+1) ⟶ k) :
+  substn σ = subst0 ((σ (0 : Fin (n+1))).ren (fun i => i.addNat n)) ≫ substn (σ ∘ Fin.succ) := by
+  funext i
+  induction i using Fin.cases with
+  | zero =>
+    simp [tm.subst_comp_app, subst0, substn_at0, <-tm.ren_subst_comp]
+    symm; apply tm.subst_id_ext
+    funext i; simp [substn]
+    rfl
+  | succ i =>
+    simp [tm.subst_comp_app, subst0, RelativeMonad.ret, tm.subst]
+    rw [substn_atsucc]
+    rfl
+
+
 def subst_fst {m} {H : Subst m ⥤ Type} (t : H.obj (n+1)) (a : tm m n) : H.obj n :=
   H.map (subst0 a) t
 
