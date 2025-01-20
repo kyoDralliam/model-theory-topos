@@ -363,7 +363,10 @@ abbrev in110 : Fin (n + k) -> Fin (n + k + k) := in10
 abbrev in001 : Fin k -> Fin (n + k + k) := in01
 abbrev in010 : Fin k -> Fin (n + k + k) := in10 ∘ in01
 end R
+#check substn
+--theorem in10_substn (φ: fml m k): fml.ren (@R.in01 n k) φ  =  fml.subst (substn (@R.in01 n k)) φ := sorry
 
+--theorem in10_substn_in01 (φ: fml m k): fml.ren (@R.in01 n k) φ =
 structure functional {T: theory} {n1 n2 : RenCtx} (φ: fml T.sig n1) (ψ : fml T.sig n2) (θ  : fml T.sig (n1 + n2)) where
  total : Hilbert.proof φ θ.existsn
  range: Hilbert.proof θ ((φ.ren R.in10).conj (ψ.ren R.in01))
@@ -438,8 +441,33 @@ theorem Hilbert.proof.conjn  {T: theory} {k : ℕ} {n : RenCtx} (φ: fml T.sig n
      · apply h
      · assumption
 
+theorem Hilbert.proof.conj_iff
+  {T: theory} {k : ℕ} {n : RenCtx} (μ φ ψ: fml T.sig n) :
+    Hilbert.proof μ (φ.conj ψ) ↔ Hilbert.proof μ φ ∧ Hilbert.proof μ ψ := by
+      constructor
+      · intro h
+        constructor
+        · have := @Hilbert.proof.conj_elim_l T n φ ψ
+          exact Hilbert.proof.cut h this
+        · have := @Hilbert.proof.conj_elim_r T n φ ψ
+          exact Hilbert.proof.cut h this
+      · intros h
+        cases h
+        apply Hilbert.proof.conj_intro <;> assumption
+
+
+
 theorem Hilbert.proof.conjn'  {T: theory} {k : ℕ} {n : RenCtx} (φ: fml T.sig n) (fs: Fin k → fml T.sig n) :
-  Hilbert.proof φ (fml.conjn fs)  → (∀ (i: Fin k), Hilbert.proof φ (fs i)) := sorry
+  Hilbert.proof φ (fml.conjn fs)  ↔ (∀ (i: Fin k), Hilbert.proof φ (fs i)) := by
+    induction k with
+    | zero =>
+      simp[fml.conjn]
+      apply Hilbert.proof.true_intro
+    | succ n _ =>
+
+      sorry
+
+
 
 theorem Hilbert.proof.eqs  {T: theory} {k : ℕ} {n : RenCtx} (φ: fml T.sig n) (ts1 ts2: Fin k → tm T.sig n):
  (∀ (i: Fin k), Hilbert.proof φ (fml.eq  (ts1 i) (ts2 i))) →
@@ -607,8 +635,10 @@ theorem id_rep_functional  {T: theory} {n : RenCtx} (φ: fml T.sig n) :
       simp[id_rep]
       apply Hilbert.proof.conj_intro
       · apply Hilbert.proof.conj_elim_l
-      #check Hilbert.proof.eq_elim
-      · sorry
+      #check Hilbert.eqs_elim
+      #check tm.ren_subst_comp
+      ·
+         sorry --R01 as substn?
     unique := sorry
 
 
