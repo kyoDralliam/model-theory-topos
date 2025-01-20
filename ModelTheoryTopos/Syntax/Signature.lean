@@ -26,15 +26,15 @@ instance CategoryTheory.RenCat : Category RenCtx where
   comp := fun f g => g ∘ f
 
 -- TODO: there's probably a name for that def in Fin
-def lift {n n' : RenCtx} (f : n ⟶ n') : (n+1) ⟶ (n'+1) :=
+def lift₁ {n n' : RenCtx} (f : n ⟶ n') : (n+1) ⟶ (n'+1) :=
   Fin.cases 0 (Fin.succ ∘ f)
 
-theorem lift_id : lift (𝟙 n) = 𝟙 (n+1) := by
-  funext i ; simp only [lift, CategoryStruct.id]
+theorem lift₁_id : lift₁ (𝟙 n) = 𝟙 (n+1) := by
+  funext i ; simp only [lift₁, CategoryStruct.id]
   induction i using Fin.cases <;> simp?
 
-theorem lift_comp : lift (f ≫ g) = lift f ≫ lift g := by
-  funext i ; simp [lift, CategoryStruct.comp]
+theorem lift₁_comp : lift₁ (f ≫ g) = lift₁ f ≫ lift₁ g := by
+  funext i ; simp [lift₁, CategoryStruct.comp]
   induction i using Fin.cases <;> simp?
 
 def tm.ren {n n' : RenCtx} (f : n ⟶ n') : tm m n -> tm m n'
@@ -169,40 +169,44 @@ def subst0 {m} {n : Subst m} (a : tm m n) : (n+1) ⟶ n :=
 def substn {m} {n n' : Subst m} (σ : n ⟶ n') : (n'+n) ⟶ n' :=
   Fin.casesAdd (tm.substitution.ret _) σ
 
+class ScopedSubstitution (T : Nat -> Type u) (F : Nat -> Type v) where
+  ssubst : forall {k n : Nat} (σ : Fin k → T n), F k -> F n
+
+-- instance substGetElem (T : Nat -> Type u) (F : Nat -> Type v) [ScopedSubstitution T F] {k n : Nat} :
+--   GetElem (F k) ( Fin k → T n) (F n) (fun _ _ => True) where
+--   getElem t σ _ := ScopedSubstitution.ssubst σ t
+
+notation t "⟪" σ "⟫" => (ScopedSubstitution.ssubst σ t)
+
+instance append_substitutions {k n m : Subst S} : HAppend (k ⟶ m) (n ⟶ m) (k + n ⟶ m) where
+  hAppend σ τ := Fin.addCases σ τ
+
+abbrev scons {k n : Subst S} (a : tm S n) (σ : k ⟶ n) : (k+1) ⟶ n :=
+  Fin.cases a σ
+
+infix:50 " ∷ " => scons
+-- infix:50 " ⇑ " => scons
+
+
+instance : ScopedSubstitution (tm S) (tm S) where
+  ssubst σ t := tm.subst σ t
 
 theorem subst0_substn {n : Subst m} (a : tm m n) :
- subst0 a = substn (fun _ => a) := by
-  funext x
-  induction x using Fin.cases with
-  | zero =>
-    simp only [subst0, Fin.cases_zero, substn]
-    rfl
-  | succ i =>
-    simp only [subst0, Fin.cases_succ, substn];rfl
+  subst0 a = substn (fun _ => a) := by
+  funext x ; induction x using Fin.cases <;>
+    simp only [subst0, Fin.cases_zero, Fin.cases_succ, substn] <;> rfl
 
-theorem subst0_substn' {n : Subst m} (σ : 1 ⟶ n) (a : tm m n) :
-a = σ (0 : Fin 1) -> subst0 a = substn σ := by
- intro h
- simp[h]
- funext x
- induction x using Fin.cases with
-  | zero =>
-    simp only [subst0, Fin.cases_zero, substn]
-    rfl
-  | succ i =>
-    simp only [subst0, Fin.cases_succ, substn];rfl
-
-
+theorem subst0_substn' {n : Subst m} (σ : 1 ⟶ n) (a : tm m n) (h : a = σ (0 : Fin 1)) :
+  subst0 a = substn σ := by
+  have : σ = (fun _ => a) := by
+    funext i ; simp [emb] at i
+    rw [Fin.fin_one_eq_zero i] ; symm; assumption
+  subst this ; apply subst0_substn
 
 theorem substn_left {m} {n n' : Subst m} (σ : n ⟶ n') (a: Fin n'):
   substn σ (Fin.addNat a n) = .var a := by
    simp only [substn, Fin.casesAdd_left]
    rfl
-
--- theorem substn_left' {m} {n n' : Subst m} (σ : n ⟶ n') (a: Fin n'):
---   substn σ (Fin.addNat a n) = .var a := by
---    simp only [substn, Fin.casesAdd_left]
---    rfl
 
 theorem substn_right {m} {n n' : Subst m} (σ : n ⟶ n') (a: Fin n):
   substn σ (Fin.castAdd' n' a ) = σ a := by
@@ -217,6 +221,7 @@ def liftn_subst {n: Nat} {k k' : Subst m} (f : k ⟶ k') : (k+n) ⟶ (k'+n) :=
     (tm.ren (fun i ↦ Fin.addNat i n) ∘ f)
     (fun i ↦ .var (i.castAdd' k'))
 
+abbrev lift  (n: Nat) {k k' : Subst m} (f : k ⟶ k') := liftn_subst (n:=n) f
 
 theorem subst0_lift_subst {n n' : Subst m} (a : tm m n) (σ : n ⟶ n') :
   subst0 a ≫ σ = lift_subst σ ≫ subst0 (a.subst σ) := by
@@ -298,11 +303,6 @@ theorem substnsucc' (σ : (n+1) ⟶ k) :
     rw [substn_atsucc]
     rfl
 
-
-abbrev scons {k n : Subst S} (a : tm S n) (σ : k ⟶ n) : (k+1) ⟶ n :=
-  Fin.cases a σ
-
-
 theorem substnsucc'' (σ : Fin n ⟶ tm m k) (t: tm m k):
   substn (scons t σ ) = subst0 (t.ren (fun i => i.addNat n)) ≫ substn σ := by
   funext i
@@ -321,26 +321,6 @@ theorem substnsucc'' (σ : Fin n ⟶ tm m k) (t: tm m k):
     congr
 
 
-
-
-class ScopedSubstitution (T : Nat -> Type u) (F : Nat -> Type v) where
-  ssubst : forall {k n : Nat} (σ : Fin k → T n), F k -> F n
-
-notation t "[" a ".." "]" => (ScopedSubstitution.ssubst (subst0 a) t)
-
-instance : ScopedSubstitution (tm S) (tm S) where
-  ssubst σ t := tm.subst σ t
-
--- def subst_fst {m} {H : Subst m ⥤ Type} (t : H.obj (n+1)) (a : tm m n) : H.obj n :=
---   H.map (subst0 a) t
-
--- TODO: introduce a proper namespace for substitutions
--- and define the other usual combinators
--- notation t "[" a ".." "]" => (subst_fst t a)
-
-
-
-
 abbrev Tm (m : monosig) := RelativeMonad.kleisli.forgetful (tm.substitution (m:=m))
 
 namespace Example
@@ -357,9 +337,9 @@ def ε : tm magma n := .op true Fin.elim0
 def mult (t u : tm magma n) : tm magma n :=
   .op false (fun i : Fin 2 => [ t , u ][i])
 
-#check v0[ε..]
+#check v0⟪ε ∷ 𝟙 _ ⟫
 
 -- Oups...
-#reduce (mult v0 (mult v0 v0))[ε..]
+#reduce (mult v0 (mult v0 v0))⟪ε ∷ 𝟙 _ ⟫
 
 end Example

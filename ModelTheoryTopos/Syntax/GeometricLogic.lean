@@ -55,7 +55,7 @@ def fml.ren {n n' : RenCtx} (f : n ⟶ n') : fml m n -> fml m n'
 | .infdisj φ => .infdisj (fun i => (φ i).ren f)
 -- | .infdisj A φ => .infdisj A (fun a => (φ a).ren f)
 | .eq t u => .eq (t.ren f) (u.ren f)
-| .existsQ φ => .existsQ (φ.ren (lift f))
+| .existsQ φ => .existsQ (φ.ren (lift₁ f))
 
 def fml.subst {n n' : Subst m} (f : n ⟶ n') : fml m n → fml m n'
 | .pred p k => .pred p (fun i => (k i).subst f)
@@ -88,11 +88,11 @@ theorem fml.ren_to_subst  (f : n ⟶ n') (φ: fml S n):
     simp only [fml.ren, fml.subst, ih]
     congr
     funext i
-    simp [lift_subst, _root_.lift]
+    simp [lift_subst, lift₁]
     induction i using Fin.cases with
-    | zero => simp
+    | zero => simp [lift₁]
     | succ i =>
-      simp only [Fin.cases_succ, Function.comp_apply, tm.ren]
+      simp only [lift₁, Fin.cases_succ, Function.comp_apply, tm.ren]
 
 instance : ScopedSubstitution (tm S) (fml S) where
   ssubst σ t := fml.subst σ t
@@ -109,7 +109,7 @@ theorem fml.ren_id {n : RenCtx} (f : fml m n)
     simp only [ren, conj.injEq,disj.injEq] ; constructor <;> simp only[ihφ, ihψ]
   | infdisj φ ih => rw [ren, infdisj.injEq] ; funext i ; exact ih _
   | eq t u => simp only [ren, tm.ren_id]
-  | existsQ φ ih => rw [ren, lift_id, ih]
+  | existsQ φ ih => rw [ren, lift₁_id, ih]
 
 theorem fml.ren_comp (f : n1 ⟶ n2) (g : n2 ⟶ n3) (t : fml m n1):
   ren (f ≫ g) t = ren g (ren f t) := by
@@ -120,7 +120,7 @@ theorem fml.ren_comp (f : n1 ⟶ n2) (g : n2 ⟶ n3) (t : fml m n1):
     simp only [ren, conj.injEq,disj.injEq] ; constructor <;> simp only [ihφ, ihψ]
   | infdisj φ ih => simp only [ren, infdisj.injEq] ; funext i ; exact ih _ _ _
   | eq t u => simp only [ren, tm.ren_comp]
-  | existsQ φ ih => simp only [ren, lift_comp, ih]
+  | existsQ φ ih => simp only [ren, lift₁_comp, ih]
 
 theorem lift_subst_id (n : Subst m) : lift_subst (𝟙 n) = 𝟙 (n+1: Subst m) := by
   funext i ; simp only [lift_subst, CategoryStruct.id]
@@ -204,9 +204,9 @@ inductive proof {T : theory}: {n : RenCtx} → FmlCtx T n → fml T.sig n → Pr
     (forall k, proof (φ k :: Γ) ξ) → proof Γ ξ
   | eq_intro : proof Γ (.eq t t)
   | eq_elim (φ : fml _ _) (Γ : FmlCtx _ _) : proof Δ (.eq t u) →
-    proof (Δ ++ Γ[t..]) (φ[t..]) →
-    proof (Δ ++ Γ[u..]) (φ[u..])
-  | existsQ_intro (φ : (Fml _).obj _) : proof Γ (φ[t..]) → proof Γ (.existsQ φ)
+    proof (Δ ++ Γ⟪t ∷ 𝟙 _ ⟫) (φ⟪t ∷ 𝟙 _⟫) →
+    proof (Δ ++ Γ⟪u ∷ 𝟙 _ ⟫) (φ⟪u ∷ 𝟙 _ ⟫)
+  | existsQ_intro (φ : (Fml _).obj _) : proof Γ (φ⟪t ∷ 𝟙 _⟫) → proof Γ (.existsQ φ)
   | existsQ_elim : proof Γ (.existsQ φ) →
     proof (List.map (fml.ren Fin.succ) Γ) φ
 
@@ -303,9 +303,9 @@ namespace Hilbert
       (forall k, proof (.conj (φ k) δ) ξ) → proof Γ ξ
     | eq_intro : proof .true (.eq t t)
     | eq_elim (φ γ : (Fml _).obj _) : proof δ (.eq t u) →
-      proof (δ.conj (γ[t..])) (φ[t..]) →
-      proof (δ.conj (γ[u..])) (φ[u..])
-    | existsQ_intro (φ : (Fml _).obj _) : proof (φ[t..]) (.existsQ φ)
+      proof (δ.conj (γ⟪t ∷ 𝟙 _⟫)) (φ⟪t ∷ 𝟙 _⟫) →
+      proof (δ.conj (γ⟪u ∷ 𝟙 _⟫)) (φ⟪u ∷ 𝟙 _⟫)
+    | existsQ_intro (t : tm T.sig _) (φ : fml _ _) : proof (φ⟪t ∷ 𝟙 _⟫) (.existsQ φ)
     | existsQ_elim : proof  phi (fml.ren Fin.succ psi) -> proof (.existsQ phi) psi
       --existsQ_elim : proof (fml.ren Fin.succ (.existsQ φ)) φ
     | ren : proof φ ψ -> proof (fml.ren ρ φ) (fml.ren ρ ψ)

@@ -438,7 +438,7 @@ theorem disj_elim_lemma (A: Type) [Lattice A] (a b c d: A)
   assumption
 
 theorem interp_subst_fst (L: Str msig D) (t : tm msig n) (φ: (Fml msig).obj (n + 1)) :
-  L.interp_fml (φ[t..]) = lift (L.interp_tm t) (𝟙 _) ≫ L.interp_fml φ := by
+  L.interp_fml (φ⟪t∷𝟙 _⟫) = lift (L.interp_tm t) (𝟙 _) ≫ L.interp_fml φ := by
     simp only [ScopedSubstitution.ssubst, Fml, subst_interp_fml, Str.interp_subst]
     congr 1
     simp [npair_succ, subst0, tm.ret_var, Str.interp_tm]
@@ -458,7 +458,7 @@ theorem interp_tm_eq_app (L: Str msig D) (t1 t2 : tm msig n) (d: Dᵒᵖ) (x: (n
   exact SubobjectClassifier.lift_eq_eq (L.interp_tm t1) (L.interp_tm t2) d x
 
 theorem interp_tm_eq_conseq (L: Str msig D) (t1 t2 : tm msig n) ( γ: (Fml msig).obj (n + 1)):
-  L.interp_fml (fml.eq t1 t2) = ⊤ → (L.interp_fml  (γ[t1..])) = (L.interp_fml (γ[t2..])) := by
+  L.interp_fml (fml.eq t1 t2) = ⊤ → (L.interp_fml  (γ⟪t1∷𝟙 _⟫)) = (L.interp_fml (γ⟪t2∷𝟙 _⟫)) := by
   simp only [interp_subst_fst]
   simp only[interp_tm_eq L t1 t2]
   intro h
@@ -467,7 +467,7 @@ theorem interp_tm_eq_conseq (L: Str msig D) (t1 t2 : tm msig n) ( γ: (Fml msig)
 theorem interp_tm_eq_conseq_app (L: Str msig D) (t1 t2 : tm msig n) ( γ: (Fml msig).obj (n + 1))
     (d: Dᵒᵖ) (x: (npow L.carrier n).obj d ):
   let s: Sieve d.unop := (L.interp_fml (fml.eq t1 t2)).app d x
-  s = ⊤ → (L.interp_fml (γ[t1..])).app d x = (L.interp_fml (γ[t2..])).app d x := by
+  s = ⊤ → (L.interp_fml (γ⟪t1∷𝟙 _⟫)).app d x = (L.interp_fml (γ⟪t2∷𝟙 _⟫)).app d x := by
   simp only [interp_subst_fst, FunctorToTypes.comp, lift_app_pt,
     NatTrans.id_app, types_id_apply,interp_tm_eq_app L t1 t2 d x]
   intro h
@@ -533,11 +533,11 @@ theorem soundness {T : theory} {n : RenCtx} (M:Mod T D) (φ ψ: fml T.sig n)
     rename_i n f t1 t2 p1 p2 h1 h2
     simp only[Str.interp_fml]
     set a := M.str.interp_fml f with a_def
-    set b := M.str.interp_fml (γ[t1..]) with b_def
-    set c := M.str.interp_fml (φ[t1..]) with c_def
+    set b := M.str.interp_fml (γ⟪t1∷𝟙 _⟫) with b_def
+    set c := M.str.interp_fml (φ⟪t1∷𝟙 _⟫) with c_def
     set d := M.str.interp_fml (fml.eq t1 t2) with d_def
-    set e := M.str.interp_fml (γ[t2..]) with e_def
-    set f1 := M.str.interp_fml (φ[t2..]) with f1_def
+    set e := M.str.interp_fml (γ⟪t2∷𝟙 _⟫) with e_def
+    set f1 := M.str.interp_fml (φ⟪t2∷𝟙 _⟫) with f1_def
     have := @SubobjectClassifier.Sieve_le_alt _ _ _ (a ⊓ e) f1
     simp only[this]
     intros d0 x0 cjae
@@ -570,8 +570,7 @@ theorem soundness {T : theory} {n : RenCtx} (M:Mod T D) (φ ψ: fml T.sig n)
     constructor
     · assumption
     · assumption
-  | existsQ_intro φ =>
-    rename_i n t
+  | @existsQ_intro n t φ =>
     simp only [Str.model, SubobjectClassifier.prop]
     intros dop x l
     simp only [SubobjectClassifier.prop, l]
@@ -584,7 +583,7 @@ theorem soundness {T : theory} {n : RenCtx} (M:Mod T D) (φ ψ: fml T.sig n)
     simp only[← CategoryTheory.Sieve.id_mem_iff_eq_top] at h
     simp only [← SubobjectClassifier.to_prop_naturality] at h
     let a: (M.str.carrier ⊗ npow M.str.carrier n).obj (Opposite.op d') :=
-      ((lift (M.str.interp_tm t) (𝟙 _)).app dop ≫ (npow M.str.carrier (n+1)).map (Opposite.op f)) x
+      ((ChosenFiniteProducts.lift (M.str.interp_tm t) (𝟙 _)).app dop ≫ (npow M.str.carrier (n+1)).map (Opposite.op f)) x
     exists a
     constructor
     · simp only [types_comp_apply, lift_app_pt, NatTrans.id_app, types_id_apply,
