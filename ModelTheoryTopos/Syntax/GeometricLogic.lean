@@ -494,15 +494,21 @@ theorem Hilbert.proof.eqs  {T: theory} {k : ℕ} {n : RenCtx} (φ: fml T.sig n) 
 theorem Hilbert.proof.eqs'  {T: theory} {k : ℕ} {n : RenCtx} (φ: fml T.sig n) (ts1 ts2: Fin k → tm T.sig n):
   Hilbert.proof φ (fml.eqs ts1 ts2) →
   (∀ (i: Fin k), Hilbert.proof φ (fml.eq  (ts1 i) (ts2 i))) := by
-  simp only[fml.eqs]
+  simp only[fml.eqs,Hilbert.proof.conjn']
   intro h i
-
-  sorry
+  exact h i
 
 
 theorem Hilbert.proof.eqs_iff  {T: theory} {k : ℕ} {n : RenCtx} (φ: fml T.sig n) (ts1 ts2: Fin k → tm T.sig n):
   Hilbert.proof φ (fml.eqs ts1 ts2) ↔
-  (∀ (i: Fin k), Hilbert.proof φ (fml.eq  (ts1 i) (ts2 i))) := sorry
+  (∀ (i: Fin k), Hilbert.proof φ (fml.eq  (ts1 i) (ts2 i))) := by
+    constructor
+    · intros
+      apply Hilbert.proof.eqs'
+      assumption
+    · intros
+      apply Hilbert.proof.eqs
+      assumption
 
 theorem Hilbert.any_eq_intro {T: theory} {n : RenCtx} (φ: fml T.sig n) (t: tm T.sig n):
  Hilbert.proof φ (.eq t t) := by
