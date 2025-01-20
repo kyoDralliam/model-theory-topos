@@ -149,7 +149,10 @@ theorem tm.subst_id_ext {n : Subst m} (f : n ⟶ n) (t : tm m n) : f = 𝟙 n �
   rintro rfl
   simp [subst_id]
 
-
+theorem tm.subst_id_ext' {n : Subst m} (f : n ⟶ n) (t : tm m n)
+  (h : forall i : Fin n, f i = .var i) :
+  t.subst f = t := by
+  apply tm.subst_id_ext ; funext i; apply h
 
 instance : OfNat (Subst m) n where
   ofNat := tm.substitution.to_kl n
@@ -179,7 +182,7 @@ class ScopedSubstitution (T : Nat -> Type u) (F : Nat -> Type v) where
 notation t "⟪" σ "⟫" => (ScopedSubstitution.ssubst σ t)
 
 instance append_substitutions {k n m : Subst S} : HAppend (k ⟶ m) (n ⟶ m) (k + n ⟶ m) where
-  hAppend σ τ := Fin.addCases σ τ
+  hAppend σ τ := Fin.casesAdd σ τ
 
 abbrev scons {k n : Subst S} (a : tm S n) (σ : k ⟶ n) : (k+1) ⟶ n :=
   Fin.cases a σ
@@ -246,6 +249,21 @@ theorem lift_subst_subst0 {n n' : Subst m} (σ : (n+1) ⟶ n') :
     apply tm.subst_id_ext
     funext y
     rfl
+
+theorem subst_0_succ {k n : Subst m} (σ : (k+1) ⟶ n) :
+  let σ0 : (k + 1) ⟶ (n + k) := (σ (0 : Fin (k+1))).ren (fun i => i.addNat k) ∷ (tm.var ∘ Fin.castAdd' _)
+  let σ' : k ⟶ n := σ ∘ Fin.succ
+  let σsucc : (n + k) ⟶ n := 𝟙 n ++ σ'
+  σ = σ0 ≫ σsucc := by
+  funext i
+  induction i using Fin.cases with
+  | zero =>
+    simp [tm.subst_comp_app, <-tm.ren_subst_comp]
+    symm ; apply tm.subst_id_ext' ; intros i
+    simp [HAppend.hAppend]
+    rfl
+  | succ i =>
+    simp [tm.subst_comp_app, <-tm.ren_subst_comp, tm.subst, HAppend.hAppend]
 
 
 theorem substn_liftn_subst {n k k' : Subst m} (σ : n ⟶ k) (f : k ⟶ k') :

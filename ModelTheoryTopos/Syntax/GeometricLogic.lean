@@ -97,6 +97,29 @@ theorem fml.ren_to_subst  (f : n ⟶ n') (φ: fml S n):
 instance : ScopedSubstitution (tm S) (fml S) where
   ssubst σ t := fml.subst σ t
 
+theorem fml.subst_conjn {k n n': RenCtx} (σ : Fin n -> tm m n') (fs: Fin k -> fml m n):
+ fml.subst σ (fml.conjn fs) = fml.conjn (fun i => fml.subst σ (fs i)) := by
+   induction k generalizing n with
+   | zero =>
+     simp only [fml.conjn,  Fin.foldr,
+          Nat.zero_eq,Fin.foldr.loop,fml.subst]
+   | succ n1 ih =>
+     have := ih σ (fs ∘ Fin.succ)--(fun i => fs (Fin.castAdd 1 i))
+     simp only[fml.conjn,fml.subst]
+     simp only[Fin.foldr_succ]
+     simp only [Nat.succ_eq_add_one, Function.comp_apply]
+     simp only[fml.subst]
+     congr
+
+theorem fml.subst_eq:
+  fml.subst σ (fml.eq t1 t2) = fml.eq (tm.subst σ t1) (tm.subst σ t2) := rfl
+
+theorem fml.subst_eqs :
+  fml.subst σ (fml.eqs ts1 ts2) =
+  fml.eqs (fun i => tm.subst σ (ts1 i)) (fun i => tm.subst σ (ts2 i)) := by
+   simp only[fml.subst,fml.eqs]
+   simp only[fml.subst_conjn,fml.subst_eq]
+
 
 open CategoryTheory
 
@@ -185,7 +208,7 @@ abbrev FmlCtx (T : theory) n := List (fml T.sig n)
 instance : ScopedSubstitution (tm T.sig) (FmlCtx T) where
   ssubst σ t := (Ctx T.sig).map σ t
 
-
+namespace StructuredProofs
 inductive proof {T : theory}: {n : RenCtx} → FmlCtx T n → fml T.sig n → Prop where
   | axiom : s ∈ T.axioms -> proof Γ (s.premise.subst σ) -> proof Γ (s.concl.subst σ)
   -- | cut : (forall φ, φ ∈ Δ -> proof Γ φ) -> proof Δ ψ -> proof Γ ψ
@@ -251,14 +274,14 @@ theorem proof.cut {T : theory} n (Δ : FmlCtx T n) ψ (hψ : proof Δ ψ) : fora
   | existsQ_elim _ _ => sorry
 
 
-def sequent.derivable (T : theory) (s : sequent T.sig) := proof [s.premise] s.concl
+def derivable (T : theory) (s : sequent T.sig) := proof [s.premise] s.concl
 
 def sequent.of_formulas (Γ : FmlCtx T n) (φ : fml T.sig n) : sequent T.sig where
   ctx := n
   premise := List.foldr .conj .true Γ
   concl := φ
 
-theorem sequent.from_proof : proof Γ φ -> (of_formulas Γ φ).derivable := by
+theorem sequent.from_proof : proof Γ φ -> derivable _ (of_formulas Γ φ) := by
   intros hΓφ
   apply proof.cut _ _ _ hΓφ
   clear hΓφ
@@ -273,7 +296,7 @@ theorem sequent.from_proof : proof Γ φ -> (of_formulas Γ φ).derivable := by
       apply proof.conj_elim_r ; apply proof.var ; simp only [List.mem_singleton, fml.conj.injEq,
         and_true] ; rfl
 
-theorem sequent.to_proof : (of_formulas Γ φ).derivable -> proof Γ φ := by
+theorem sequent.to_proof : derivable _ (of_formulas Γ φ) -> proof Γ φ := by
   intros hs ; apply proof.cut _ _ _ hs
   clear hs
   induction Γ with
@@ -283,71 +306,155 @@ theorem sequent.to_proof : (of_formulas Γ φ).derivable -> proof Γ φ := by
     · apply proof.var ; simp only [List.mem_cons, true_or]
     · simp only [List.mem_singleton, forall_eq] at ih ; apply proof.cut _ _ _ ih
       intros ; apply proof.var; simp only [List.mem_cons] ; right ; assumption
+end StructuredProofs
 
 namespace Hilbert
-  inductive proof {T : theory}: {n : RenCtx} → fml T.sig n → fml T.sig n → Prop where
-    | axiom : s ∈ T.axioms -> proof (s.premise.subst σ) (s.concl.subst σ)
-    | cut : proof φ τ -> proof τ ψ -> proof φ ψ
-    | var : proof φ φ
-    | true_intro : proof φ .true
-    | false_elim : proof φ .false → proof φ ψ
-    | conj_intro : proof ν φ → proof ν ψ → proof ν (.conj φ ψ)
-    | conj_elim_l : proof (.conj φ  ψ) φ
-    | conj_elim_r : proof (.conj φ  ψ) ψ
-    | disj_intro_l : proof φ (.disj φ ψ)
-    | disj_intro_r : proof ψ (.disj φ ψ)
-    | disj_elim : proof δ (.disj φ ψ) →
-      proof (φ.conj δ) ξ → proof (ψ.conj δ) ξ → proof δ ξ
-    | infdisj_intro : proof (φ k) (.infdisj φ)
-    | infdisj_elim : proof δ (.infdisj φ) →
-      (forall k, proof (.conj (φ k) δ) ξ) → proof Γ ξ
-    | eq_intro : proof .true (.eq t t)
-    | eq_elim (φ γ : (Fml _).obj _) : proof δ (.eq t u) →
-      proof (δ.conj (γ⟪t ∷ 𝟙 _⟫)) (φ⟪t ∷ 𝟙 _⟫) →
-      proof (δ.conj (γ⟪u ∷ 𝟙 _⟫)) (φ⟪u ∷ 𝟙 _⟫)
-    | existsQ_intro (t : tm T.sig _) (φ : fml _ _) : proof (φ⟪t ∷ 𝟙 _⟫) (.existsQ φ)
-    | existsQ_elim : proof  phi (fml.ren Fin.succ psi) -> proof (.existsQ phi) psi
-      --existsQ_elim : proof (fml.ren Fin.succ (.existsQ φ)) φ
-    | ren : proof φ ψ -> proof (fml.ren ρ φ) (fml.ren ρ ψ)
+inductive proof {T : theory}: {n : RenCtx} → fml T.sig n → fml T.sig n → Prop where
+  | axiom : s ∈ T.axioms -> proof (s.premise.subst σ) (s.concl.subst σ)
+  | cut : proof φ τ -> proof τ ψ -> proof φ ψ
+  | var : proof φ φ
+  | true_intro : proof φ .true
+  | false_elim : proof φ .false → proof φ ψ
+  | conj_intro : proof ν φ → proof ν ψ → proof ν (.conj φ ψ)
+  | conj_elim_l : proof (.conj φ  ψ) φ
+  | conj_elim_r : proof (.conj φ  ψ) ψ
+  | disj_intro_l : proof φ (.disj φ ψ)
+  | disj_intro_r : proof ψ (.disj φ ψ)
+  | disj_elim : proof δ (.disj φ ψ) →
+    proof (φ.conj δ) ξ → proof (ψ.conj δ) ξ → proof δ ξ
+  | infdisj_intro : proof (φ k) (.infdisj φ)
+  | infdisj_elim : proof δ (.infdisj φ) →
+    (forall k, proof (.conj (φ k) δ) ξ) → proof Γ ξ
+  | eq_intro : proof .true (.eq t t)
+  | eq_elim (φ γ : (Fml _).obj _) : proof δ (.eq t u) →
+    proof (δ.conj (γ⟪t ∷ 𝟙 _⟫)) (φ⟪t ∷ 𝟙 _⟫) →
+    proof (δ.conj (γ⟪u ∷ 𝟙 _⟫)) (φ⟪u ∷ 𝟙 _⟫)
+  | existsQ_intro (t : tm T.sig _) (φ : fml _ _) : proof (φ⟪t ∷ 𝟙 _⟫) (.existsQ φ)
+  | existsQ_elim : proof  phi (fml.ren Fin.succ psi) -> proof (.existsQ phi) psi
+    --existsQ_elim : proof (fml.ren Fin.succ (.existsQ φ)) φ
+  | ren : proof φ ψ -> proof (fml.ren ρ φ) (fml.ren ρ ψ)
 
-  variable {T : theory}
+variable {T : theory}
+
+infix:30 " ⊢ " => proof
+
+def proof.existn_intro {n k : Subst T.sig} (σ : n ⟶ k) (ψ : fml T.sig k) (φ : fml T.sig (k + n)) :
+  proof ψ (φ.subst (substn σ)) -> proof ψ φ.existsn := by
+  induction n generalizing ψ with
+  | zero => simp only [substn0, fml.existsn] ; intros; rw [<-φ.subst_id]; assumption
+  | succ i ih =>
+    simp only [substnsucc, fml.existsn, fml.subst_comp]
+    intros h
+    apply ih (σ ∘ Fin.succ)
+    simp only [fml.subst]
+    apply cut h
+    apply existsQ_intro
+
+def proof.existn_elim {n k : Subst T.sig} (σ : n ⟶ k) (ψ : fml T.sig k) (φ : fml T.sig (k + n)) :
+  proof φ (ψ.ren (fun i ↦ i.addNat n)) -> proof φ.existsn ψ  := by
+  induction n generalizing ψ with
+  | zero =>
+    simp only [fml.existsn, Fin.addNat_zero]
+    intros
+    rw [<-(fml.ren_id ψ)]
+    assumption
+  | succ i ih =>
+    simp only [fml.existsn]
+    intros
+    apply ih (σ ∘ Fin.succ)
+    apply existsQ_elim
+    rw [<-fml.ren_comp]
+    assumption
 
 
+theorem eq_elim_subst0 {φ γ : fml T.sig (n+1)} (eq : δ ⊢ .eq t u)
+  (pf : δ.conj (γ.subst (subst0 t)) ⊢ φ.subst (subst0 t)) :
+  δ.conj (.subst (subst0 u) γ) ⊢ φ.subst (subst0 u) :=  by
+  apply proof.eq_elim <;> assumption
 
-  def proof.existn_intro {n k : Subst T.sig} (σ : n ⟶ k) (ψ : fml T.sig k) (φ : fml T.sig (k + n)) :
-    proof ψ (φ.subst (substn σ)) -> proof ψ φ.existsn := by
-    induction n generalizing ψ with
-    | zero => simp only [substn0, fml.existsn] ; intros; rw [<-φ.subst_id]; assumption
-    | succ i ih =>
-      simp only [substnsucc, fml.existsn, fml.subst_comp]
-      intros h
-      apply ih (σ ∘ Fin.succ)
-      simp only [fml.subst]
-      apply cut h
-      apply existsQ_intro
+theorem proof.conjn  {T: theory} {k : ℕ} {n : RenCtx} (φ: fml T.sig n) (fs: Fin k → fml T.sig n) :
+ (∀ (i: Fin k), proof φ (fs i)) → proof φ (fml.conjn fs) := by
+   induction k with
+   | zero =>
+     simp only [IsEmpty.forall_iff, fml.conjn, Fin.foldr_zero, Hilbert.proof.true_intro, imp_self]
+   | succ n1 ih =>
+     intro h
+     have h1 : Hilbert.proof φ (fml.conjn (fs ∘ Fin.succ)) := by
+       apply ih (fs ∘ Fin.succ)
+       intro i
+       have := h (Fin.succ i)
+       assumption
+     rw[fml.conjn_succ]
+     apply Hilbert.proof.conj_intro
+     · apply h
+     · assumption
 
-  def proof.existn_elim {n k : Subst T.sig} (σ : n ⟶ k) (ψ : fml T.sig k) (φ : fml T.sig (k + n)) :
-    proof φ (ψ.ren (fun i ↦ i.addNat n)) -> proof φ.existsn ψ  := by
-    induction n generalizing ψ with
-    | zero =>
-      simp only [fml.existsn, Fin.addNat_zero]
-      intros
-      rw [<-(fml.ren_id ψ)]
-      assumption
-    | succ i ih =>
-      simp only [fml.existsn]
-      intros
-      apply ih (σ ∘ Fin.succ)
-      apply existsQ_elim
-      rw [<-fml.ren_comp]
-      assumption
+theorem proof.conj_iff
+  {T: theory}  {n : RenCtx} (μ φ ψ: fml T.sig n) :
+    μ ⊢ φ.conj ψ ↔ (μ ⊢ φ) ∧ (μ ⊢ ψ) := by
+      constructor
+      · intro h ; constructor <;> apply cut h
+        · apply conj_elim_l
+        · apply conj_elim_r
+      · rintro ⟨⟩
+        apply Hilbert.proof.conj_intro <;> assumption
 
-  -- theorem subst_fst_subst0 {n: Subst m} (a: tm m n) (f: (Fml S).obj (n+1)):
-  --  subst_fst f a = fml.subst (subst0 a) f := sorry
+theorem proof.conjn_elim_0 {T : theory} {n} (φ : fml T.sig n) (fs: Fin 0 → fml T.sig n) :
+  φ ⊢ fml.conjn fs := by
+  simp [fml.conjn]
+  apply true_intro
 
-  theorem eq_elim_subst0 : proof δ (.eq t u) →
-      proof (δ.conj (.subst (subst0 t) γ)) (.subst (subst0 t) φ) →
-      proof (δ.conj (.subst (subst0 u) γ)) (.subst (subst0 u) φ) := sorry
+theorem proof.conjn_elim_succ_l {T : theory} {n k} (φ : fml T.sig n)
+  (fs: Fin (k+1) → fml T.sig n)
+  (pf : φ ⊢ fml.conjn fs) :
+  φ ⊢ fs (0 : Fin (k + 1)) := by
+  apply cut pf
+  simp [fml.conjn, Fin.foldr_succ]
+  apply conj_elim_l
+
+theorem proof.conjn_elim_succ_r {T : theory} {n k} (φ : fml T.sig n)
+  (fs: Fin (k+1) → fml T.sig n)
+  (pf : φ ⊢ fml.conjn fs) :
+  φ ⊢ fml.conjn (fs ∘ Fin.succ) := by
+  apply cut pf
+  simp [fml.conjn, Fin.foldr_succ]
+  apply conj_elim_r
+
+theorem proof.conjn_elim  {T: theory} {k : ℕ} {n : RenCtx} (φ: fml T.sig n) (fs: Fin k → fml T.sig n) :
+  Hilbert.proof φ (fml.conjn fs)  → (∀ (i: Fin k), Hilbert.proof φ (fs i)) := by
+  induction k with
+  | zero => intros _ i ; apply Fin.elim0 i
+  | succ k ih =>
+    intros pf i
+    induction i using Fin.cases
+    · apply conjn_elim_succ_l _ _ pf
+    · apply ih (fs ∘ Fin.succ)
+      apply conjn_elim_succ_r _ _ pf
+
+theorem proof.eqs  {T: theory} {k : ℕ} {n : RenCtx} (φ: fml T.sig n) (ts1 ts2: Fin k → tm T.sig n)
+  (h : ∀ (i: Fin k), φ ⊢ fml.eq (ts1 i) (ts2 i)) :
+  Hilbert.proof φ (fml.eqs ts1 ts2) := by
+  simp only[fml.eqs]
+  apply conjn
+  assumption
+
+theorem proof.eqs'  {T: theory} {k : ℕ} {n : RenCtx} (φ: fml T.sig n) (ts1 ts2: Fin k → tm T.sig n):
+  Hilbert.proof φ (fml.eqs ts1 ts2) →
+  (∀ (i: Fin k), Hilbert.proof φ (fml.eq  (ts1 i) (ts2 i))) := by
+  simp only[fml.eqs]
+  apply conjn_elim
+
+
+theorem proof.eqs_iff  {T: theory} {k : ℕ} {n : RenCtx} (φ: fml T.sig n) (ts1 ts2: Fin k → tm T.sig n):
+  Hilbert.proof φ (fml.eqs ts1 ts2) ↔
+  (∀ (i: Fin k), Hilbert.proof φ (fml.eq  (ts1 i) (ts2 i))) :=
+  ⟨proof.eqs' _ ts1 ts2, proof.eqs _ _ _⟩
+
+theorem any_eq_intro {T: theory} {n : RenCtx} (φ: fml T.sig n) (t: tm T.sig n):
+  Hilbert.proof φ (.eq t t) := by
+  apply @Hilbert.proof.cut _ _ _ .true
+  · apply Hilbert.proof.true_intro
+  · apply Hilbert.proof.eq_intro
 
 end Hilbert
 
@@ -396,149 +503,14 @@ def id_rep {T: theory} {n : RenCtx} (φ: fml T.sig n) : fml T.sig (n+n) :=
  (φ.ren R.in10).conj
  (fml.eqs (tm.var ∘ R.in10) (tm.var ∘ R.in01))
 
-theorem fml.subst_conj {n n': RenCtx} (σ : Fin n -> tm m n') (φ ψ: fml m n) :
- fml.subst σ (fml.conj φ ψ) = fml.conj (fml.subst σ φ) (fml.subst σ ψ) := rfl
 
-theorem fml.subst_conjn {k n n': RenCtx} (σ : Fin n -> tm m n') (fs: Fin k -> fml m n):
- fml.subst σ (fml.conjn fs) = fml.conjn (fun i => fml.subst σ (fs i)) := by
-   induction k generalizing n with
-   | zero =>
-     simp only [fml.conjn,  Fin.foldr,
-          Nat.zero_eq,Fin.foldr.loop,fml.subst]
-   | succ n1 ih =>
-     have := ih σ (fs ∘ Fin.succ)--(fun i => fs (Fin.castAdd 1 i))
-     simp only[fml.conjn,fml.subst]
-     simp only[Fin.foldr_succ]
-     simp only [Nat.succ_eq_add_one, Function.comp_apply]
-     simp only[fml.subst_conj]
-     congr
-
-theorem fml.subst_eq:
-  fml.subst σ (fml.eq t1 t2) = fml.eq (tm.subst σ t1) (tm.subst σ t2) := rfl
-
-theorem fml.subst_eqs :
-  fml.subst σ (fml.eqs ts1 ts2) =
-  fml.eqs (fun i => tm.subst σ (ts1 i)) (fun i => tm.subst σ (ts2 i)) := by
-   simp only[fml.subst,fml.eqs]
-   simp only[fml.subst_conjn,fml.subst_eq]
-
-
-
-theorem Hilbert.proof.conjn  {T: theory} {k : ℕ} {n : RenCtx} (φ: fml T.sig n) (fs: Fin k → fml T.sig n) :
- (∀ (i: Fin k), Hilbert.proof φ (fs i)) → Hilbert.proof φ (fml.conjn fs) := by
-   induction k with
-   | zero =>
-     simp only [IsEmpty.forall_iff, fml.conjn, Fin.foldr_zero, Hilbert.proof.true_intro, imp_self]
-   | succ n1 ih =>
-     intro h
-     have h1 : Hilbert.proof φ (fml.conjn (fs ∘ Fin.succ)) := by
-       apply ih (fs ∘ Fin.succ)
-       intro i
-       have := h (Fin.succ i)
-       assumption
-     rw[fml.conjn_succ]
-     apply Hilbert.proof.conj_intro
-     · apply h
-     · assumption
-
-theorem Hilbert.proof.conj_iff
-  {T: theory}  {n : RenCtx} (μ φ ψ: fml T.sig n) :
-    Hilbert.proof μ (φ.conj ψ) ↔ Hilbert.proof μ φ ∧ Hilbert.proof μ ψ := by
-      constructor
-      · intro h
-        constructor
-        · have := @Hilbert.proof.conj_elim_l T n φ ψ
-          exact Hilbert.proof.cut h this
-        · have := @Hilbert.proof.conj_elim_r T n φ ψ
-          exact Hilbert.proof.cut h this
-      · intros h
-        cases h
-        apply Hilbert.proof.conj_intro <;> assumption
-
-
-
-theorem Hilbert.proof.conjn'  {T: theory} {k : ℕ} {n : RenCtx} (φ: fml T.sig n) (fs: Fin k → fml T.sig n) :
-  Hilbert.proof φ (fml.conjn fs)  ↔ (∀ (i: Fin k), Hilbert.proof φ (fs i)) := by
-    induction k with
-    | zero =>
-      simp[fml.conjn]
-      apply Hilbert.proof.true_intro
-    | succ k ih =>
-      simp[fml.conjn_succ]
-      simp[Hilbert.proof.conj_iff]
-      simp[ih]
-      constructor
-      · intro h i
-        rcases h with ⟨ l,r⟩
-        induction i using Fin.cases with
-        | zero => assumption
-        | succ i => exact r i
-      · intro h
-        constructor
-        · exact h 0
-        · intro i
-          exact h i.succ
-
-
-
-
-theorem Hilbert.proof.eqs  {T: theory} {k : ℕ} {n : RenCtx} (φ: fml T.sig n) (ts1 ts2: Fin k → tm T.sig n):
- (∀ (i: Fin k), Hilbert.proof φ (fml.eq  (ts1 i) (ts2 i))) →
-  Hilbert.proof φ (fml.eqs ts1 ts2) := by
-  simp only[fml.eqs]
-  intro h
-  apply Hilbert.proof.conjn
-  assumption
-
-
-theorem Hilbert.proof.eqs'  {T: theory} {k : ℕ} {n : RenCtx} (φ: fml T.sig n) (ts1 ts2: Fin k → tm T.sig n):
-  Hilbert.proof φ (fml.eqs ts1 ts2) →
-  (∀ (i: Fin k), Hilbert.proof φ (fml.eq  (ts1 i) (ts2 i))) := by
-  simp only[fml.eqs,Hilbert.proof.conjn']
-  intro h i
-  exact h i
-
-
-theorem Hilbert.proof.eqs_iff  {T: theory} {k : ℕ} {n : RenCtx} (φ: fml T.sig n) (ts1 ts2: Fin k → tm T.sig n):
-  Hilbert.proof φ (fml.eqs ts1 ts2) ↔
-  (∀ (i: Fin k), Hilbert.proof φ (fml.eq  (ts1 i) (ts2 i))) := by
-    constructor
-    · intros
-      apply Hilbert.proof.eqs'
-      assumption
-    · intros
-      apply Hilbert.proof.eqs
-      assumption
-
-theorem Hilbert.any_eq_intro {T: theory} {n : RenCtx} (φ: fml T.sig n) (t: tm T.sig n):
- Hilbert.proof φ (.eq t t) := by
-  apply @Hilbert.proof.cut _ _ _ .true
-  · apply Hilbert.proof.true_intro
-  · apply Hilbert.proof.eq_intro
-
-theorem tm.substn_zero (ts:  0 ⟶  n') : (tm.subst (substn ts) t) = t := by
-  induction t with
-  | var a => simp only [tm.subst, substn, Nat.add_zero];rfl
-  | op o σ ih =>
-    simp only [tm.subst, substn]
-    congr
-    funext
-    simp only [ih]
-
-theorem fml.substn_zero (ts:  0 ⟶  n') : (fml.subst (substn ts) f) = f := by
-  simp only[substn0]
-  apply fml.subst_id
-
--- theorem subst_fst_subst0 : subst_fst t = tm.subst (subst0 t) := sorry
--- #check subst0
--- #check subst_fst
 theorem Hilbert.eqs_elim {T: theory} {n' n : Subst T.sig}  (δ : fml T.sig n')  (φ γ: fml T.sig (n'+n)) (ts1 ts2:  n ⟶  n'):
  Hilbert.proof δ (.eqs ts1 ts2) →
  Hilbert.proof (δ.conj (.subst (substn ts1) γ)) (.subst (substn ts1) φ) →
  Hilbert.proof (δ.conj (.subst (substn ts2) γ)) (.subst (substn ts2) φ) := by
      induction n  with
      | zero =>
-       simp only[fml.substn_zero]
+       simp only[substn0, fml.subst_id]
        intros h1 h2
        assumption
      | succ n1 ih =>
@@ -560,7 +532,7 @@ theorem Hilbert.eqs_elim {T: theory} {n' n : Subst T.sig}  (δ : fml T.sig n')  
          have h10 : Hilbert.proof δ (fml.eq (ts1 (0:Fin n1.succ)) ( ts2 (0:Fin n1.succ))) := by
            simp[Hilbert.proof.eqs_iff] at h1
            exact h1 0
-         have := @Hilbert.eq_elim_subst0 T _ δ (ts1 (0: Fin n1.succ)) (ts2 (0: Fin n1.succ)) γ' φ' h10 h2
+         have := Hilbert.eq_elim_subst0 h10 h2
          set si := (scons (ts2 (0:Fin n1.succ)) (ts1 ∘ Fin.succ))
          have t20 : si (0:Fin n1.succ) = ts2 (0:Fin n1.succ) := by
            simp[si]
@@ -574,6 +546,28 @@ theorem Hilbert.eqs_elim {T: theory} {n' n : Subst T.sig}  (δ : fml T.sig n')  
          simp[← geq,← peq]
          assumption
 
+
+namespace S
+  def in10 {n k : Subst S} : n  ⟶ n + k := tm.var ∘ R.in10
+  def in01 {n k : Subst S} : k  ⟶ n + k := tm.var ∘ R.in01
+
+  -- #check fun S (n k : Subst S) => @in10 S n k ++ @in10 S n k ++ @in01 S n k
+end S
+
+theorem substn_section {T: theory} {k n : Subst T.sig} (φ : fml T.sig k) (σ :  k ⟶ n) :
+  (φ.ren R.in01).subst (substn σ) = φ.subst σ := by
+  simp [fml.ren_to_subst, <-fml.subst_comp, R.in01]
+  congr
+  funext i
+  simp [tm.subst_comp_app, tm.subst, substn]
+
+theorem Hilbert.eqs_elim' {T: theory} {k n : Subst T.sig} (δ : fml T.sig n)  (φ ψ: fml T.sig k) (σ τ:  k ⟶ n)
+  (h : Hilbert.proof δ (.eqs σ τ)):
+  Hilbert.proof (δ.conj (ψ.subst σ)) (φ.subst σ) →
+  Hilbert.proof (δ.conj (ψ.subst τ)) (φ.subst τ) := by
+  rw [<-substn_section ψ σ, <-substn_section φ σ,
+    <-substn_section ψ τ, <-substn_section φ τ]
+  apply Hilbert.eqs_elim δ _ _ σ τ h
 
 -- namespace Example
 
@@ -597,6 +591,7 @@ theorem Hilbert.eqs_elim {T: theory} {n' n : Subst T.sig}  (δ : fml T.sig n')  
 --   substn σ (Fin.castAdd' n' a ) = σ a := by
 --    simp only [substn, Fin.casesAdd_right]
 
+-- TODO: this should us fml.subst_id, fml.ren_to_subst and fml.subst_comp
 theorem tm.subst_ren_id {T: theory} {n: RenCtx} (t: tm T.sig n):
  (.subst (substn fun i ↦ tm.var i) (tm.ren R.in10 t)) = t := by
    induction t with
@@ -616,6 +611,7 @@ theorem Subst_comp_o' {S: monosig} {n m k: Subst S}  (f : Fin n -> Fin k) (g : k
   (fun i => tm.var (f i)) ≫ g = g ∘ f := rfl
 
 
+-- TODO: this should be a straightforward application of fml.ren_id and fml.ren_comp
 theorem fml.subst_ren_id {T: theory} {n: Subst T.sig} (φ: fml T.sig n):
  (fml.subst (substn fun i ↦ tm.var i) (fml.ren R.in10 φ)) = φ := by
       simp[fml.ren_to_subst,<-fml.subst_comp]
