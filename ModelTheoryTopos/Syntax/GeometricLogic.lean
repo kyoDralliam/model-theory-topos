@@ -442,7 +442,7 @@ theorem Hilbert.proof.conjn  {T: theory} {k : ℕ} {n : RenCtx} (φ: fml T.sig n
      · assumption
 
 theorem Hilbert.proof.conj_iff
-  {T: theory} {k : ℕ} {n : RenCtx} (μ φ ψ: fml T.sig n) :
+  {T: theory}  {n : RenCtx} (μ φ ψ: fml T.sig n) :
     Hilbert.proof μ (φ.conj ψ) ↔ Hilbert.proof μ φ ∧ Hilbert.proof μ ψ := by
       constructor
       · intro h
@@ -463,9 +463,22 @@ theorem Hilbert.proof.conjn'  {T: theory} {k : ℕ} {n : RenCtx} (φ: fml T.sig 
     | zero =>
       simp[fml.conjn]
       apply Hilbert.proof.true_intro
-    | succ n _ =>
+    | succ k ih =>
+      simp[fml.conjn_succ]
+      simp[Hilbert.proof.conj_iff]
+      simp[ih]
+      constructor
+      · intro h i
+        rcases h with ⟨ l,r⟩
+        induction i using Fin.cases with
+        | zero => assumption
+        | succ i => exact r i
+      · intro h
+        constructor
+        · exact h 0
+        · intro i
+          exact h i.succ
 
-      sorry
 
 
 
