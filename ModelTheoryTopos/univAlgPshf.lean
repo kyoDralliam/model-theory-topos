@@ -105,18 +105,18 @@ instance Type_equiv_Psh_eta: 𝟭 (CategoryTheory.Psh Unit) ≅
 
 instance Type_equiv_Psh_epsilpon: 𝟭 Type ≅
   Type_Psh ⋙ Psh_Type  where
-    hom := sorry
-    inv := sorry
+    hom := {
+      app a := 𝟙 a
+       }
+    inv := {
+      app a := 𝟙 a
+    }
 
 
 #check CategoryTheory.Equivalence.mk
 
-instance Type_equiv_Psh : Type ≌  CategoryTheory.Psh Unit where
-  functor := Type_Psh
-  inverse := Psh_Type
-  unitIso := sorry
-  counitIso := sorry
-  functor_unitIso_comp := sorry
+instance Type_equiv_Psh : CategoryTheory.Psh Unit ≌ Type   :=
+ CategoryTheory.Equivalence.mk Psh_Type Type_Psh Type_equiv_Psh_eta Type_equiv_Psh_epsilpon
 
 def semigroup_to_model (α : Type) [Semigroup α]
   : semigroup_set_models where
