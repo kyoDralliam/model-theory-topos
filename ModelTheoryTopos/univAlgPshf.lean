@@ -48,20 +48,81 @@ def semigroup_set_models :=
   InterpPsh.Mod semigroup_thy Unit
 
 
-def Semigroup_to_Psh (α : Type) [Semigroup α] :
+def Type_to_Psh (α : Type) :
   CategoryTheory.Psh Unit where
   obj _ := α
-  map := sorry
+  map _ := id
+
+open CategoryTheory
+
+
+
+instance Type_Psh : Type  ⥤ CategoryTheory.Psh Unit where
+  obj a := Type_to_Psh a
+  map f := {
+    app _ := f
+  }
+
+
+instance Psh_Type:  CategoryTheory.Psh Unit ⥤ Type where
+  obj P := P.obj (Opposite.op ())
+  map f := f.app (Opposite.op ())
+
+--𝟙 identity morphism
+--id identity function
+--𝟭 identity functor
+
+open CategoryTheory.Functor
+instance Type_equiv_Psh_eta: 𝟭 (CategoryTheory.Psh Unit) ≅
+  Psh_Type ⋙ Type_Psh where
+    hom := {
+      app P := {
+        app := fun
+          | .op unop => 𝟙 _
+        naturality X Y f := by
+         simp [] at *
+         have : f = 𝟙 (Opposite.op ()) := rfl
+         simp [this]
+         have := map_id P (Opposite.op ())
+         simp [this]
+         rfl
+      }
+    }
+    inv := {
+      app P := {
+        app _ := 𝟙 _
+        naturality X Y f := by
+         simp [] at *
+         have : f = 𝟙 (Opposite.op ()) := rfl
+         simp [this]
+         have := map_id P (Opposite.op ())
+         simp [this]
+         rfl
+      }
+    }
+
+
+
+instance Type_equiv_Psh_epsilpon: 𝟭 Type ≅
+  Type_Psh ⋙ Psh_Type  where
+    hom := sorry
+    inv := sorry
+
+
+#check CategoryTheory.Equivalence.mk
+
+instance Type_equiv_Psh : Type ≌  CategoryTheory.Psh Unit where
+  functor := Type_Psh
+  inverse := Psh_Type
+  unitIso := sorry
+  counitIso := sorry
+  functor_unitIso_comp := sorry
 
 def semigroup_to_model (α : Type) [Semigroup α]
   : semigroup_set_models where
   str := {
-      carrier := {
-        obj _ := α
-        map := fun
-          | .op unop => sorry
-      }
-      interp_ops := sorry
+      carrier := Type_to_Psh α
+      interp_ops o := sorry
       interp_preds := sorry
     }
   valid := sorry
