@@ -685,10 +685,19 @@ theorem Hilbert_eqs_symm {T: theory} {n k: RenCtx} (σ1 σ2: Fin k →  tm T.sig
   φ ⊢ fml.eqs σ1 σ2 → φ ⊢ fml.eqs σ2 σ1 := sorry
 
 theorem Hilbert_conj_1  {T: theory} {n: RenCtx} (δ φ ψ: fml T.sig n):
- δ ⊢ φ.conj ψ → δ ⊢ φ := sorry
+ δ ⊢ φ.conj ψ → δ ⊢ φ := by
+   intro h
+   have := @Hilbert.proof.cut T n δ (φ.conj ψ)
+   apply this h
+   exact Hilbert.proof.conj_elim_l
 
 theorem Hilbert_conj_2  {T: theory} {n: RenCtx} (δ φ ψ: fml T.sig n):
- δ ⊢ φ.conj ψ → δ ⊢ ψ := sorry
+ δ ⊢ φ.conj ψ → δ ⊢ ψ := by
+   intro h
+   have := @Hilbert.proof.cut T n δ (φ.conj ψ)
+   apply this h
+   exact Hilbert.proof.conj_elim_r
+
 
 
 theorem id_rep_functional  {T: theory} {n : RenCtx} (φ: fml T.sig n) :
