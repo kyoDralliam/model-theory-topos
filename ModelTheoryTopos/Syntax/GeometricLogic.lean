@@ -456,6 +456,9 @@ theorem any_eq_intro {T: theory} {n : RenCtx} (φ: fml T.sig n) (t: tm T.sig n):
   · apply Hilbert.proof.true_intro
   · apply Hilbert.proof.eq_intro
 
+#check Hilbert.proof.eq_elim
+
+
 end Hilbert
 
 namespace SyntacticSite
@@ -575,6 +578,17 @@ theorem Hilbert.eqs_elim' {T: theory} {k n : Subst T.sig} (δ : fml T.sig n)  (�
     <-substn_section ψ τ, <-substn_section φ τ]
   apply Hilbert.eqs_elim δ _ _ σ τ h
 
+theorem Hilbert_eqs_intro {T: theory} {n k: RenCtx} (φ: fml T.sig n) (σ: Fin k → tm T.sig n):
+ φ ⊢ fml.eqs σ σ := sorry
+
+theorem Hilbert_eq_symm {T: theory} {n k: RenCtx} (t1 t2:  tm T.sig n) (φ: fml T.sig n):
+  φ ⊢ fml.eq t1 t2 → φ ⊢ fml.eq t2 t1 :=
+
+   sorry
+
+theorem Hilbert_eqs_symm {T: theory} {n k: RenCtx} (σ1 σ2: Fin k → tm T.sig n) (φ: fml T.sig n):
+  φ ⊢ fml.eqs σ1 σ2 → φ ⊢ fml.eqs σ2 σ1 :=
+  sorry
 
 theorem Hilbert.conj_add_true {T: theory} (φ ψ : fml T.sig n) :
  Hilbert.proof φ ψ ↔ Hilbert.proof (φ.conj .true) ψ := by
@@ -657,9 +671,6 @@ theorem fun_map_comp : (fun i ↦ g (f i)) = fun i => (g ∘ f) i := rfl
 theorem fun_map_comp' : (fun i ↦ g (f i)) =(g ∘ f) := rfl
 
 
--- theorem subst_110_10 :
---  (tm.subst (tm.var ∘ R.in110)) ∘ tm.var ∘ @R.in10 n n =
---  (tm.var ∘ R.in100) := sorry subst_comp
 
 theorem subst_comp_var: (tm.subst σ) ∘ .var = σ := rfl
 
@@ -681,8 +692,7 @@ theorem Hilbert_eq_trans' {T: theory} {n : RenCtx} (t1 t2 t3: tm T.sig n) (φ: f
 theorem Hilbert_eqs_trans' {T: theory} {n k: RenCtx} (σ1 σ2 σ3: Fin k →  tm T.sig n) (φ: fml T.sig n):
   φ ⊢ fml.eqs σ1 σ2 → φ ⊢ fml.eqs σ2 σ3→ φ ⊢ fml.eqs σ1 σ3 := sorry
 
-theorem Hilbert_eqs_symm {T: theory} {n k: RenCtx} (σ1 σ2: Fin k →  tm T.sig n) (φ: fml T.sig n):
-  φ ⊢ fml.eqs σ1 σ2 → φ ⊢ fml.eqs σ2 σ1 := sorry
+
 
 theorem Hilbert_conj_1  {T: theory} {n: RenCtx} (δ φ ψ: fml T.sig n):
  δ ⊢ φ.conj ψ → δ ⊢ φ := by

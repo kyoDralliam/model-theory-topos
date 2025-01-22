@@ -117,19 +117,30 @@ open Semigroup
 #check Semigroup.ext
 #check Mul.mul
 
+instance Type_to_Psh_npow (α : Type) (n : ℕ):
+ Type_to_Psh (ChosenFiniteProducts.npow α n) ≅ ChosenFiniteProducts.npow (Type_to_Psh α) n :=
+   sorry
+
+#check Function.uncurry
+
+
+instance times_npow_2 (α : Type)  : ChosenFiniteProducts.npow α 2 ≅ α × α := sorry
+
 noncomputable
 def semigroup_to_model (α : Type) [Semigroup α]
   : semigroup_set_models where
   str := {
       carrier := Type_to_Psh α
       interp_ops o := {
-        app _ := fun
-          | .mk fst snd => sorry --Mul.mul (fst: α) * snd
-
+        app _ :=  (Type_to_Psh_npow α 2).inv.app _ ≫
+        (Type_Psh.map ((times_npow_2 α).hom ≫
+                       (Function.uncurry (@Mul.mul α _ )))).app _
+        naturality := sorry
       }
       interp_preds := sorry
     }
   valid := sorry
+
 
 def model_to_semigroup (m : semigroup_set_models)
   : Semigroup (m.str.carrier.obj ⟨⟨⟩⟩) where
