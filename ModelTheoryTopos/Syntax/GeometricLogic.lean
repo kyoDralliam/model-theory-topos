@@ -672,6 +672,24 @@ theorem in101_10_010 : (@R.in101 n k) ∘ R.in01 = R.in001 := by
   ext i
   simp only [Function.comp_apply, Fin.casesAdd_right, Fin.coe_castAdd']
 
+theorem Hilbert_eq_trans {T: theory} {n : RenCtx} (t1 t2 t3: tm T.sig n) (φ ψ: fml T.sig n):
+  φ ⊢ fml.eq t1 t2 → ψ ⊢ fml.eq t2 t3 → φ.conj ψ ⊢ fml.eq t1 t3 := sorry
+
+theorem Hilbert_eq_trans' {T: theory} {n : RenCtx} (t1 t2 t3: tm T.sig n) (φ: fml T.sig n):
+  φ ⊢ fml.eq t1 t2 → φ ⊢ fml.eq t2 t3 → φ ⊢ fml.eq t1 t3 := sorry
+
+theorem Hilbert_eqs_trans' {T: theory} {n k: RenCtx} (σ1 σ2 σ3: Fin k →  tm T.sig n) (φ: fml T.sig n):
+  φ ⊢ fml.eqs σ1 σ2 → φ ⊢ fml.eqs σ2 σ3→ φ ⊢ fml.eqs σ1 σ3 := sorry
+
+theorem Hilbert_eqs_symm {T: theory} {n k: RenCtx} (σ1 σ2: Fin k →  tm T.sig n) (φ: fml T.sig n):
+  φ ⊢ fml.eqs σ1 σ2 → φ ⊢ fml.eqs σ2 σ1 := sorry
+
+theorem Hilbert_conj_1  {T: theory} {n: RenCtx} (δ φ ψ: fml T.sig n):
+ δ ⊢ φ.conj ψ → δ ⊢ φ := sorry
+
+theorem Hilbert_conj_2  {T: theory} {n: RenCtx} (δ φ ψ: fml T.sig n):
+ δ ⊢ φ.conj ψ → δ ⊢ ψ := sorry
+
 
 theorem id_rep_functional  {T: theory} {n : RenCtx} (φ: fml T.sig n) :
   functional φ φ (id_rep φ) where
@@ -709,7 +727,15 @@ theorem id_rep_functional  {T: theory} {n : RenCtx} (φ: fml T.sig n) :
      simp[subst_comp_var]
      simp[Function.comp_assoc]
      simp[in110_10_100,in110_01_010,in101_10_100,in101_10_010]
-     sorry
+     apply Hilbert_eqs_trans' _ (tm.var ∘ R.in100)
+     · apply Hilbert_eqs_symm
+       apply Hilbert_conj_2 _ (fml.subst (tm.var ∘ R.in110) (fml.ren R.in10 φ))
+       apply Hilbert_conj_2 _ ((fml.subst (tm.var ∘ R.in101) (fml.ren R.in10 φ)).conj (fml.eqs (tm.var ∘ R.in100) (tm.var ∘ R.in001)))
+       apply Hilbert.proof.var
+     · apply Hilbert_conj_2 _ (fml.subst (tm.var ∘ R.in101) (fml.ren R.in10 φ))
+       apply Hilbert_conj_1 _ _ ((fml.subst (tm.var ∘ R.in110) (fml.ren R.in10 φ)).conj (fml.eqs (tm.var ∘ R.in100) (tm.var ∘ R.in010)))
+       apply Hilbert.proof.var
+
 
 
 @[simp]
