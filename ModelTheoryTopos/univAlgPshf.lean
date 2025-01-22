@@ -29,6 +29,7 @@ def semigroup_sig : monosig where
 
 def mk_mul (t1 t2: tm semigroup_sig n) : tm semigroup_sig n :=
  .op () (fun i => if i = (0: Fin 2) then t1 else t2)
+ -- KM: simpler version .op () (fun i => [t1 , t2][i])
 
 def mk_mul_left (t1 t2 t3: tm semigroup_sig n) := mk_mul (mk_mul t1 t2) t3
 
@@ -73,12 +74,13 @@ instance Psh_Type:  CategoryTheory.Psh Unit ⥤ Type where
 --𝟭 identity functor
 
 open CategoryTheory.Functor
+-- KM: you can simplify probably simplify this code with NatIso.ofComponents or NatIso.ofNatTrans
 instance Type_equiv_Psh_eta: 𝟭 (CategoryTheory.Psh Unit) ≅
   Psh_Type ⋙ Type_Psh where
     hom := {
       app P := {
-        app := fun
-          | .op unop => 𝟙 _
+        app := fun _ => 𝟙 _
+          -- | .op unop => 𝟙 _
         naturality X Y f := by
          simp [] at *
          have : f = 𝟙 (Opposite.op ()) := rfl
@@ -132,10 +134,10 @@ def semigroup_to_model (α : Type) [Semigroup α]
   str := {
       carrier := Type_to_Psh α
       interp_ops o := {
-        app _ :=  (Type_to_Psh_npow α 2).inv.app _ ≫
-        (Type_Psh.map ((times_npow_2 α).hom ≫
-                       (Function.uncurry (@Mul.mul α _ )))).app _
-        naturality := sorry
+        app _ p :=
+          let x : α := p.1
+          let y : α := p.2.1
+          x * y
       }
       interp_preds := sorry
     }
