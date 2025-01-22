@@ -469,8 +469,12 @@ abbrev in101 : Fin (n + k) -> Fin (n + k + k) :=
 abbrev in110 : Fin (n + k) -> Fin (n + k + k) := in10
 abbrev in001 : Fin k -> Fin (n + k + k) := in01
 abbrev in010 : Fin k -> Fin (n + k + k) := in10 ∘ in01
+abbrev in100 : Fin n -> Fin (n + k + k) := in10 ∘ in10
 end R
 #check substn
+
+
+
 --theorem in10_substn (φ: fml m k): fml.ren (@R.in01 n k) φ  =  fml.subst (substn (@R.in01 n k)) φ := sorry
 
 --theorem in10_substn_in01 (φ: fml m k): fml.ren (@R.in01 n k) φ =
@@ -515,13 +519,15 @@ theorem Hilbert.eqs_elim {T: theory} {n' n : Subst T.sig}  (δ : fml T.sig n')  
        assumption
      | succ n1 ih =>
        intros h1 h2
-       simp[substnsucc'] at *
-       simp[fml.subst_comp] at *
+       simp only [Nat.succ_eq_add_one, substnsucc'] at *
+       simp only [fml.subst_comp] at *
        apply ih _ _ (ts1 ∘ Fin.succ) (ts2 ∘ Fin.succ)
-       · simp[Hilbert.proof.eqs_iff] at *
+       · simp only [Hilbert.proof.eqs_iff, Nat.succ_eq_add_one, Function.comp_apply] at *
          intro i
          apply h1
-       · simp[← fml.subst_comp] at *
+       · simp only [← fml.subst_comp,
+         Nat.succ_eq_add_one] at *
+           --have := @substnsucc'
          --have := @substnsucc'
          simp only[← substnsucc'] at *
          simp only[← substnsucc'']
@@ -530,20 +536,20 @@ theorem Hilbert.eqs_elim {T: theory} {n' n : Subst T.sig}  (δ : fml T.sig n')  
          set γ' := (fml.subst (lift_subst (substn (ts1 ∘ Fin.succ))) γ)
          set φ' := (fml.subst (lift_subst (substn (ts1 ∘ Fin.succ))) φ)
          have h10 : Hilbert.proof δ (fml.eq (ts1 (0:Fin n1.succ)) ( ts2 (0:Fin n1.succ))) := by
-           simp[Hilbert.proof.eqs_iff] at h1
+           simp only [Hilbert.proof.eqs_iff] at h1
            exact h1 0
          have := Hilbert.eq_elim_subst0 h10 h2
          set si := (scons (ts2 (0:Fin n1.succ)) (ts1 ∘ Fin.succ))
          have t20 : si (0:Fin n1.succ) = ts2 (0:Fin n1.succ) := by
-           simp[si]
-         simp[t20]
+           simp only [Nat.succ_eq_add_one, Fin.cases_zero, si]
+         simp only [t20, si]
          have geq: γ' = (fml.subst (lift_subst (substn (si ∘ Fin.succ))) γ) := by
-          simp[γ']
+          simp only [Nat.succ_eq_add_one, γ', si]
           congr --????? how?????
          have peq: φ' = (fml.subst (lift_subst (substn (si ∘ Fin.succ))) φ) := by
-          simp[φ']
+          simp only [Nat.succ_eq_add_one, φ', γ', si]
           congr
-         simp[← geq,← peq]
+         simp only [← geq, ← peq, γ', φ', si]
          assumption
 
 
@@ -650,6 +656,23 @@ theorem fml.subst_ren_id {T: theory} {n: Subst T.sig} (φ: fml T.sig n):
 theorem fun_map_comp : (fun i ↦ g (f i)) = fun i => (g ∘ f) i := rfl
 theorem fun_map_comp' : (fun i ↦ g (f i)) =(g ∘ f) := rfl
 
+
+-- theorem subst_110_10 :
+--  (tm.subst (tm.var ∘ R.in110)) ∘ tm.var ∘ @R.in10 n n =
+--  (tm.var ∘ R.in100) := sorry subst_comp
+
+theorem subst_comp_var: (tm.subst σ) ∘ .var = σ := rfl
+
+theorem in110_01_010 : (@R.in110 n k) ∘ R.in01 = R.in010 := rfl
+theorem in110_10_100 : (@R.in110 n k) ∘ R.in10 = R.in100 := rfl
+theorem in101_10_100 : (@R.in101 n k) ∘ R.in10 = R.in100 := by
+  ext i
+  simp only [Function.comp_apply, Fin.casesAdd_left, Fin.coe_addNat]
+theorem in101_10_010 : (@R.in101 n k) ∘ R.in01 = R.in001 := by
+  ext i
+  simp only [Function.comp_apply, Fin.casesAdd_right, Fin.coe_castAdd']
+
+
 theorem id_rep_functional  {T: theory} {n : RenCtx} (φ: fml T.sig n) :
   functional φ φ (id_rep φ) where
     total := by
@@ -678,7 +701,15 @@ theorem id_rep_functional  {T: theory} {n : RenCtx} (φ: fml T.sig n) :
          apply this
          simp only[δ]
          exact Hilbert.proof.conj_elim_l
-    unique := sorry
+    unique := by
+     simp only [fml.ren_to_subst, fun_map_comp']
+     simp only[id_rep,fml.subst] --does Lean have match abbrev which will not require copy-and-paste?
+     simp only[fml.subst_eqs,fun_map_comp']
+     simp[← Function.comp_assoc]
+     simp[subst_comp_var]
+     simp[Function.comp_assoc]
+     simp[in110_10_100,in110_01_010,in101_10_100,in101_10_010]
+     sorry
 
 
 @[simp]
