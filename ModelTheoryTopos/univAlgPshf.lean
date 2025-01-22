@@ -101,8 +101,6 @@ instance Type_equiv_Psh_eta: 𝟭 (CategoryTheory.Psh Unit) ≅
       }
     }
 
-
-
 instance Type_equiv_Psh_epsilpon: 𝟭 Type ≅
   Type_Psh ⋙ Psh_Type  where
     hom := {
@@ -112,24 +110,30 @@ instance Type_equiv_Psh_epsilpon: 𝟭 Type ≅
       app a := 𝟙 a
     }
 
-
-#check CategoryTheory.Equivalence.mk
-
 instance Type_equiv_Psh : CategoryTheory.Psh Unit ≌ Type   :=
  CategoryTheory.Equivalence.mk Psh_Type Type_Psh Type_equiv_Psh_eta Type_equiv_Psh_epsilpon
 
+open Semigroup
+#check Semigroup.ext
+#check Mul.mul
+
+noncomputable
 def semigroup_to_model (α : Type) [Semigroup α]
   : semigroup_set_models where
   str := {
       carrier := Type_to_Psh α
-      interp_ops o := sorry
+      interp_ops o := {
+        app _ := fun
+          | .mk fst snd => sorry --Mul.mul (fst: α) * snd
+
+      }
       interp_preds := sorry
     }
   valid := sorry
 
 def model_to_semigroup (m : semigroup_set_models)
   : Semigroup (m.str.carrier.obj ⟨⟨⟩⟩) where
-  mul := sorry
+  mul a1 a2:= sorry --(m.str.interp_ops ()).app (Opposite.op ()) ⟨ a1,a2 ⟩ sorry
   mul_assoc := sorry
 
 end SemigroupExample

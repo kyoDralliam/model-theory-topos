@@ -569,6 +569,19 @@ theorem Hilbert.eqs_elim' {T: theory} {k n : Subst T.sig} (δ : fml T.sig n)  (�
     <-substn_section ψ τ, <-substn_section φ τ]
   apply Hilbert.eqs_elim δ _ _ σ τ h
 
+
+theorem Hilbert.conj_add_true {T: theory} (φ ψ : fml T.sig n) :
+ Hilbert.proof φ ψ ↔ Hilbert.proof (φ.conj .true) ψ := by
+  constructor
+  · intro h
+    apply Hilbert.proof.cut _ h
+    exact Hilbert.proof.conj_elim_l
+  · intro h
+    apply Hilbert.proof.cut _ h
+    apply Hilbert.proof.conj_intro
+    · exact Hilbert.proof.var
+    · exact Hilbert.proof.true_intro
+
 -- namespace Example
 
 --   def phi : fml S 1 := fml.existsQ (.eq (.var 0) (.var 1))
@@ -630,6 +643,7 @@ theorem fml.subst_ren_id {T: theory} {n: Subst T.sig} (φ: fml T.sig n):
       simp[ff] at h
       simp[h]
       apply this
+
 
 
 
