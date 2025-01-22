@@ -647,7 +647,8 @@ theorem fml.subst_ren_id {T: theory} {n: Subst T.sig} (φ: fml T.sig n):
 
 
 
-
+theorem fun_map_comp : (fun i ↦ g (f i)) = fun i => (g ∘ f) i := rfl
+theorem fun_map_comp' : (fun i ↦ g (f i)) =(g ∘ f) := rfl
 
 theorem id_rep_functional  {T: theory} {n : RenCtx} (φ: fml T.sig n) :
   functional φ φ (id_rep φ) where
@@ -664,10 +665,19 @@ theorem id_rep_functional  {T: theory} {n : RenCtx} (φ: fml T.sig n) :
       simp[id_rep]
       apply Hilbert.proof.conj_intro
       · apply Hilbert.proof.conj_elim_l
-      #check Hilbert.eqs_elim
-      #check tm.ren_subst_comp
-      ·
-         sorry --R01 as substn?
+      ·  simp only[fml.ren_to_subst]
+         simp only[fun_map_comp']
+         set σ  :=  (tm.var ∘ R.in10)
+         set τ := (tm.var ∘ R.in01)
+         set δ := (fml.subst σ φ).conj (fml.eqs σ τ)
+         have h1 : δ ⊢ fml.eqs σ τ := by
+           simp only[δ]
+           exact Hilbert.proof.conj_elim_r
+         have := @Hilbert.eqs_elim' T n (n+n) δ φ .true σ τ h1
+         simp[fml.subst,← Hilbert.conj_add_true] at this
+         apply this
+         simp only[δ]
+         exact Hilbert.proof.conj_elim_l
     unique := sorry
 
 
