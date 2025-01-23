@@ -63,9 +63,6 @@ instance Psh_Type:  CategoryTheory.Psh Unit ⥤ Type where
 theorem Psh_Type_obj (P: Psh Unit) : Psh_Type.obj P = P.obj (Opposite.op ()) := rfl
 theorem Psh_Type_map {P1 P2: Psh Unit} (f: P1 ⟶ P2) : Psh_Type.map f = f.app (Opposite.op ()) := rfl
 
---𝟙 identity morphism
---id identity function
---𝟭 identity functor
 
 open CategoryTheory.Functor
 
@@ -114,7 +111,8 @@ instance Type_equiv_Psh_eta' : 𝟭 (CategoryTheory.Psh Unit) ≅
   Psh_Type ⋙ Type_Psh :=
   NatIso.ofNatTrans_pt_inv eta_from_Psh_Unit
   Type_Psh_to_Psh_itself
-  (by intros P; ext ; simp[Psh_itself_to_Type_Psh_app P,Type_Psh_to_Psh_itself_app P,eta_from_Psh_Unit])
+  (by intros P; ext ; simp only [id_obj, comp_obj, eta_from_Psh_Unit, FunctorToTypes.comp,
+    Psh_itself_to_Type_Psh_app P, types_id_apply, Type_Psh_to_Psh_itself_app P, NatTrans.id_app])
 
 
 -- KM: you can simplify probably simplify this code with NatIso.ofComponents or NatIso.ofNatTrans
@@ -155,10 +153,9 @@ def semigroup_to_model (α : Type) [Semigroup α]
   : semigroup_set_models where
   str := Semigroup_Str α
   valid := by
-    simp [InterpPsh.Str.model,semigroup_thy,InterpPsh.Str.interp_fml,assoc,
-         InterpPsh.Str.interp_tm,SubobjectClassifier.eq,
-
-         ]
+    simp only [semigroup_thy, assoc, Fin.isValue, List.mem_singleton, InterpPsh.Str.model,
+      SubobjectClassifier.prop.eq_1, forall_eq, InterpPsh.Str.interp_fml, InterpPsh.Str.interp_tm,
+      Fin.getElem_fin, SubobjectClassifier.eq, Opposite.op_unop]
     rintro _ ⟨a , b , c, _⟩ _ _ _ _
     simp
     apply mul_assoc (G:=α) a b c
@@ -174,8 +171,10 @@ def model_to_semigroup (m : semigroup_set_models)
     exact (m.str.interp_ops ()).app ⟨()⟩ ⟨ a1, a2, () ⟩
   mul_assoc := by
     intros a b c
-    have := m.valid assoc (by simp [semigroup_thy]) ⟨()⟩ ⟨ a, b, c , () ⟩ (𝟙 _) ⟨⟩
-    simp [assoc, InterpPsh.Str.interp_fml, InterpPsh.Str.interp_tm, SubobjectClassifier.eq] at this
+    have := m.valid assoc (by simp only [semigroup_thy, List.mem_singleton]) ⟨()⟩ ⟨ a, b, c , () ⟩ (𝟙 _) ⟨⟩
+    simp only [assoc, Fin.isValue, SubobjectClassifier.prop.eq_1, InterpPsh.Str.interp_fml,
+      InterpPsh.Str.interp_tm, SubobjectClassifier.eq, Opposite.op_unop, FunctorToTypes.comp,
+      ChosenFiniteProducts.lift_app_pt, op_id, FunctorToTypes.map_id_apply] at this
     apply this
 
 
