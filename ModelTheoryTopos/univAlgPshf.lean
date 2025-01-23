@@ -87,48 +87,58 @@ open CategoryTheory.Functor
 theorem Unit_id {X Y: Unit} (f: X ⟶  Y) : f = 𝟙 () :=rfl
 
 theorem Unit_op_id {X Y: Unitᵒᵖ } (f: X ⟶  Y) : f = 𝟙 (Opposite.op ()) :=rfl
+
 instance Psh_itself_to_Type_Psh (P: Psh Unit) : P ⟶ Type_Psh.obj (Psh_Type.obj P) where
   app _ := 𝟙 _
   naturality := by
    intros X Y f
    simp_all only [Category.comp_id, Category.id_comp]
-   simp[Type_Psh_obj,Type_to_Psh]
-   simp[Unit_op_id] at *
+   simp only [Type_Psh_obj, Type_to_Psh]
+   simp only [Unit_op_id] at *
    have := map_id P (Opposite.op ())
-   simp[this]
+   simp only [this]
    rfl
 
-instance Psh_itself_iso_Type_Psh (P: Psh Unit) : P ≅ Type_Psh.obj (Psh_Type.obj P) := sorry
+theorem Psh_itself_to_Type_Psh_app (P: Psh Unit) :
+  (Psh_itself_to_Type_Psh P).app _ = 𝟙 _ := rfl
 
-instance Type_equiv_Psh_eta_def : 𝟭 (Psh Unit) ⟶ Psh_Type ⋙ Type_Psh where
-  app P := {
-        app := fun _ => 𝟙 _
-        naturality X Y f := by
-         simp [] at *
-         have : f = 𝟙 (Opposite.op ()) := rfl
-         simp [this]
-         have := map_id P (Opposite.op ())
-         simp [this]
-         rfl
-      }
+instance Type_Psh_to_Psh_itself (P: Psh Unit) : Type_Psh.obj (Psh_Type.obj P) ⟶ P where
+  app _ := 𝟙 _
+  naturality := by
+    intro X Y f
+    simp_all only [Category.comp_id, Category.id_comp,Type_Psh_obj,Type_to_Psh]
+    simp only [Unit_op_id] at *
+    have := map_id P (Opposite.op ())
+    simp only [this]
+    rfl
 
+theorem Type_Psh_to_Psh_itself_app (P: Psh Unit) :
+  (Type_Psh_to_Psh_itself P).app _ = 𝟙 _ := rfl
 
-instance eta_pointwise_iso:
-  ∀ (c : Psh Unit), IsIso (Type_equiv_Psh_eta_def.app c) :=
-    fun P ↦ {
-      out := by
-
-        sorry
-    }
+instance Psh_itself_iso_Type_Psh (P: Psh Unit) : P ≅ Type_Psh.obj (Psh_Type.obj P) :=
+  NatIso.ofNatTrans_pt_inv (Psh_itself_to_Type_Psh P) (Type_Psh_to_Psh_itself P).app
+   (by intros c; simp[Psh_itself_to_Type_Psh_app P,Type_Psh_to_Psh_itself_app P])
 
 
-noncomputable
+instance eta_from_Psh_Unit : 𝟭 (Psh Unit) ⟶ Psh_Type ⋙ Type_Psh where
+  app P := Psh_itself_to_Type_Psh P
+
 instance Type_equiv_Psh_eta' : 𝟭 (CategoryTheory.Psh Unit) ≅
   Psh_Type ⋙ Type_Psh :=
-  NatIso.ofNatTrans (Type_equiv_Psh_eta_def) eta_pointwise_iso
+  NatIso.ofNatTrans_pt_inv eta_from_Psh_Unit
+  Type_Psh_to_Psh_itself
+  (by intros P; ext ; simp[Psh_itself_to_Type_Psh_app P,Type_Psh_to_Psh_itself_app P,eta_from_Psh_Unit])
+  (by intros P; ext ; simp[Psh_itself_to_Type_Psh_app P,Type_Psh_to_Psh_itself_app P,eta_from_Psh_Unit])
+
+
+-- noncomputable
+-- instance Type_equiv_Psh_eta' : 𝟭 (CategoryTheory.Psh Unit) ≅
+--   Psh_Type ⋙ Type_Psh :=
+--   NatIso.ofNatTrans (Type_equiv_Psh_eta_def) eta_pointwise_iso
 
 -- KM: you can simplify probably simplify this code with NatIso.ofComponents or NatIso.ofNatTrans
-instance Type_equiv_Psh_eta: 𝟭 (CategoryTheory.Psh Unit) ≅
+
+instance Type_equiv_Psh_eta0: 𝟭 (CategoryTheory.Psh Unit) ≅
   Psh_Type ⋙ Type_Psh where
     hom := {
       app P := {
@@ -166,7 +176,7 @@ instance Type_equiv_Psh_epsilpon: 𝟭 Type ≅
     }
 
 instance Type_equiv_Psh : CategoryTheory.Psh Unit ≌ Type   :=
- CategoryTheory.Equivalence.mk Psh_Type Type_Psh Type_equiv_Psh_eta Type_equiv_Psh_epsilpon
+ CategoryTheory.Equivalence.mk Psh_Type Type_Psh Type_equiv_Psh_eta0 Type_equiv_Psh_epsilpon
 
 open Semigroup
 #check Semigroup.ext
