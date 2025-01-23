@@ -146,7 +146,12 @@ def semigroup_to_model (α : Type) [Semigroup α]
 
 def model_to_semigroup (m : semigroup_set_models)
   : Semigroup (m.str.carrier.obj ⟨⟨⟩⟩) where
-  mul a1 a2:= sorry --(m.str.interp_ops ()).app (Opposite.op ()) ⟨ a1,a2 ⟩ sorry
+  mul a1 a2:= by
+    set mul := (m.str.interp_ops ()).app (Opposite.op ())
+    let mul' : m.str.carrier.obj (Opposite.op PUnit.unit) × m.str.carrier.obj (Opposite.op PUnit.unit) × _ →
+     m.str.carrier.obj (Opposite.op PUnit.unit) := mul
+    exact mul' ⟨ a1, ⟨ a2, ()⟩ ⟩
+    --(m.str.interp_ops ()).app (Opposite.op ()) ⟨ a1,a2 ⟩ sorry
   mul_assoc := sorry
 
 end SemigroupExample
