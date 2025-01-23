@@ -116,25 +116,24 @@ theorem Type_Psh_to_Psh_itself_app (P: Psh Unit) :
   (Type_Psh_to_Psh_itself P).app _ = 𝟙 _ := rfl
 
 instance Psh_itself_iso_Type_Psh (P: Psh Unit) : P ≅ Type_Psh.obj (Psh_Type.obj P) :=
-  NatIso.ofNatTrans_pt_inv (Psh_itself_to_Type_Psh P) (Type_Psh_to_Psh_itself P).app
-   (by intros c; simp[Psh_itself_to_Type_Psh_app P,Type_Psh_to_Psh_itself_app P])
+  NatIso.ofNatTrans_pt_inv (Psh_itself_to_Type_Psh P) (fun _ => 𝟙 _)
+  (by intros c;simp[Psh_itself_to_Type_Psh_app P])
+  --(by intros c; simp[Psh_itself_to_Type_Psh_app P,Type_Psh_to_Psh_itself_app P])
 
-
+#check Psh_itself_iso_Type_Psh
 instance eta_from_Psh_Unit : 𝟭 (Psh Unit) ⟶ Psh_Type ⋙ Type_Psh where
   app P := Psh_itself_to_Type_Psh P
+
+-- instance Type_equiv_Psh_eta'' : Psh_Type ⋙ Type_Psh  ≅ 𝟭 (CategoryTheory.Psh Unit) :=
+--  NatIso.ofNatTrans_pt_inv sorry sorry sorry sorry
+
 
 instance Type_equiv_Psh_eta' : 𝟭 (CategoryTheory.Psh Unit) ≅
   Psh_Type ⋙ Type_Psh :=
   NatIso.ofNatTrans_pt_inv eta_from_Psh_Unit
   Type_Psh_to_Psh_itself
   (by intros P; ext ; simp[Psh_itself_to_Type_Psh_app P,Type_Psh_to_Psh_itself_app P,eta_from_Psh_Unit])
-  (by intros P; ext ; simp[Psh_itself_to_Type_Psh_app P,Type_Psh_to_Psh_itself_app P,eta_from_Psh_Unit])
 
-
--- noncomputable
--- instance Type_equiv_Psh_eta' : 𝟭 (CategoryTheory.Psh Unit) ≅
---   Psh_Type ⋙ Type_Psh :=
---   NatIso.ofNatTrans (Type_equiv_Psh_eta_def) eta_pointwise_iso
 
 -- KM: you can simplify probably simplify this code with NatIso.ofComponents or NatIso.ofNatTrans
 
@@ -176,7 +175,7 @@ instance Type_equiv_Psh_epsilpon: 𝟭 Type ≅
     }
 
 instance Type_equiv_Psh : CategoryTheory.Psh Unit ≌ Type   :=
- CategoryTheory.Equivalence.mk Psh_Type Type_Psh Type_equiv_Psh_eta0 Type_equiv_Psh_epsilpon
+ CategoryTheory.Equivalence.mk Psh_Type Type_Psh Type_equiv_Psh_eta' Type_equiv_Psh_epsilpon
 
 open Semigroup
 #check Semigroup.ext
@@ -210,11 +209,14 @@ def semigroup_to_model (α : Type) [Semigroup α]
 def model_to_semigroup (m : semigroup_set_models)
   : Semigroup (m.str.carrier.obj ⟨⟨⟩⟩) where
   mul a1 a2:= by
-    set mul := (m.str.interp_ops ()).app (Opposite.op ())
+    --set mul := (m.str.interp_ops ()).app (Opposite.op ())
     let mul' : m.str.carrier.obj (Opposite.op PUnit.unit) × m.str.carrier.obj (Opposite.op PUnit.unit) × _ →
-     m.str.carrier.obj (Opposite.op PUnit.unit) := mul
+     m.str.carrier.obj (Opposite.op PUnit.unit) :=  (m.str.interp_ops ()).app (Opposite.op ())
     exact mul' ⟨ a1, ⟨ a2, ()⟩ ⟩
     --(m.str.interp_ops ()).app (Opposite.op ()) ⟨ a1,a2 ⟩ sorry
-  mul_assoc := sorry
+  mul_assoc := by
+    have := m.valid assoc
+    simp [semigroup_thy,model] at this
+    sorry
 
 end SemigroupExample
