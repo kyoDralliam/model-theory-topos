@@ -25,7 +25,6 @@ noncomputable
 def ofNatTrans' {C D} [Category C] [Category D] {F G : C ⥤ D} (θ : F ⟶ G) (h : forall c, IsIso (θ.app c)) : IsIso θ :=
   Iso.isIso_hom (ofNatTrans θ h)
 
-noncomputable
 def ofNatTrans_pt_inv {C D} [Category C] [Category D] {F G : C ⥤ D} (θ : F ⟶ G)
   (inv : forall c, G.obj c ⟶ F.obj c)
   (hom_inv_id: forall c, θ.app c ≫ inv c = 𝟙 _ := by aesop_cat )
