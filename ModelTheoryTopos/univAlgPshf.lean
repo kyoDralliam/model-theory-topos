@@ -28,7 +28,7 @@ def semigroup_sig : monosig where
 -- def idR : (sequent semigroup_sig) := sorry
 
 def mk_mul (t1 t2: tm semigroup_sig n) : tm semigroup_sig n :=
- .op () (fun i => if i = (0: Fin 2) then t1 else t2)
+ .op () (fun i => [t1 , t2][i])--(fun i => if i = (0: Fin 2) then t1 else t2)
  -- KM: simpler version .op () (fun i => [t1 , t2][i])
 
 def mk_mul_left (t1 t2 t3: tm semigroup_sig n) := mk_mul (mk_mul t1 t2) t3
@@ -64,16 +64,69 @@ instance Type_Psh : Type  ⥤ CategoryTheory.Psh Unit where
     app _ := f
   }
 
+theorem Type_Psh_obj (α : Type) : (Type_Psh.obj α)= Type_to_Psh α := rfl
+theorem Type_Psh_map {α β : Type} (f: α → β) : (Type_Psh.map f).app (Opposite.op ())  = f := rfl
 
 instance Psh_Type:  CategoryTheory.Psh Unit ⥤ Type where
   obj P := P.obj (Opposite.op ())
   map f := f.app (Opposite.op ())
+
+--@simp?
+theorem Psh_Type_obj (P: Psh Unit) : Psh_Type.obj P = P.obj (Opposite.op ()) := rfl
+theorem Psh_Type_map {P1 P2: Psh Unit} (f: P1 ⟶ P2) : Psh_Type.map f = f.app (Opposite.op ()) := rfl
 
 --𝟙 identity morphism
 --id identity function
 --𝟭 identity functor
 
 open CategoryTheory.Functor
+#check NatIso.ofComponents
+#check NatIso.ofNatTrans
+
+
+theorem Unit_id {X Y: Unit} (f: X ⟶  Y) : f = 𝟙 () :=rfl
+
+theorem Unit_op_id {X Y: Unitᵒᵖ } (f: X ⟶  Y) : f = 𝟙 (Opposite.op ()) :=rfl
+instance Psh_itself_to_Type_Psh (P: Psh Unit) : P ⟶ Type_Psh.obj (Psh_Type.obj P) where
+  app _ := 𝟙 _
+  naturality := by
+   intros X Y f
+   simp_all only [Category.comp_id, Category.id_comp]
+   simp[Type_Psh_obj,Type_to_Psh]
+   simp[Unit_op_id] at *
+   have := map_id P (Opposite.op ())
+   simp[this]
+   rfl
+
+instance Psh_itself_iso_Type_Psh (P: Psh Unit) : P ≅ Type_Psh.obj (Psh_Type.obj P) := sorry
+
+instance Type_equiv_Psh_eta_def : 𝟭 (Psh Unit) ⟶ Psh_Type ⋙ Type_Psh where
+  app P := {
+        app := fun _ => 𝟙 _
+        naturality X Y f := by
+         simp [] at *
+         have : f = 𝟙 (Opposite.op ()) := rfl
+         simp [this]
+         have := map_id P (Opposite.op ())
+         simp [this]
+         rfl
+      }
+
+
+instance eta_pointwise_iso:
+  ∀ (c : Psh Unit), IsIso (Type_equiv_Psh_eta_def.app c) :=
+    fun P ↦ {
+      out := by
+
+        sorry
+    }
+
+
+noncomputable
+instance Type_equiv_Psh_eta' : 𝟭 (CategoryTheory.Psh Unit) ≅
+  Psh_Type ⋙ Type_Psh :=
+  NatIso.ofNatTrans (Type_equiv_Psh_eta_def) eta_pointwise_iso
+
 -- KM: you can simplify probably simplify this code with NatIso.ofComponents or NatIso.ofNatTrans
 instance Type_equiv_Psh_eta: 𝟭 (CategoryTheory.Psh Unit) ≅
   Psh_Type ⋙ Type_Psh where
