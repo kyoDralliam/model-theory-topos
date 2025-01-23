@@ -142,7 +142,6 @@ instance Type_equiv_Psh_eta0: 𝟭 (CategoryTheory.Psh Unit) ≅
     hom := {
       app P := {
         app := fun _ => 𝟙 _
-          -- | .op unop => 𝟙 _
         naturality X Y f := by
          simp [] at *
          have : f = 𝟙 (Opposite.op ()) := rfl
@@ -191,7 +190,7 @@ open Semigroup
 instance times_npow_2 (α : Type)  : ChosenFiniteProducts.npow α 2 ≅ α × α := sorry
 
 noncomputable
-def semigroup_str_from_Semigroup (α : Type) [Semigroup α] :
+def Semigroup_Str (α : Type) [Semigroup α] :
  InterpPsh.Str semigroup_sig Unit :=
  {
       carrier := Type_to_Psh α
@@ -206,19 +205,56 @@ def semigroup_str_from_Semigroup (α : Type) [Semigroup α] :
         cases p
     }
 
+theorem top_le_iff1 {X: Psh Unit} {a: X ⟶ SubobjectClassifier.prop}: ⊤ <= a →  a = ⊤ := sorry
+
+theorem Semigroup_Str_assoc (α : Type) [Semigroup α]:
+  (Semigroup_Str α).interp_fml
+   (fml.eq (mk_mul_left (.var 0) (.var 1) (.var 2)) (mk_mul_right (.var 0) (.var 1) (.var 2))) =
+   ⊤ := sorry
 
 noncomputable
 def semigroup_to_model (α : Type) [Semigroup α]
   : semigroup_set_models where
-  str := semigroup_str_from_Semigroup α
+  str := Semigroup_Str α
   valid := by
-
-   simp [InterpPsh.Str.model,semigroup_thy,InterpPsh.Str.interp_fml,assoc,
+    simp [InterpPsh.Str.model,semigroup_thy,InterpPsh.Str.interp_fml,assoc,
          InterpPsh.Str.interp_tm,SubobjectClassifier.eq,
-         mk_mul, mk_mul_left,mk_mul_right
-         ]
 
-   sorry
+         ]
+    rintro _ ⟨a , b , c, _⟩ _ _ _ _
+    simp
+    apply mul_assoc (G:=α) a b c
+
+    --apply mul_assoc (G:= α)
+    --simp[@Semigroup.mul_assoc α _, InterpPsh.Str.interp_tm]
+    --simp only[this]
+
+
+    --have := @Semigroup.mul_assoc α _
+    --apply (@Semigroup.mul_assoc α)
+
+    -- simp [InterpPsh.Str.interp_tm,mk_mul,Semigroup_Str,Type_to_Psh]
+    -- have := @Semigroup.mul_assoc α _
+
+
+
+-- noncomputable
+-- def semigroup_to_model (α : Type) [Semigroup α]
+--   : semigroup_set_models where
+--   str := Semigroup_Str α
+--   valid := by
+--    simp [InterpPsh.Str.model]
+--    intro h h1 x a
+--    simp[semigroup_thy]
+--    intro h'
+--    simp[h']
+
+--    simp [InterpPsh.Str.model,semigroup_thy,InterpPsh.Str.interp_fml,assoc,
+--          InterpPsh.Str.interp_tm,SubobjectClassifier.eq,
+--          mk_mul, mk_mul_left,mk_mul_right
+--          ]
+
+--    sorry
 
 -- theorem interp_fml_assoc_concl :
 --  InterpPsh.Str.interp_fml L
@@ -226,7 +262,7 @@ def semigroup_to_model (α : Type) [Semigroup α]
 
 #check top_le_iff -- wrong one, is there a correct one...?
 
---(fun i => [t1 , t2][i])
+
 theorem interp_tm_mul_left (m : semigroup_set_models):
  m.str.interp_tm (mk_mul_left t1 t2 t3) =
  let f1 := (ChosenFiniteProducts.npair _ _ _
@@ -236,7 +272,6 @@ theorem interp_tm_mul_left (m : semigroup_set_models):
 
 
 
-theorem top_le_iff1 {X: Psh Unit} {a: X ⟶ SubobjectClassifier.prop}: ⊤ <= a →  a = ⊤ := sorry
 
 def mul_on_model (m : semigroup_set_models) :
   m.str.carrier.obj (Opposite.op ()) ×
