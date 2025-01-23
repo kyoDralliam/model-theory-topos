@@ -27,13 +27,13 @@ def semigroup_sig : monosig where
 
 -- def idR : (sequent semigroup_sig) := sorry
 
-def mk_mul (t1 t2: tm semigroup_sig n) : tm semigroup_sig n :=
+abbrev mk_mul (t1 t2: tm semigroup_sig n) : tm semigroup_sig n :=
  .op () (fun i => [t1 , t2][i])--(fun i => if i = (0: Fin 2) then t1 else t2)
  -- KM: simpler version .op () (fun i => [t1 , t2][i])
 
-def mk_mul_left (t1 t2 t3: tm semigroup_sig n) := mk_mul (mk_mul t1 t2) t3
+abbrev mk_mul_left (t1 t2 t3: tm semigroup_sig n) := mk_mul (mk_mul t1 t2) t3
 
-def mk_mul_right (t1 t2 t3: tm semigroup_sig n) := mk_mul t1 (mk_mul t2 t3)
+abbrev mk_mul_right (t1 t2 t3: tm semigroup_sig n) := mk_mul t1 (mk_mul t2 t3)
 
 def assoc : sequent semigroup_sig where
   ctx := 3
@@ -181,9 +181,9 @@ open Semigroup
 #check Semigroup.ext
 #check Mul.mul
 
-instance Type_to_Psh_npow (α : Type) (n : ℕ):
- Type_to_Psh (ChosenFiniteProducts.npow α n) ≅ ChosenFiniteProducts.npow (Type_to_Psh α) n :=
-   sorry
+-- instance Type_to_Psh_npow (α : Type) (n : ℕ):
+--  Type_to_Psh (ChosenFiniteProducts.npow α n) ≅ ChosenFiniteProducts.npow (Type_to_Psh α) n :=
+--    sorry
 
 #check Function.uncurry
 
@@ -191,9 +191,9 @@ instance Type_to_Psh_npow (α : Type) (n : ℕ):
 instance times_npow_2 (α : Type)  : ChosenFiniteProducts.npow α 2 ≅ α × α := sorry
 
 noncomputable
-def semigroup_to_model (α : Type) [Semigroup α]
-  : semigroup_set_models where
-  str := {
+def semigroup_str_from_Semigroup (α : Type) [Semigroup α] :
+ InterpPsh.Str semigroup_sig Unit :=
+ {
       carrier := Type_to_Psh α
       interp_ops o := {
         app _ p :=
@@ -201,9 +201,24 @@ def semigroup_to_model (α : Type) [Semigroup α]
           let y : α := p.2.1
           x * y
       }
-      interp_preds := sorry
+      interp_preds := by
+        intro p
+        cases p
     }
-  valid := sorry
+
+
+noncomputable
+def semigroup_to_model (α : Type) [Semigroup α]
+  : semigroup_set_models where
+  str := semigroup_str_from_Semigroup α
+  valid := by
+
+   simp [InterpPsh.Str.model,semigroup_thy,InterpPsh.Str.interp_fml,assoc,
+         InterpPsh.Str.interp_tm,SubobjectClassifier.eq,
+         mk_mul, mk_mul_left,mk_mul_right
+         ]
+
+   sorry
 
 -- theorem interp_fml_assoc_concl :
 --  InterpPsh.Str.interp_fml L
@@ -232,24 +247,37 @@ def mul_on_model (m : semigroup_set_models) :
     m.str.carrier.obj (Opposite.op PUnit.unit) :=  (m.str.interp_ops ()).app (Opposite.op ())
    mul' ⟨ p.1, ⟨ p.2, ()⟩⟩
 
-theorem mul_on_model_assoc (m : semigroup_set_models) (a1 a2 a3: m.str.carrier.obj (Opposite.op ())) :
-  mul_on_model m ⟨ mul_on_model m ⟨a1,a2⟩,a3⟩  = mul_on_model m ⟨ a1,mul_on_model m ⟨a2,a3⟩⟩ := sorry
+-- theorem mul_on_model_assoc (m : semigroup_set_models) (a1 a2 a3: m.str.carrier.obj (Opposite.op ())) :
+--   mul_on_model m ⟨ mul_on_model m ⟨a1,a2⟩,a3⟩  = mul_on_model m ⟨ a1,mul_on_model m ⟨a2,a3⟩⟩ := sorry
+
+
 
 def model_to_semigroup (m : semigroup_set_models)
   : Semigroup (m.str.carrier.obj ⟨⟨⟩⟩) where
-  mul a1 a2:= mul_on_model m ⟨a1,a2⟩
+  mul a1 a2:= by
+    exact (m.str.interp_ops ()).app ⟨()⟩ ⟨ a1, a2, () ⟩
   mul_assoc := by
-    have := m.valid assoc
-    simp only [semigroup_thy, List.mem_singleton, forall_const,InterpPsh.Str.model,assoc,InterpPsh.Str.interp_fml.eq_2] at *
-    have := top_le_iff1 this
-    set it1 := (m.str.interp_tm (mk_mul_left (tm.var 0) (tm.var 1) (tm.var (2: Fin 3))))
-    set it2 := (m.str.interp_tm (mk_mul_right (tm.var 0) (tm.var 1) (tm.var (2: Fin 3))))
-    have h1 := (@InterpPsh.BaseChange.interp_tm_eq Unit _ _ 3 m.str _ _).mp this
     intros a b c
-    --have hml: a * b * c = mul_on_model m ⟨ mul_on_model m ⟨a,b⟩,c⟩ :=
-    -- have h1 := Iff.mpr  (top_le_iff1 (ChosenFiniteProducts.npow m.str.carrier 3 ⟶ SubobjectClassifier.prop) sorry sorry
-    --   (ChosenFiniteProducts.lift it1 it2 ≫ SubobjectClassifier.eq))
+    have := m.valid assoc (by simp [semigroup_thy]) ⟨()⟩ ⟨ a, b, c , () ⟩ (𝟙 _) ⟨⟩
+    simp [assoc, InterpPsh.Str.interp_fml, InterpPsh.Str.interp_tm, SubobjectClassifier.eq] at this
+    apply this
 
-    sorry
+
+-- def model_to_semigroup (m : semigroup_set_models)
+--   : Semigroup (m.str.carrier.obj ⟨⟨⟩⟩) where
+--   mul a1 a2:= mul_on_model m ⟨a1,a2⟩
+--   mul_assoc := by
+--     have := m.valid assoc
+--     simp only [semigroup_thy, List.mem_singleton, forall_const,InterpPsh.Str.model,assoc,InterpPsh.Str.interp_fml.eq_2] at *
+--     have := top_le_iff1 this
+--     set it1 := (m.str.interp_tm (mk_mul_left (tm.var 0) (tm.var 1) (tm.var (2: Fin 3))))
+--     set it2 := (m.str.interp_tm (mk_mul_right (tm.var 0) (tm.var 1) (tm.var (2: Fin 3))))
+--     have h1 := (@InterpPsh.BaseChange.interp_tm_eq Unit _ _ 3 m.str _ _).mp this
+--     intros a b c
+--     --have hml: a * b * c = mul_on_model m ⟨ mul_on_model m ⟨a,b⟩,c⟩ :=
+--     -- have h1 := Iff.mpr  (top_le_iff1 (ChosenFiniteProducts.npow m.str.carrier 3 ⟶ SubobjectClassifier.prop) sorry sorry
+--     --   (ChosenFiniteProducts.lift it1 it2 ≫ SubobjectClassifier.eq))
+
+--     sorry
 
 end SemigroupExample
