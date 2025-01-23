@@ -205,7 +205,13 @@ def semigroup_to_model (α : Type) [Semigroup α]
     }
   valid := sorry
 
+-- theorem interp_fml_assoc_concl :
+--  InterpPsh.Str.interp_fml L
+--   (fml.eq (mk_mul_left (.var 0) (.var 1) (.var 2)) (mk_mul_right (.var 0) (.var 1) (.var 2))) =
 
+#check top_le_iff
+
+theorem top_le_iff1 {X: Psh Unit} {a: X ⟶ SubobjectClassifier.prop}: ⊤ <= a →  a = ⊤ := sorry
 def model_to_semigroup (m : semigroup_set_models)
   : Semigroup (m.str.carrier.obj ⟨⟨⟩⟩) where
   mul a1 a2:= by
@@ -216,7 +222,13 @@ def model_to_semigroup (m : semigroup_set_models)
     --(m.str.interp_ops ()).app (Opposite.op ()) ⟨ a1,a2 ⟩ sorry
   mul_assoc := by
     have := m.valid assoc
-    simp [semigroup_thy,model] at this
+    simp [semigroup_thy,InterpPsh.Str.model,assoc,InterpPsh.Str.interp_fml] at this
+    set it1 := (m.str.interp_tm (mk_mul_left (tm.var 0) (tm.var 1) (tm.var (2: Fin 3))))
+    set it2 := (m.str.interp_tm (mk_mul_right (tm.var 0) (tm.var 1) (tm.var (2: Fin 3))))
+    -- have h1 := Iff.mpr  (top_le_iff1 (ChosenFiniteProducts.npow m.str.carrier 3 ⟶ SubobjectClassifier.prop) sorry sorry
+    --   (ChosenFiniteProducts.lift it1 it2 ≫ SubobjectClassifier.eq))
+    have := top_le_iff1 this
+
     sorry
 
 end SemigroupExample
