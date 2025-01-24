@@ -47,7 +47,7 @@ open CategoryTheory
 
 
 
-instance Type_Psh : Type  ⥤ CategoryTheory.Psh Unit where
+ def Type_Psh : Type  ⥤ CategoryTheory.Psh Unit where
   obj a := Type_to_Psh a
   map f := {
     app _ := f
@@ -56,7 +56,7 @@ instance Type_Psh : Type  ⥤ CategoryTheory.Psh Unit where
 theorem Type_Psh_obj (α : Type) : (Type_Psh.obj α)= Type_to_Psh α := rfl
 theorem Type_Psh_map {α β : Type} (f: α → β) : (Type_Psh.map f).app (Opposite.op ())  = f := rfl
 
-instance Psh_Type:  CategoryTheory.Psh Unit ⥤ Type where
+def Psh_Type:  CategoryTheory.Psh Unit ⥤ Type where
   obj P := P.obj (Opposite.op ())
   map f := f.app (Opposite.op ())
 
@@ -71,7 +71,7 @@ theorem Unit_id {X Y: Unit} (f: X ⟶  Y) : f = 𝟙 () :=rfl
 
 theorem Unit_op_id {X Y: Unitᵒᵖ } (f: X ⟶  Y) : f = 𝟙 (Opposite.op ()) :=rfl
 
-instance Psh_itself_to_Type_Psh (P: Psh Unit) : P ⟶ Type_Psh.obj (Psh_Type.obj P) where
+def Psh_itself_to_Type_Psh (P: Psh Unit) : P ⟶ Type_Psh.obj (Psh_Type.obj P) where
   app _ := 𝟙 _
   naturality := by
    intros X Y f
@@ -85,7 +85,7 @@ instance Psh_itself_to_Type_Psh (P: Psh Unit) : P ⟶ Type_Psh.obj (Psh_Type.obj
 theorem Psh_itself_to_Type_Psh_app (P: Psh Unit) :
   (Psh_itself_to_Type_Psh P).app _ = 𝟙 _ := rfl
 
-instance Type_Psh_to_Psh_itself (P: Psh Unit) : Type_Psh.obj (Psh_Type.obj P) ⟶ P where
+def Type_Psh_to_Psh_itself (P: Psh Unit) : Type_Psh.obj (Psh_Type.obj P) ⟶ P where
   app _ := 𝟙 _
   naturality := by
     intro X Y f
@@ -98,16 +98,16 @@ instance Type_Psh_to_Psh_itself (P: Psh Unit) : Type_Psh.obj (Psh_Type.obj P) �
 theorem Type_Psh_to_Psh_itself_app (P: Psh Unit) :
   (Type_Psh_to_Psh_itself P).app _ = 𝟙 _ := rfl
 
-instance Psh_itself_iso_Type_Psh (P: Psh Unit) : P ≅ Type_Psh.obj (Psh_Type.obj P) :=
+def Psh_itself_iso_Type_Psh (P: Psh Unit) : P ≅ Type_Psh.obj (Psh_Type.obj P) :=
   NatIso.ofNatTrans_pt_inv (Psh_itself_to_Type_Psh P) (fun _ => 𝟙 _)
   (by intros c;simp[Psh_itself_to_Type_Psh_app P])
 
 
-instance eta_from_Psh_Unit : 𝟭 (Psh Unit) ⟶ Psh_Type ⋙ Type_Psh where
+def eta_from_Psh_Unit : 𝟭 (Psh Unit) ⟶ Psh_Type ⋙ Type_Psh where
   app P := Psh_itself_to_Type_Psh P
 
 
-instance Type_equiv_Psh_eta' : 𝟭 (CategoryTheory.Psh Unit) ≅
+def Type_equiv_Psh_eta' : 𝟭 (CategoryTheory.Psh Unit) ≅
   Psh_Type ⋙ Type_Psh :=
   NatIso.ofNatTrans_pt_inv eta_from_Psh_Unit
   Type_Psh_to_Psh_itself
@@ -118,7 +118,7 @@ instance Type_equiv_Psh_eta' : 𝟭 (CategoryTheory.Psh Unit) ≅
 -- KM: you can simplify probably simplify this code with NatIso.ofComponents or NatIso.ofNatTrans
 
 
-instance Type_equiv_Psh_epsilpon: 𝟭 Type ≅
+def Type_equiv_Psh_epsilpon: 𝟭 Type ≅
   Type_Psh ⋙ Psh_Type  where
     hom := {
       app a := 𝟙 a
@@ -127,7 +127,7 @@ instance Type_equiv_Psh_epsilpon: 𝟭 Type ≅
       app a := 𝟙 a
     }
 
-instance Type_equiv_Psh : CategoryTheory.Psh Unit ≌ Type   :=
+def Type_equiv_Psh : CategoryTheory.Psh Unit ≌ Type   :=
  CategoryTheory.Equivalence.mk Psh_Type Type_Psh Type_equiv_Psh_eta' Type_equiv_Psh_epsilpon
 
 
