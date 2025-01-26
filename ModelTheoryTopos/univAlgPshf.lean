@@ -179,3 +179,53 @@ def model_to_semigroup (m : semigroup_set_models)
 
 
 end SemigroupExample
+
+section MonoidExample
+def monoid_sig : monosig where
+  ops := Fin 2
+  arity_ops := (fun i => [0 , 2][i])
+  preds := Empty
+  arity_preds := Empty.rec
+
+
+abbrev Monoid.mk_mul (t1 t2: tm monoid_sig n) : tm monoid_sig n :=
+ .op (1: Fin 2) (fun i => [t1 , t2][i])
+
+
+abbrev Monoid.mk_mul_left (t1 t2 t3: tm monoid_sig n) := Monoid.mk_mul (Monoid.mk_mul t1 t2) t3
+
+abbrev Monoid.mk_mul_right (t1 t2 t3: tm monoid_sig n) := Monoid.mk_mul t1 (Monoid.mk_mul t2 t3)
+
+def Monoid.assoc : sequent monoid_sig where
+  ctx := 3
+  premise := .true
+  concl := fml.eq (Monoid.mk_mul_left (.var 0) (.var 1) (.var 2)) (Monoid.mk_mul_right (.var 0) (.var 1) (.var 2))
+
+
+abbrev Monoid.unit n: tm monoid_sig n := .op (0: Fin 2) Fin.elim0
+
+def Monoid.idL : (sequent monoid_sig) where
+  ctx := 1
+  premise := fml.true
+  concl := fml.eq (Monoid.mk_mul (Monoid.unit 1) (.var 0)) (.var 0)
+
+def Monoid.idR : (sequent monoid_sig) where
+  ctx := 1
+  premise := fml.true
+  concl := fml.eq (.var 0) (Monoid.mk_mul (Monoid.unit 1) (.var 0))
+
+
+
+def monoid_thy : theory where
+  sig := monoid_sig
+  axioms := [ Monoid.assoc ,Monoid.idL ,Monoid.idR]
+
+def Monoid_2_models :=
+  InterpPsh.Mod monoid_thy (Fin 2)
+
+
+
+
+
+
+end MonoidExample
