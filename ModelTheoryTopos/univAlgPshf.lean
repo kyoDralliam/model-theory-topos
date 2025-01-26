@@ -220,8 +220,25 @@ def monoid_thy : theory where
   sig := monoid_sig
   axioms := [ Monoid.assoc ,Monoid.idL ,Monoid.idR]
 
+instance : CategoryTheory.Category (Fin 2) := inferInstance
+instance : CategoryTheory.Category (Fin n) := inferInstance
+instance : PartialOrder (Fin n) := inferInstance
+
 def Monoid_2_models :=
   InterpPsh.Mod monoid_thy (Fin 2)
+
+def invertible (m: tm monoid_sig (n + 1)) := fml.existsQ (fml.eq (Monoid.mk_mul (.var 0) m) m)
+
+def idempotent (m: tm monoid_sig n) := fml.eq (Monoid.mk_mul m m) m
+
+def is_id (m: tm monoid_sig n) := fml.eq m (Monoid.unit n)
+
+def test (m: tm monoid_sig n) : sequent monoid_sig where
+  ctx := n
+  premise := fml.conj (invertible (tm.ren SyntacticSite.R.in10 m)) (idempotent m)
+  concl := is_id m
+
+
 
 
 
