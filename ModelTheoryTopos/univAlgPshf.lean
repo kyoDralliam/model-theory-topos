@@ -4,7 +4,8 @@ import ModelTheoryTopos.Syntax.Signature
 import ModelTheoryTopos.Syntax.GeometricLogic
 import ModelTheoryTopos.Category.Presheaf
 import ModelTheoryTopos.Category.InterpretGeometricPresheaf
-
+import Mathlib.CategoryTheory.ComposableArrows
+import Mathlib.CategoryTheory.Functor.Category
 -- Keep this file as main example
 
 section SemigroupExample
@@ -238,11 +239,16 @@ def test (m: tm monoid_sig n) : sequent monoid_sig where
   premise := fml.conj (invertible (tm.ren SyntacticSite.R.in10 m)) (idempotent m)
   concl := is_id m
 
-def Monoid_hom_as_Psh [Monoid M1] [Monoid M2] (h: M1 ⟶ M2) : CategoryTheory.Psh (Fin 2) where
-  obj x := (fun i => [M1, M2][i]) (Opposite.unop x)
-  map f := sorry
-  map_id := sorry
-  map_comp := sorry
+def Monoid_hom_as_Psh [Monoid M1] [Monoid M2] (h: M1 ⟶ M2) : CategoryTheory.Psh (Fin 2) :=
+  let f : CategoryTheory.ComposableArrows Typeᵒᵖ 1 := .mk₁ (Opposite.op h)
+  f.leftOp
+
+
+-- def Monoid_hom_as_Psh [Monoid M1] [Monoid M2] (h: M1 ⟶ M2) : CategoryTheory.Psh (Fin 2) where
+--   obj x := (fun i => [M1, M2][i]) (Opposite.unop x)
+--   map f := sorry
+--   map_id := sorry
+--   map_comp := sorry
 
 def Monoid_hom_to_Monoid_2_models [Monoid M1] [Monoid M2] (h: M1 ⟶ M2) : Monoid_2_models where
   str := {
