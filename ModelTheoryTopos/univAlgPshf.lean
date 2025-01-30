@@ -238,6 +238,25 @@ def test (m: tm monoid_sig n) : sequent monoid_sig where
   premise := fml.conj (invertible (tm.ren SyntacticSite.R.in10 m)) (idempotent m)
   concl := is_id m
 
+def Monoid_hom_as_Psh [Monoid M1] [Monoid M2] (h: M1 ⟶ M2) : CategoryTheory.Psh (Fin 2) where
+  obj x := (fun i => [M1, M2][i]) (Opposite.unop x)
+  map f := sorry
+  map_id := sorry
+  map_comp := sorry
+
+def Monoid_hom_to_Monoid_2_models [Monoid M1] [Monoid M2] (h: M1 ⟶ M2) : Monoid_2_models where
+  str := {
+    carrier := Monoid_hom_as_Psh h
+    interp_ops := sorry
+    interp_preds := sorry
+  }
+  valid := sorry
+
+
+def Monoid_2_models_to_Monoid_hom (M : Monoid_2_models):
+   M.str.carrier.obj (Opposite.op (1:Fin 2)) ⟶
+   M.str.carrier.obj (Opposite.op (0:Fin 2)) := sorry
+
 
 
 
