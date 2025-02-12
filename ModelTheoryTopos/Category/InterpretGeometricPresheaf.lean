@@ -48,7 +48,7 @@ def interp_fml {S : monosig} {n} (L : Str S C) : fml S n -> (npow L.carrier n �
 | .false => ⊥
 | .conj φ ψ => L.interp_fml φ ⊓ L.interp_fml ψ
 | .disj φ ψ => L.interp_fml φ ⊔ L.interp_fml ψ
-| .infdisj φ => ⨆ i: Nat, interp_fml L (φ i)
+| .infdisj a φ => ⨆ i: SmallUniverse.El a, interp_fml L (φ i)
 | .existsQ φ => SubobjectClassifier.existπ (L.interp_fml φ)
 | .eq t u => lift (L.interp_tm t) (interp_tm L u) ≫ SubobjectClassifier.eq
 
@@ -199,7 +199,7 @@ theorem pb_prop_interp_fml {n : Nat} (L : Str T.sig D) (φ : fml T.sig n) :
     | disj f1 f2 ih1 ih2 =>
       simp only [Str.interp_fml, pb_prop_disj, ih1, ih2]
       rfl
-    | @infdisj n φ ih =>
+    | @infdisj n a φ ih =>
       simp only [Str.interp_fml, pb_prop_iSup, ih]
       have := OrderIso.map_iSup (pb_prod_precomp_order_iso F T L n) (fun i => (pb_obj F T L).interp_fml (φ i))
       rw [pb_prod_precomp_order_iso, SubobjectClassifier.precomp_order_iso_app] at this
@@ -336,7 +336,7 @@ theorem subst_interp_fml (L: Str S C) (n : RenCtx) (m : Subst S) (σ : Fin n →
   | disj f1 f2 ih1 ih2 =>
     simp only [Str.interp_fml, fml.subst, ih1, ih2]
     rfl
-  | infdisj _ ih =>
+  | infdisj _ _ ih =>
     simp only [Str.interp_fml, fml.subst, ih, SubobjectClassifier.precomp_iSup]
   | @eq n t1 t2 =>
     simp[Str.interp_fml,fml.subst]

@@ -4,15 +4,22 @@ import Mathlib.CategoryTheory.Types
 import ModelTheoryTopos.Misc
 import ModelTheoryTopos.Syntax.Signature
 
+class SmallUniverse where
+  U : Type
+  El : U -> Type
 
-inductive fml (m : monosig) : RenCtx -> Type where
+instance natSU : SmallUniverse where
+  U := Unit
+  El _ := Nat
+
+inductive fml [SmallUniverse] (m : monosig) : RenCtx -> Type where
 --inductive fml.{u} (m : monosig) : RenCtx -> Type (u+1) where
   | pred : (p : m.preds) -> (Fin (m.arity_preds p) -> tm m n) -> fml m n
   | true : fml m n
   | false : fml m n
   | conj : fml m n -> fml m n -> fml m n
   | disj : fml m n -> fml m n -> fml m n
-  | infdisj : (Nat -> fml m n) -> fml m n
+  | infdisj : (a : SmallUniverse.U) -> (SmallUniverse.El a -> fml m n) -> fml m n
 --  | infdisj : (A : Type u) -> (A -> fml m n) -> fml m n
   | eq : tm m n -> tm m n -> fml m n
   | existsQ : fml m (n + 1) -> fml m n
@@ -52,7 +59,7 @@ def fml.ren {n n' : RenCtx} (f : n ⟶ n') : fml m n -> fml m n'
 | .false => .false
 | .conj φ ψ => .conj (φ.ren f) (ψ.ren f)
 | .disj φ ψ => .disj (φ.ren f) (ψ.ren f)
-| .infdisj φ => .infdisj (fun i => (φ i).ren f)
+| .infdisj a φ => .infdisj a (fun i => (φ i).ren f)
 -- | .infdisj A φ => .infdisj A (fun a => (φ a).ren f)
 | .eq t u => .eq (t.ren f) (u.ren f)
 | .existsQ φ => .existsQ (φ.ren (lift₁ f))
@@ -63,7 +70,7 @@ def fml.subst {n n' : Subst m} (f : n ⟶ n') : fml m n → fml m n'
 | .false => .false
 | .conj φ ψ => .conj (φ.subst f) (ψ.subst f)
 | .disj φ ψ => .disj (φ.subst f) (ψ.subst f)
-| .infdisj φ => .infdisj (fun i => (φ i).subst f)
+| .infdisj a φ => .infdisj a (fun i => (φ i).subst f)
 -- | .infdisj A φ => .infdisj A (fun a => (φ a).subst f)
 | .eq t u => .eq (t.subst f) (u.subst f)
 | .existsQ φ => .existsQ (φ.subst (lift_subst f))
@@ -79,7 +86,7 @@ theorem fml.ren_to_subst  (f : n ⟶ n') (φ: fml S n):
     simp only [fml.ren, h1, h2, fml.subst]
   | disj _ _ h1 h2 =>
     simp only [fml.ren, h1, h2, fml.subst]
-  | infdisj _ ih =>
+  | infdisj _ _ ih =>
     simp only [fml.ren, fml.subst, ih]
   | eq _ _ =>
     simp only [fml.ren, tm.ren_to_subst, fml.subst, fml.eq.injEq]
@@ -130,7 +137,7 @@ theorem fml.ren_id {n : RenCtx} (f : fml m n)
   | true | false => simp [ren]
   | conj φ ψ ihφ ihψ | disj φ ψ ihφ ihψ =>
     simp only [ren, conj.injEq,disj.injEq] ; constructor <;> simp only[ihφ, ihψ]
-  | infdisj φ ih => rw [ren, infdisj.injEq] ; funext i ; exact ih _
+  | infdisj a φ ih => rw [ren] ; congr ; funext i ; exact ih _
   | eq t u => simp only [ren, tm.ren_id]
   | existsQ φ ih => rw [ren, lift₁_id, ih]
 
@@ -141,7 +148,7 @@ theorem fml.ren_comp (f : n1 ⟶ n2) (g : n2 ⟶ n3) (t : fml m n1):
   | true | false => simp only [ren]
   | conj φ ψ ihφ ihψ | disj φ ψ ihφ ihψ =>
     simp only [ren, conj.injEq,disj.injEq] ; constructor <;> simp only [ihφ, ihψ]
-  | infdisj φ ih => simp only [ren, infdisj.injEq] ; funext i ; exact ih _ _ _
+  | infdisj a φ ih => simp only [ren]; congr ; funext i ; exact ih _ _ _
   | eq t u => simp only [ren, tm.ren_comp]
   | existsQ φ ih => simp only [ren, lift₁_comp, ih]
 
@@ -166,11 +173,10 @@ theorem fml.subst_id {n : Subst m} (f : fml m n)
   : subst (𝟙 n) f = f := by
   induction f with
   | pred => simp only [subst, pred.injEq, heq_eq_eq, true_and] ; funext i ; simp only [tm.subst_id]
-  --  ; simp [tm.subst_id]
   | true | false => simp only [subst]
   | conj φ ψ ihφ ihψ | disj φ ψ ihφ ihψ =>
     simp only [subst, conj.injEq,disj.injEq] ; constructor <;> simp only [ihφ, ihψ]
-  | infdisj φ ih => simp only [subst, infdisj.injEq] ; funext i ; apply ih
+  | infdisj a φ ih => simp only [subst]; congr ; funext i ; apply ih
   | eq t u => simp only [subst, tm.subst_id]
   | existsQ φ ih => simp only [subst, lift_subst_id, ih]
 
@@ -181,7 +187,7 @@ theorem fml.subst_comp {n1 n2 n3 : Subst m} (f : n1 ⟶ n2) (g : n2 ⟶ n3) (t :
   | true | false => simp only [subst]
   | conj φ ψ ihφ ihψ | disj φ ψ ihφ ihψ =>
     simp only [subst, conj.injEq,disj.injEq] ; constructor <;> simp only [ihφ, ihψ]
-  | infdisj φ ih => simp only [subst, infdisj.injEq] ; funext i ; exact ih _ _ _
+  | infdisj a φ ih => simp only [subst]; congr ; funext i ; exact ih _ _ _
   | eq t u => simp only [subst, tm.subst_comp]
   | existsQ φ ih => simp only [subst, lift_subst_comp, ih]
 
@@ -222,8 +228,8 @@ inductive proof {T : theory}: {n : RenCtx} → FmlCtx T n → fml T.sig n → Pr
   | disj_intro_r : proof Γ ψ → proof Γ (.disj φ ψ)
   | disj_elim : proof Γ (.disj φ ψ) →
     proof (φ :: Γ) ξ → proof (ψ :: Γ) ξ → proof Γ ξ
-  | infdisj_intro : proof Γ (φ k) → proof Γ (.infdisj φ)
-  | infdisj_elim : proof Γ (.infdisj φ) →
+  | infdisj_intro (a : SmallUniverse.U) (φ : SmallUniverse.El a → fml T.sig n) : proof Γ (φ k) → proof Γ (.infdisj a φ)
+  | infdisj_elim : proof Γ (.infdisj a φ) →
     (forall k, proof (φ k :: Γ) ξ) → proof Γ ξ
   | eq_intro : proof Γ (.eq t t)
   | eq_elim (φ : fml _ _) (Γ : FmlCtx _ _) : proof Δ (.eq t u) →
@@ -322,8 +328,8 @@ inductive proof {T : theory}: {n : RenCtx} → fml T.sig n → fml T.sig n → P
   | disj_intro_r : proof ψ (.disj φ ψ)
   | disj_elim : proof δ (.disj φ ψ) →
     proof (φ.conj δ) ξ → proof (ψ.conj δ) ξ → proof δ ξ
-  | infdisj_intro : proof (φ k) (.infdisj φ)
-  | infdisj_elim : proof δ (.infdisj φ) →
+  | infdisj_intro (k : SmallUniverse.El a) : proof (φ k) (.infdisj a φ)
+  | infdisj_elim : proof δ (.infdisj a φ) →
     (forall k, proof (.conj (φ k) δ) ξ) → proof Γ ξ
   | eq_intro : proof .true (.eq t t)
   | eq_elim (φ γ : (Fml _).obj _) : proof δ (.eq t u) →
