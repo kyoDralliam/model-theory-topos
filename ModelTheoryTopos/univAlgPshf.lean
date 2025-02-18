@@ -6,6 +6,11 @@ import ModelTheoryTopos.Category.Presheaf
 import ModelTheoryTopos.Category.InterpretGeometricPresheaf
 import Mathlib.CategoryTheory.ComposableArrows
 import Mathlib.CategoryTheory.Functor.Category
+import Mathlib.Algebra.Group.Hom.Defs
+import Mathlib.CategoryTheory.Opposites
+
+
+
 -- Keep this file as main example
 
 section SemigroupExample
@@ -239,7 +244,7 @@ def test (m: tm monoid_sig n) : sequent monoid_sig where
   premise := fml.conj (invertible (tm.ren SyntacticSite.R.in10 m)) (idempotent m)
   concl := is_id m
 
-def Monoid_hom_as_Psh [Monoid M1] [Monoid M2] (h: M1 ⟶ M2) : CategoryTheory.Psh (Fin 2) :=
+def Monoid_hom_as_Psh {M1 M2:Type} (h: M1 →  M2) : CategoryTheory.Psh (Fin 2) :=
   let f : CategoryTheory.ComposableArrows Typeᵒᵖ 1 := .mk₁ (Opposite.op h)
   f.leftOp
 
@@ -249,13 +254,47 @@ def Monoid_hom_as_Psh [Monoid M1] [Monoid M2] (h: M1 ⟶ M2) : CategoryTheory.Ps
 --   map f := sorry
 --   map_id := sorry
 --   map_comp := sorry
+open CategoryTheory MonoidalCategory
+#check 𝟙_ (Psh (Fin 2))
 
-def Monoid_hom_to_Monoid_2_models [Monoid M1] [Monoid M2] (h: M1 ⟶ M2) : Monoid_2_models where
+def terminal_n_rep : 𝟙_ (Psh (Fin (n + 1))) ≅ yoneda.obj n where
+  hom := {
+    app k a := by
+      simp[yoneda]
+      rcases k.unop with ⟨ k,p⟩
+      have p':k <= n := by
+        simp[Nat.lt_add_one_iff] at p
+        assumption
+      exact homOfLE p'
+  }
+  inv := {
+    app k a := by
+     exact ()
+  }
+
+noncomputable
+def mk_gs2 {M1 M0:Type} [Monoid M1] [Monoid M0] (m1:M1) (h: M1 →* M0) :
+𝟙_ (Psh (Fin 2)) ⟶ Monoid_hom_as_Psh h.toFun :=
+ let y := (@CategoryTheory.yonedaEquiv (Fin 2) _ (1:Fin 2) (Monoid_hom_as_Psh h.toFun)).invFun m1
+ let y': 𝟙_ (Psh (Fin 2)) ⟶ yoneda.obj 1 := (@terminal_n_rep 1).hom
+ y' ≫ y
+
+-- open Group Monoid
+-- def mk_gs2 {M1 M2:Type} [Monoid M1] [Monoid M2] (m1:M1) (m2:M2) (h: M1 →* M2) (p: h.toFun m1 = m2) : 𝟙_ (Psh (Fin 2)) ⟶ Monoid_hom_as_Psh h.toFun := sorry
+--𝟙_ (Psh (Fin 2)) ⟶
+
+noncomputable
+def Monoid_hom_to_Monoid_2_models [Monoid M1] [Monoid M2] (h: M1 →* M2) : Monoid_2_models where
   str := {
     carrier := Monoid_hom_as_Psh h
-    interp_ops := sorry
+    interp_ops o := match o with
+     | ⟨ 0 ,_ ⟩ => mk_gs2 1 h  --just need h 1 = 1
+     | ⟨ 1 ,_ ⟩ => {
+       app n := sorry
+       naturality := sorry
+     }
     interp_preds := sorry
-  }
+    }
   valid := sorry
 
 
