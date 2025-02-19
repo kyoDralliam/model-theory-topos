@@ -221,7 +221,7 @@ inductive proof [SmallUniverse] {T : theory}: {n : RenCtx} → FmlCtx T n → fm
   | disj_intro_r : proof Γ ψ → proof Γ (.disj φ ψ)
   | disj_elim : proof Γ (.disj φ ψ) →
     proof (φ :: Γ) ξ → proof (ψ :: Γ) ξ → proof Γ ξ
-  | infdisj_intro (a : SmallUniverse.U) (φ : SmallUniverse.El a → fml T.sig n) : proof Γ (φ k) → proof Γ (.infdisj a φ)
+  | infdisj_intro (a : SmallUniverse.U) (φ : SmallUniverse.El a → fml T.sig n) (i: SmallUniverse.El a) : proof Γ (φ i) → proof Γ (.infdisj a φ)
   | infdisj_elim : proof Γ (.infdisj a φ) →
     (forall k, proof (φ k :: Γ) ξ) → proof Γ ξ
   | eq_intro : proof Γ (.eq t t)
@@ -237,7 +237,7 @@ theorem proof.weaken [SmallUniverse] {T : theory} n (Δ : FmlCtx T n) ψ (hψ : 
   by sorry
 
 -- TODO: cut could be made admissible ; requires weakening first
-theorem proof.cut {T : theory} n (Δ : FmlCtx T n) ψ (hψ : proof Δ ψ) : forall Γ (hsub : forall φ, φ ∈ Δ -> proof Γ φ), proof Γ ψ := by
+theorem proof.cut [SmallUniverse] {T : theory} n (Δ : FmlCtx T n) ψ (hψ : proof Δ ψ) : forall Γ (hsub : forall φ, φ ∈ Δ -> proof Γ φ), proof Γ ψ := by
   induction hψ with
   | «axiom» _ _ ih =>
     intros ; apply proof.axiom ; assumption ; apply ih ; assumption
@@ -273,14 +273,14 @@ theorem proof.cut {T : theory} n (Δ : FmlCtx T n) ψ (hψ : proof Δ ψ) : fora
   | existsQ_elim _ _ => sorry
 
 
-def derivable (T : theory) (s : sequent T.sig) := proof [s.premise] s.concl
+def derivable [SmallUniverse] (T : theory) (s : sequent T.sig) := proof [s.premise] s.concl
 
-def sequent.of_formulas (Γ : FmlCtx T n) (φ : fml T.sig n) : sequent T.sig where
+def sequent.of_formulas [SmallUniverse] {T : theory} (Γ : FmlCtx T n) (φ : fml T.sig n) : sequent T.sig where
   ctx := n
   premise := List.foldr .conj .true Γ
   concl := φ
 
-theorem sequent.from_proof : proof Γ φ -> derivable _ (of_formulas Γ φ) := by
+theorem sequent.from_proof [SmallUniverse] {T : theory} {Γ : FmlCtx T n} {φ : fml T.sig n}: proof Γ φ -> derivable _ (of_formulas Γ φ) := by
   intros hΓφ
   apply proof.cut _ _ _ hΓφ
   clear hΓφ
@@ -295,7 +295,7 @@ theorem sequent.from_proof : proof Γ φ -> derivable _ (of_formulas Γ φ) := b
       apply proof.conj_elim_r ; apply proof.var ; simp only [List.mem_singleton, fml.conj.injEq,
         and_true] ; rfl
 
-theorem sequent.to_proof : derivable _ (of_formulas Γ φ) -> proof Γ φ := by
+theorem sequent.to_proof [SmallUniverse] {T : theory} {Γ : FmlCtx T n} {φ : fml T.sig n}: derivable _ (of_formulas Γ φ) -> proof Γ φ := by
   intros hs ; apply proof.cut _ _ _ hs
   clear hs
   induction Γ with
