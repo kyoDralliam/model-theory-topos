@@ -219,6 +219,23 @@ theorem substn_right {m} {n n' : Subst m} (σ : n ⟶ n') (a: Fin n):
 def lift_subst {n n' : Subst m} (f : n ⟶ n') : (n+1) ⟶ (n'+1) :=
   Fin.cases (.var 0) (tm.ren Fin.succ ∘ f)
 
+theorem lift_subst_id (n : Subst m) : lift_subst (𝟙 n) = 𝟙 (n+1: Subst m) := by
+  funext i ; simp only [lift_subst, CategoryStruct.id]
+  induction i using Fin.cases <;> simp only [RelativeMonad.ret,Fin.cases_zero, Fin.cases_succ, Function.comp_apply,
+    tm.ren]
+
+theorem lift_subst_comp : lift_subst (f ≫ g) = lift_subst f ≫ lift_subst g := by
+  funext i ; simp [lift_subst, CategoryStruct.comp]
+  induction i using Fin.cases with
+    | zero => simp only [RelativeMonad.bind, Fin.cases_zero, tm.subst, lift_subst]
+    | succ i =>
+      simp only [RelativeMonad.bind, Fin.cases_succ, Function.comp_apply, ← tm.subst_ren_comp, ←
+        tm.ren_subst_comp]
+      congr; ext x; simp only [CategoryStruct.comp, Function.comp_apply, lift_subst, Fin.cases_succ,
+        tm.ren_map]
+      rfl
+
+
 def liftn_subst {n: Nat} {k k' : Subst m} (f : k ⟶ k') : (k+n) ⟶ (k'+n) :=
   Fin.casesAdd
     (tm.ren (fun i ↦ Fin.addNat i n) ∘ f)

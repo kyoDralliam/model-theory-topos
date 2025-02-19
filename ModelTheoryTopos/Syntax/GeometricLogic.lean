@@ -8,9 +8,9 @@ class SmallUniverse where
   U : Type
   El : U -> Type
 
-instance natSU : SmallUniverse where
-  U := Unit
-  El _ := Nat
+-- instance natSU : SmallUniverse where
+--   U := Unit
+--   El _ := Nat
 
 inductive fml [SmallUniverse] (m : monosig) : RenCtx -> Type where
 --inductive fml.{u} (m : monosig) : RenCtx -> Type (u+1) where
@@ -24,36 +24,27 @@ inductive fml [SmallUniverse] (m : monosig) : RenCtx -> Type where
   | eq : tm m n -> tm m n -> fml m n
   | existsQ : fml m (n + 1) -> fml m n
 
-def fml.existsn : {n' : Nat} -> fml m (n + n') -> fml m n
+namespace fml
+variable [SmallUniverse]
+
+def existsn : {n' : Nat} -> fml m (n + n') -> fml m n
 | 0, φ => φ
 | _+1, φ => existsn φ.existsQ
 
-def fml.conjn {k : ℕ} (fs: Fin k -> fml m n): fml m n :=
+def conjn {k : ℕ} (fs: Fin k -> fml m n): fml m n :=
   Fin.foldr k (.conj ∘ fs) .true
 
-theorem fml.conjn_succ {k : ℕ} (fs: Fin (k + 1) -> fml m n):
-   fml.conjn fs = fml.conj (fs ((0 : Fin (k + 1)))) (fml.conjn (fs ∘ Fin.succ)) := by
-    rw[fml.conjn,Fin.foldr_succ]
+theorem conjn_succ {k : ℕ} (fs: Fin (k + 1) -> fml m n):
+   conjn fs = fml.conj (fs ((0 : Fin (k + 1)))) (fml.conjn (fs ∘ Fin.succ)) := by
+    rw[conjn,Fin.foldr_succ]
     simp only [Function.comp_apply, conj.injEq, true_and]
-    rw[fml.conjn]
+    rw[conjn]
     congr
 
-def fml.eqs (lhs rhs : Fin k -> tm m n) : fml m n :=
-  fml.conjn  fun i => .eq (lhs i) (rhs i)
+def eqs (lhs rhs : Fin k -> tm m n) : fml m n :=
+  conjn  fun i => .eq (lhs i) (rhs i)
 
-
--- x1, .., xn | φ ⊢ ψ
-structure sequent (m : monosig) where
-  ctx : Nat
-  premise : fml m ctx := .true
-  concl : fml m ctx
-
-
-structure theory where
-  sig : monosig
-  axioms : List (sequent sig)
-
-def fml.ren {n n' : RenCtx} (f : n ⟶ n') : fml m n -> fml m n'
+def ren {n n' : RenCtx} (f : n ⟶ n') : fml m n -> fml m n'
 | .pred p k => .pred p (fun i => (k i).ren f)
 | .true => .true
 | .false => .false
@@ -64,7 +55,7 @@ def fml.ren {n n' : RenCtx} (f : n ⟶ n') : fml m n -> fml m n'
 | .eq t u => .eq (t.ren f) (u.ren f)
 | .existsQ φ => .existsQ (φ.ren (lift₁ f))
 
-def fml.subst {n n' : Subst m} (f : n ⟶ n') : fml m n → fml m n'
+def subst {n n' : Subst m} (f : n ⟶ n') : fml m n → fml m n'
 | .pred p k => .pred p (fun i => (k i).subst f)
 | .true => .true
 | .false => .false
@@ -75,24 +66,24 @@ def fml.subst {n n' : Subst m} (f : n ⟶ n') : fml m n → fml m n'
 | .eq t u => .eq (t.subst f) (u.subst f)
 | .existsQ φ => .existsQ (φ.subst (lift_subst f))
 
-theorem fml.ren_to_subst  (f : n ⟶ n') (φ: fml S n):
-  (fml.ren f φ) = fml.subst (fun i => tm.var (f i)) φ := by
+theorem ren_to_subst  (f : n ⟶ n') (φ: fml S n):
+  (ren f φ) = fml.subst (fun i => tm.var (f i)) φ := by
   induction φ generalizing n' with
   | pred p _ =>
-    simp only [fml.ren, tm.ren_to_subst, fml.subst, fml.pred.injEq, heq_eq_eq, true_and];rfl
-  | true => simp only [fml.ren, fml.subst]
-  | false => simp only [fml.ren, fml.subst]
+    simp only [ren, tm.ren_to_subst, fml.subst, fml.pred.injEq, heq_eq_eq, true_and];rfl
+  | true => simp only [ren, fml.subst]
+  | false => simp only [ren, fml.subst]
   | conj _ _ h1 h2 =>
-    simp only [fml.ren, h1, h2, fml.subst]
+    simp only [ren, h1, h2, fml.subst]
   | disj _ _ h1 h2 =>
-    simp only [fml.ren, h1, h2, fml.subst]
+    simp only [ren, h1, h2, fml.subst]
   | infdisj _ _ ih =>
-    simp only [fml.ren, fml.subst, ih]
+    simp only [ren, fml.subst, ih]
   | eq _ _ =>
-    simp only [fml.ren, tm.ren_to_subst, fml.subst, fml.eq.injEq]
+    simp only [ren, tm.ren_to_subst, fml.subst, fml.eq.injEq]
     exact ⟨by rfl, by rfl⟩
   | existsQ _ ih =>
-    simp only [fml.ren, fml.subst, ih]
+    simp only [ren, fml.subst, ih]
     congr
     funext i
     simp [lift_subst, lift₁]
@@ -101,37 +92,52 @@ theorem fml.ren_to_subst  (f : n ⟶ n') (φ: fml S n):
     | succ i =>
       simp only [lift₁, Fin.cases_succ, Function.comp_apply, tm.ren]
 
-instance : ScopedSubstitution (tm S) (fml S) where
+end fml
+
+-- x1, .., xn | φ ⊢ ψ
+structure sequent [SmallUniverse] (m : monosig) where
+  ctx : Nat
+  premise : fml m ctx := .true
+  concl : fml m ctx
+
+
+structure theory [SmallUniverse] where
+  sig : monosig
+  axioms : List (sequent sig)
+
+instance fmlSubst [SmallUniverse] : ScopedSubstitution (tm S) (fml S) where
   ssubst σ t := fml.subst σ t
 
-theorem fml.subst_conjn {k n n': RenCtx} (σ : Fin n -> tm m n') (fs: Fin k -> fml m n):
- fml.subst σ (fml.conjn fs) = fml.conjn (fun i => fml.subst σ (fs i)) := by
+namespace fml
+  variable [SmallUniverse]
+theorem subst_conjn {k n n': RenCtx} (σ : Fin n -> tm m n') (fs: Fin k -> fml m n):
+ subst σ (conjn fs) = conjn (fun i => subst σ (fs i)) := by
    induction k generalizing n with
    | zero =>
-     simp only [fml.conjn,  Fin.foldr,
-          Nat.zero_eq,Fin.foldr.loop,fml.subst]
+     simp only [conjn,  Fin.foldr,
+          Nat.zero_eq,Fin.foldr.loop,subst]
    | succ n1 ih =>
      have := ih σ (fs ∘ Fin.succ)--(fun i => fs (Fin.castAdd 1 i))
-     simp only[fml.conjn,fml.subst]
+     simp only[conjn,subst]
      simp only[Fin.foldr_succ]
      simp only [Nat.succ_eq_add_one, Function.comp_apply]
-     simp only[fml.subst]
+     simp only[subst]
      congr
 
-theorem fml.subst_eq:
-  fml.subst σ (fml.eq t1 t2) = fml.eq (tm.subst σ t1) (tm.subst σ t2) := rfl
+theorem subst_eq:
+  subst σ (eq t1 t2) = eq (tm.subst σ t1) (tm.subst σ t2) := rfl
 
-theorem fml.subst_eqs :
-  fml.subst σ (fml.eqs ts1 ts2) =
-  fml.eqs (fun i => tm.subst σ (ts1 i)) (fun i => tm.subst σ (ts2 i)) := by
-   simp only[fml.subst,fml.eqs]
-   simp only[fml.subst_conjn,fml.subst_eq]
+theorem subst_eqs :
+  subst σ (eqs ts1 ts2) =
+  eqs (fun i => tm.subst σ (ts1 i)) (fun i => tm.subst σ (ts2 i)) := by
+   simp only[subst,eqs]
+   simp only[subst_conjn,subst_eq]
 
 
 open CategoryTheory
 
-theorem fml.ren_id {n : RenCtx} (f : fml m n)
-  : fml.ren (𝟙 n) f = f := by
+theorem ren_id {n : RenCtx} (f : fml m n)
+  : ren (𝟙 n) f = f := by
   induction f with
   | pred => simp only [ren, pred.injEq, heq_eq_eq, true_and] ; funext i ; simp only [tm.ren_id]
   | true | false => simp [ren]
@@ -141,7 +147,7 @@ theorem fml.ren_id {n : RenCtx} (f : fml m n)
   | eq t u => simp only [ren, tm.ren_id]
   | existsQ φ ih => rw [ren, lift₁_id, ih]
 
-theorem fml.ren_comp (f : n1 ⟶ n2) (g : n2 ⟶ n3) (t : fml m n1):
+theorem ren_comp (f : n1 ⟶ n2) (g : n2 ⟶ n3) (t : fml m n1):
   ren (f ≫ g) t = ren g (ren f t) := by
   induction t generalizing n2 n3 with
   | pred => simp only [ren, pred.injEq, heq_eq_eq, true_and] ; funext i ; simp only [tm.ren_comp]
@@ -152,24 +158,7 @@ theorem fml.ren_comp (f : n1 ⟶ n2) (g : n2 ⟶ n3) (t : fml m n1):
   | eq t u => simp only [ren, tm.ren_comp]
   | existsQ φ ih => simp only [ren, lift₁_comp, ih]
 
-theorem lift_subst_id (n : Subst m) : lift_subst (𝟙 n) = 𝟙 (n+1: Subst m) := by
-  funext i ; simp only [lift_subst, CategoryStruct.id]
-  induction i using Fin.cases <;> simp only [RelativeMonad.ret,Fin.cases_zero, Fin.cases_succ, Function.comp_apply,
-    tm.ren]
-
-theorem lift_subst_comp : lift_subst (f ≫ g) = lift_subst f ≫ lift_subst g := by
-  funext i ; simp [lift_subst, CategoryStruct.comp]
-  induction i using Fin.cases with
-    | zero => simp only [RelativeMonad.bind, Fin.cases_zero, tm.subst, lift_subst]
-    | succ i =>
-      simp only [RelativeMonad.bind, Fin.cases_succ, Function.comp_apply, ← tm.subst_ren_comp, ←
-        tm.ren_subst_comp]
-      congr; ext x; simp only [CategoryStruct.comp, Function.comp_apply, lift_subst, Fin.cases_succ,
-        tm.ren_map]
-      rfl
-
-
-theorem fml.subst_id {n : Subst m} (f : fml m n)
+theorem subst_id {n : Subst m} (f : fml m n)
   : subst (𝟙 n) f = f := by
   induction f with
   | pred => simp only [subst, pred.injEq, heq_eq_eq, true_and] ; funext i ; simp only [tm.subst_id]
@@ -180,7 +169,7 @@ theorem fml.subst_id {n : Subst m} (f : fml m n)
   | eq t u => simp only [subst, tm.subst_id]
   | existsQ φ ih => simp only [subst, lift_subst_id, ih]
 
-theorem fml.subst_comp {n1 n2 n3 : Subst m} (f : n1 ⟶ n2) (g : n2 ⟶ n3) (t : fml m n1):
+theorem subst_comp {n1 n2 n3 : Subst m} (f : n1 ⟶ n2) (g : n2 ⟶ n3) (t : fml m n1):
   subst (f ≫ g) t = subst g (subst f t) := by
   induction t generalizing n2 n3 with
   | pred => simp only [subst, pred.injEq, heq_eq_eq, true_and] ; funext i ; simp only [tm.subst_comp]
@@ -190,8 +179,12 @@ theorem fml.subst_comp {n1 n2 n3 : Subst m} (f : n1 ⟶ n2) (g : n2 ⟶ n3) (t :
   | infdisj a φ ih => simp only [subst]; congr ; funext i ; exact ih _ _ _
   | eq t u => simp only [subst, tm.subst_comp]
   | existsQ φ ih => simp only [subst, lift_subst_comp, ih]
+end fml
 
-def Fml m : Subst m ⥤ Type where
+open CategoryTheory
+
+
+def Fml [SmallUniverse] m : Subst m ⥤ Type where
   map := fml.subst
   map_id := by intros ; funext t ; simp [fml.subst_id]
   map_comp := by intros ; funext t ; simp [fml.subst_comp]
