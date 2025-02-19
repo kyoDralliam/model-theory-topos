@@ -195,20 +195,20 @@ def Fml [SmallUniverse] m : Subst m ⥤ Type where
 def ListFunctor : Type ⥤ Type where
   map := List.map
 
-def Ctx m : Subst m ⥤ Type := Fml m ⋙ ListFunctor
+def Ctx m [SmallUniverse]: Subst m ⥤ Type := Fml m ⋙ ListFunctor
 
 
 -- Is there a way to make Ctx transparent enough for typeclass search ?
-instance: HAppend (List (fml m n)) ((Ctx m).obj n) (List (fml m n)) where
+instance [SmallUniverse]: HAppend (List (fml m n)) ((Ctx m).obj n) (List (fml m n)) where
   hAppend := fun l l' => let l'' : List (fml m n) := l' ; l ++ l''
 
-abbrev FmlCtx (T : theory) n := List (fml T.sig n)
+abbrev FmlCtx [SmallUniverse] (T : theory) n := List (fml T.sig n)
 
-instance : ScopedSubstitution (tm T.sig) (FmlCtx T) where
+instance [SmallUniverse] {T : theory}: ScopedSubstitution (tm T.sig) (FmlCtx T) where
   ssubst σ t := (Ctx T.sig).map σ t
 
 namespace StructuredProofs
-inductive proof {T : theory}: {n : RenCtx} → FmlCtx T n → fml T.sig n → Prop where
+inductive proof [SmallUniverse] {T : theory}: {n : RenCtx} → FmlCtx T n → fml T.sig n → Prop where
   | axiom : s ∈ T.axioms -> proof Γ (s.premise.subst σ) -> proof Γ (s.concl.subst σ)
   -- | cut : (forall φ, φ ∈ Δ -> proof Γ φ) -> proof Δ ψ -> proof Γ ψ
   | var : φ ∈ Γ → proof Γ φ
@@ -232,8 +232,8 @@ inductive proof {T : theory}: {n : RenCtx} → FmlCtx T n → fml T.sig n → Pr
   | existsQ_elim : proof Γ (.existsQ φ) →
     proof (List.map (fml.ren Fin.succ) Γ) φ
 
-
-theorem proof.weaken {T : theory} n (Δ : FmlCtx T n) ψ (hψ : proof Δ ψ) : forall Γ (hsub : forall φ, φ ∈ Δ -> φ ∈ Γ), proof Γ ψ :=
+#check proof
+theorem proof.weaken [SmallUniverse] {T : theory} n (Δ : FmlCtx T n) ψ (hψ : proof Δ ψ) : forall Γ (hsub : forall φ, φ ∈ Δ -> φ ∈ Γ), proof Γ ψ :=
   by sorry
 
 -- TODO: cut could be made admissible ; requires weakening first
