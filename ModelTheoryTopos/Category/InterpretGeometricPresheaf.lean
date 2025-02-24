@@ -86,7 +86,7 @@ structure Mod  (T : theory) (C : Type) [Category C] where
   str : Str T.sig C
   valid : forall s, s ∈ T.axioms → str.model s
 
-instance : forall {T : theory} {C : Type} [Category C], Category (Mod T C) where
+instance Mod_Category: forall {T : theory} {C : Type} [Category C], Category (Mod T C) where
   Hom M M' := M.str ⟶ M'.str
   id M := 𝟙 M.str
   comp := Str.category.comp

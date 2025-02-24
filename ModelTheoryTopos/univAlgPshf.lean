@@ -9,13 +9,20 @@ import Mathlib.CategoryTheory.Functor.Category
 import Mathlib.Algebra.Group.Hom.Defs
 import Mathlib.CategoryTheory.Opposites
 
-
-
+import Mathlib.Algebra.Category.Semigrp.Basic
+open CategoryTheory
 -- Keep this file as main example
 
 section SemigroupExample
 
-variable [SmallUniverse]
+--variable [SmallUniverse]
+/-class SmallUniverse where
+  U : Type
+  El : U -> Type-/
+
+instance empty : SmallUniverse where
+  U := Empty
+  El := Empty.rec
 
 def semigroup_sig : monosig where
   ops := Unit
@@ -32,7 +39,7 @@ abbrev mk_mul_left (t1 t2 t3: tm semigroup_sig n) := mk_mul (mk_mul t1 t2) t3
 
 abbrev mk_mul_right (t1 t2 t3: tm semigroup_sig n) := mk_mul t1 (mk_mul t2 t3)
 
-def assoc : sequent semigroup_sig where
+def assoc : @sequent empty semigroup_sig where
   ctx := 3
   premise := .true
   concl := fml.eq (mk_mul_left (.var 0) (.var 1) (.var 2)) (mk_mul_right (.var 0) (.var 1) (.var 2))
@@ -45,6 +52,9 @@ def semigroup_thy : theory where
 def semigroup_set_models :=
   InterpPsh.Mod semigroup_thy Unit
 
+instance Unit_cat : Category Unit := inferInstance
+
+instance semigrp_cat : Category semigroup_set_models := @InterpPsh.Mod_Category _ _ _ _
 
 def Type_to_Psh (α : Type) :
   CategoryTheory.Psh Unit where
@@ -168,7 +178,18 @@ def semigroup_to_model (α : Type) [Semigroup α]
     simp
     apply mul_assoc (G:=α) a b c
 
+#check Semigrp
 
+/-
+instance semigrp_mod : Category semigroup_set_models where
+  Hom sg1 sg2 := sg1.str.carrier ⟶ sg2.str.carrier
+  id sg :=  𝟙 sg.str.carrier
+  comp {sg1 sg2 sg3} f1 f2 := NatTrans.vcomp f1 f2
+-/
+
+--instance semigrp_mod: Category semigroup_set_models := sorry
+
+def Semigrp2Model : Semigrp ⥤ semigroup_set_models := sorry
 
 
 
