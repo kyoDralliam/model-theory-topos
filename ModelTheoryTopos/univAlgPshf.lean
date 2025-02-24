@@ -15,6 +15,8 @@ import Mathlib.CategoryTheory.Opposites
 
 section SemigroupExample
 
+variable [SmallUniverse]
+
 def semigroup_sig : monosig where
   ops := Unit
   arity_ops := fun _ => 2
@@ -187,6 +189,7 @@ def model_to_semigroup (m : semigroup_set_models)
 end SemigroupExample
 
 section MonoidExample
+variable [SmallUniverse]
 def monoid_sig : monosig where
   ops := Fin 2
   arity_ops := (fun i => [0 , 2][i])

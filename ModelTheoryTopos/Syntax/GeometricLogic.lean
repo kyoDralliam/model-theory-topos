@@ -308,7 +308,7 @@ theorem sequent.to_proof [SmallUniverse] {T : theory} {Γ : FmlCtx T n} {φ : fm
 end StructuredProofs
 
 namespace Hilbert
-inductive proof {T : theory}: {n : RenCtx} → fml T.sig n → fml T.sig n → Prop where
+inductive proof [SmallUniverse] {T : theory}: {n : RenCtx} → fml T.sig n → fml T.sig n → Prop where
   | axiom : s ∈ T.axioms -> proof (s.premise.subst σ) (s.concl.subst σ)
   | cut : proof φ τ -> proof τ ψ -> proof φ ψ
   | var : proof φ φ
@@ -333,7 +333,7 @@ inductive proof {T : theory}: {n : RenCtx} → fml T.sig n → fml T.sig n → P
     --existsQ_elim : proof (fml.ren Fin.succ (.existsQ φ)) φ
   | ren : proof φ ψ -> proof (fml.ren ρ φ) (fml.ren ρ ψ)
 
-variable {T : theory}
+variable [SmallUniverse] {T : theory}
 
 infix:30 " ⊢ " => proof
 
@@ -451,7 +451,7 @@ theorem proof.eqs_iff  {T: theory} {k : ℕ} {n : RenCtx} (φ: fml T.sig n) (ts1
 
 theorem any_eq_intro {T: theory} {n : RenCtx} (φ: fml T.sig n) (t: tm T.sig n):
   Hilbert.proof φ (.eq t t) := by
-  apply @Hilbert.proof.cut _ _ _ .true
+  apply @Hilbert.proof.cut _ _ _ _ .true
   · apply Hilbert.proof.true_intro
   · apply Hilbert.proof.eq_intro
 
@@ -480,7 +480,7 @@ end R
 --theorem in10_substn (φ: fml m k): fml.ren (@R.in01 n k) φ  =  fml.subst (substn (@R.in01 n k)) φ := sorry
 
 --theorem in10_substn_in01 (φ: fml m k): fml.ren (@R.in01 n k) φ =
-structure functional {T: theory} {n1 n2 : RenCtx} (φ: fml T.sig n1) (ψ : fml T.sig n2) (θ  : fml T.sig (n1 + n2)) where
+structure functional [SmallUniverse] {T: theory} {n1 n2 : RenCtx} (φ: fml T.sig n1) (ψ : fml T.sig n2) (θ  : fml T.sig (n1 + n2)) where
  total : Hilbert.proof φ θ.existsn
  range: Hilbert.proof θ ((φ.ren R.in10).conj (ψ.ren R.in01))
  unique : Hilbert.proof ((θ.ren R.in101).conj (θ.ren R.in110)) (fml.eqs (tm.var ∘ R.in010) (tm.var ∘ R.in001))
@@ -505,12 +505,12 @@ end Example
 
 
 
-def id_rep {T: theory} {n : RenCtx} (φ: fml T.sig n) : fml T.sig (n+n) :=
+def id_rep [SmallUniverse] {T: theory} {n : RenCtx} (φ: fml T.sig n) : fml T.sig (n+n) :=
  (φ.ren R.in10).conj
  (fml.eqs (tm.var ∘ R.in10) (tm.var ∘ R.in01))
 
 
-theorem Hilbert.eqs_elim {T: theory} {n' n : Subst T.sig}  (δ : fml T.sig n')  (φ γ: fml T.sig (n'+n)) (ts1 ts2:  n ⟶  n'):
+theorem Hilbert.eqs_elim [SmallUniverse] {T: theory} {n' n : Subst T.sig}  (δ : fml T.sig n')  (φ γ: fml T.sig (n'+n)) (ts1 ts2:  n ⟶  n'):
  Hilbert.proof δ (.eqs ts1 ts2) →
  Hilbert.proof (δ.conj (.subst (substn ts1) γ)) (.subst (substn ts1) φ) →
  Hilbert.proof (δ.conj (.subst (substn ts2) γ)) (.subst (substn ts2) φ) := by
@@ -562,14 +562,14 @@ namespace S
   -- #check fun S (n k : Subst S) => @in10 S n k ++ @in10 S n k ++ @in01 S n k
 end S
 
-theorem substn_section {T: theory} {k n : Subst T.sig} (φ : fml T.sig k) (σ :  k ⟶ n) :
+theorem substn_section [SmallUniverse] {T: theory} {k n : Subst T.sig} (φ : fml T.sig k) (σ :  k ⟶ n) :
   (φ.ren R.in01).subst (substn σ) = φ.subst σ := by
   simp [fml.ren_to_subst, <-fml.subst_comp, R.in01]
   congr
   funext i
   simp [tm.subst_comp_app, tm.subst, substn]
 
-theorem Hilbert.eqs_elim' {T: theory} {k n : Subst T.sig} (δ : fml T.sig n)  (φ ψ: fml T.sig k) (σ τ:  k ⟶ n)
+theorem Hilbert.eqs_elim' [SmallUniverse] {T: theory} {k n : Subst T.sig} (δ : fml T.sig n)  (φ ψ: fml T.sig k) (σ τ:  k ⟶ n)
   (h : Hilbert.proof δ (.eqs σ τ)):
   Hilbert.proof (δ.conj (ψ.subst σ)) (φ.subst σ) →
   Hilbert.proof (δ.conj (ψ.subst τ)) (φ.subst τ) := by
@@ -577,19 +577,19 @@ theorem Hilbert.eqs_elim' {T: theory} {k n : Subst T.sig} (δ : fml T.sig n)  (�
     <-substn_section ψ τ, <-substn_section φ τ]
   apply Hilbert.eqs_elim δ _ _ σ τ h
 
-theorem Hilbert_eqs_intro {T: theory} {n k: RenCtx} (φ: fml T.sig n) (σ: Fin k → tm T.sig n):
+theorem Hilbert_eqs_intro [SmallUniverse] {T: theory} {n k: RenCtx} (φ: fml T.sig n) (σ: Fin k → tm T.sig n):
  φ ⊢ fml.eqs σ σ := sorry
 
-theorem Hilbert_eq_symm {T: theory} {n k: RenCtx} (t1 t2:  tm T.sig n) (φ: fml T.sig n):
+theorem Hilbert_eq_symm [SmallUniverse] {T: theory} {n k: RenCtx} (t1 t2:  tm T.sig n) (φ: fml T.sig n):
   φ ⊢ fml.eq t1 t2 → φ ⊢ fml.eq t2 t1 :=
 
    sorry
 
-theorem Hilbert_eqs_symm {T: theory} {n k: RenCtx} (σ1 σ2: Fin k → tm T.sig n) (φ: fml T.sig n):
+theorem Hilbert_eqs_symm [SmallUniverse] {T: theory} {n k: RenCtx} (σ1 σ2: Fin k → tm T.sig n) (φ: fml T.sig n):
   φ ⊢ fml.eqs σ1 σ2 → φ ⊢ fml.eqs σ2 σ1 :=
   sorry
 
-theorem Hilbert.conj_add_true {T: theory} (φ ψ : fml T.sig n) :
+theorem Hilbert.conj_add_true [SmallUniverse] {T: theory} (φ ψ : fml T.sig n) :
  Hilbert.proof φ ψ ↔ Hilbert.proof (φ.conj .true) ψ := by
   constructor
   · intro h
@@ -624,7 +624,7 @@ theorem Hilbert.conj_add_true {T: theory} (φ ψ : fml T.sig n) :
 --    simp only [substn, Fin.casesAdd_right]
 
 -- TODO: this should us fml.subst_id, fml.ren_to_subst and fml.subst_comp
-theorem tm.subst_ren_id {T: theory} {n: RenCtx} (t: tm T.sig n):
+theorem tm.subst_ren_id [SmallUniverse] {T: theory} {n: RenCtx} (t: tm T.sig n):
  (.subst (substn fun i ↦ tm.var i) (tm.ren R.in10 t)) = t := by
    induction t with
    | var a => simp only [tm.ren, R.in10, tm.subst, substn_left]
@@ -644,7 +644,7 @@ theorem Subst_comp_o' {S: monosig} {n m k: Subst S}  (f : Fin n -> Fin k) (g : k
 
 
 -- TODO: this should be a straightforward application of fml.ren_id and fml.ren_comp
-theorem fml.subst_ren_id {T: theory} {n: Subst T.sig} (φ: fml T.sig n):
+theorem fml.subst_ren_id [SmallUniverse] {T: theory} {n: Subst T.sig} (φ: fml T.sig n):
  (fml.subst (substn fun i ↦ tm.var i) (fml.ren R.in10 φ)) = φ := by
       simp[fml.ren_to_subst,<-fml.subst_comp]
       have := @SyntacticSite.Subst_comp_o' T.sig _ _ _ (@R.in10 n n) (substn tm.var)
@@ -653,7 +653,7 @@ theorem fml.subst_ren_id {T: theory} {n: Subst T.sig} (φ: fml T.sig n):
       simp [emb]
       simp only[h0]
       simp[this]
-      have := @fml.subst_id T.sig n
+      have := @fml.subst_id _ T.sig n
       let ff : n ⟶ n := ((@substn T.sig n n tm.var) ∘  (@R.in10 n n) )
       have h : ff = 𝟙 n := by
        funext
@@ -682,34 +682,34 @@ theorem in101_10_010 : (@R.in101 n k) ∘ R.in01 = R.in001 := by
   ext i
   simp only [Function.comp_apply, Fin.casesAdd_right, Fin.coe_castAdd']
 
-theorem Hilbert_eq_trans {T: theory} {n : RenCtx} (t1 t2 t3: tm T.sig n) (φ ψ: fml T.sig n):
+theorem Hilbert_eq_trans [SmallUniverse] {T: theory} {n : RenCtx} (t1 t2 t3: tm T.sig n) (φ ψ: fml T.sig n):
   φ ⊢ fml.eq t1 t2 → ψ ⊢ fml.eq t2 t3 → φ.conj ψ ⊢ fml.eq t1 t3 := sorry
 
-theorem Hilbert_eq_trans' {T: theory} {n : RenCtx} (t1 t2 t3: tm T.sig n) (φ: fml T.sig n):
+theorem Hilbert_eq_trans' [SmallUniverse] {T: theory} {n : RenCtx} (t1 t2 t3: tm T.sig n) (φ: fml T.sig n):
   φ ⊢ fml.eq t1 t2 → φ ⊢ fml.eq t2 t3 → φ ⊢ fml.eq t1 t3 := sorry
 
-theorem Hilbert_eqs_trans' {T: theory} {n k: RenCtx} (σ1 σ2 σ3: Fin k →  tm T.sig n) (φ: fml T.sig n):
+theorem Hilbert_eqs_trans' [SmallUniverse] {T: theory} {n k: RenCtx} (σ1 σ2 σ3: Fin k →  tm T.sig n) (φ: fml T.sig n):
   φ ⊢ fml.eqs σ1 σ2 → φ ⊢ fml.eqs σ2 σ3→ φ ⊢ fml.eqs σ1 σ3 := sorry
 
 
 
-theorem Hilbert_conj_1  {T: theory} {n: RenCtx} (δ φ ψ: fml T.sig n):
+theorem Hilbert_conj_1 [SmallUniverse] {T: theory} {n: RenCtx} (δ φ ψ: fml T.sig n):
  δ ⊢ φ.conj ψ → δ ⊢ φ := by
    intro h
-   have := @Hilbert.proof.cut T n δ (φ.conj ψ)
+   have := @Hilbert.proof.cut _ T n δ (φ.conj ψ)
    apply this h
    exact Hilbert.proof.conj_elim_l
 
-theorem Hilbert_conj_2  {T: theory} {n: RenCtx} (δ φ ψ: fml T.sig n):
+theorem Hilbert_conj_2 [SmallUniverse] {T: theory} {n: RenCtx} (δ φ ψ: fml T.sig n):
  δ ⊢ φ.conj ψ → δ ⊢ ψ := by
    intro h
-   have := @Hilbert.proof.cut T n δ (φ.conj ψ)
+   have := @Hilbert.proof.cut _ T n δ (φ.conj ψ)
    apply this h
    exact Hilbert.proof.conj_elim_r
 
 
 
-theorem id_rep_functional  {T: theory} {n : RenCtx} (φ: fml T.sig n) :
+theorem id_rep_functional [SmallUniverse] {T: theory} {n : RenCtx} (φ: fml T.sig n) :
   functional φ φ (id_rep φ) where
     total := by
       apply Hilbert.proof.existn_intro (fun i => tm.var i)
@@ -732,7 +732,7 @@ theorem id_rep_functional  {T: theory} {n : RenCtx} (φ: fml T.sig n) :
          have h1 : δ ⊢ fml.eqs σ τ := by
            simp only[δ]
            exact Hilbert.proof.conj_elim_r
-         have := @Hilbert.eqs_elim' T n (n+n) δ φ .true σ τ h1
+         have := @Hilbert.eqs_elim' _ T n (n+n) δ φ .true σ τ h1
          simp[fml.subst,← Hilbert.conj_add_true] at this
          apply this
          simp only[δ]
@@ -757,9 +757,9 @@ theorem id_rep_functional  {T: theory} {n : RenCtx} (φ: fml T.sig n) :
 
 
 @[simp]
-def fml_equiv {T: theory} {n : RenCtx} (φ ψ: fml T.sig n) := Hilbert.proof φ ψ ∧ Hilbert.proof ψ φ
+def fml_equiv [SmallUniverse] {T: theory} {n : RenCtx} (φ ψ: fml T.sig n) := Hilbert.proof φ ψ ∧ Hilbert.proof ψ φ
 
-theorem fml_equiv_Equivalence {T: theory} {n : RenCtx} : Equivalence (@fml_equiv T n) where
+theorem fml_equiv_Equivalence [SmallUniverse] {T: theory} {n : RenCtx} : Equivalence (@fml_equiv _ T n) where
   refl := by
     intro φ
     simp
@@ -773,7 +773,7 @@ theorem fml_equiv_Equivalence {T: theory} {n : RenCtx} : Equivalence (@fml_equiv
     simp only [fml_equiv] at *
     constructor <;> apply Hilbert.proof.cut (τ:=y) <;> simp [a1, a2]
 
-structure theory_fml (T: theory) where
+structure theory_fml [SmallUniverse] (T: theory) where
   ctx: RenCtx
   fml : fml T.sig n
 

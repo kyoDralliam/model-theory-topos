@@ -22,7 +22,7 @@ structure Str (S : monosig) (C : Type) [Category C]  where
   interp_ops : forall (o : S.ops), npow carrier (S.arity_ops o) ⟶ carrier
   interp_preds : forall (p : S.preds), npow carrier (S.arity_preds p) ⟶ SubobjectClassifier.prop
 
-variable {C : Type} [Category C]
+variable {C : Type} [Category C] [SmallUniverse]
 
 namespace Str
 
@@ -82,7 +82,7 @@ instance category : {S : monosig} → Category (Str S C) where
 
 end Str
 
-structure Mod (T : theory) (C : Type) [Category C] where
+structure Mod  (T : theory) (C : Type) [Category C] where
   str : Str T.sig C
   valid : forall s, s ∈ T.axioms → str.model s
 
