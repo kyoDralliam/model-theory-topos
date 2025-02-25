@@ -188,8 +188,22 @@ instance semigrp_mod : Category semigroup_set_models where
 -/
 
 --instance semigrp_mod: Category semigroup_set_models := sorry
+noncomputable
+def Semigrp2Model : Semigrp ⥤ semigroup_set_models where
+  obj sg := @semigroup_to_model sg.α sg.str
+  map {sg1 sg2} h:= {
+    map :=
+     let psh1: Psh Unit := (@semigroup_to_model sg1.α sg1.str).str.carrier
+     let psh2: Psh Unit := (@semigroup_to_model sg2.α sg2.str).str.carrier
+     let m: psh1 ⟶ psh2 := Type_equiv_Psh.inverse.map h.toFun
+     m
+    ops_comm := sorry
+    preds_comm := sorry
+  }
+    -- let psh1: Psh Unit := (@semigroup_to_model sg1.α sg1.str).str.carrier
+    -- let psh2: Psh Unit := (@semigroup_to_model sg2.α sg2.str).str.carrier
 
-def Semigrp2Model : Semigrp ⥤ semigroup_set_models := sorry
+    -- Type_equiv_Psh.inverse.map h.toFun
 
 
 
