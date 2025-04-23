@@ -50,3 +50,19 @@ namespace GaloisConnection
       simp only [gc.u_sInf, sInf_image]
 
 end GaloisConnection
+
+
+namespace CompleteLatticeLemma
+  variable {α : Type u} [CompleteLattice α]
+
+  theorem inf_disj_elim_helper
+    (inf_iSup_distr : forall {I : Type u'} a (b : I → α), a ⊓ (⨆ i, b i) ≤ ⨆ i, a ⊓ b i)
+    {I : Type u'} (b : I → α) (h₁ : a ≤ ⨆ i, b i) (h₂ : forall i, b i ⊓ a ≤ c) : a ≤ c := by
+    calc
+      a ≤ a ⊓ (⨆ i, b i) := by simp [le_sup_left, h₁]
+      _ ≤ ⨆ i, (a ⊓ b i) := by apply inf_iSup_distr a b
+      _ ≤ ⨆ i, (b i ⊓ a) := by simp [inf_comm]
+      _ ≤ c := by simp [sSup_le, h₂]
+
+
+end CompleteLatticeLemma

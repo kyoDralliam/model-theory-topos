@@ -13,6 +13,7 @@ import ModelTheoryTopos.Syntax.GeometricLogic
 import ModelTheoryTopos.Category.ChosenFiniteProducts
 import ModelTheoryTopos.Category.NatIso
 import ModelTheoryTopos.Category.Presheaf
+import ModelTheoryTopos.Misc
 
 namespace InterpPsh
 open CategoryTheory MonoidalCategory ChosenFiniteProducts
@@ -524,7 +525,10 @@ theorem soundness {T : theory} {n : RenCtx} (M:Mod T D) (φ ψ: fml T.sig n)
     simp only [Str.model, SubobjectClassifier.prop, Str.interp_fml]
     apply SubobjectClassifier.complete_lattice_to_prop.le_sSup
     simp
-  | infdisj_elim _ _ _ _ => sorry
+  | infdisj_elim _ _ ih₁ ih₂ =>
+    simp only [Str.model, SubobjectClassifier.prop, Str.interp_fml] at *
+    apply CompleteLatticeLemma.inf_disj_elim_helper (α:= _ ⟶ SubobjectClassifier.prop) <;> try assumption
+    intros; apply SubobjectClassifier.psh_inf_sSup_distr
   | eq_intro =>
     simp only [Str.model, SubobjectClassifier.prop, interp_fml_eq_refl]
     simp only [SubobjectClassifier.prop, Str.interp_fml, le_refl]

@@ -323,7 +323,7 @@ inductive proof [SmallUniverse] {T : theory}: {n : RenCtx} → fml T.sig n → f
     proof (φ.conj δ) ξ → proof (ψ.conj δ) ξ → proof δ ξ
   | infdisj_intro (k : SmallUniverse.El a) : proof (φ k) (.infdisj a φ)
   | infdisj_elim : proof δ (.infdisj a φ) →
-    (forall k, proof (.conj (φ k) δ) ξ) → proof Γ ξ
+    (forall k, proof (.conj (φ k) δ) ξ) → proof δ ξ
   | eq_intro : proof .true (.eq t t)
   | eq_elim (φ γ : (Fml _).obj _) : proof δ (.eq t u) →
     proof (δ.conj (γ⟪t ∷ 𝟙 _⟫)) (φ⟪t ∷ 𝟙 _⟫) →

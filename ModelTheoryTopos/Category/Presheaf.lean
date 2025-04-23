@@ -209,29 +209,27 @@ namespace SubobjectClassifier
   noncomputable
   def existπ {A B : Psh C} (φ : A ⊗ B ⟶ prop) : B ⟶ prop := existQ (snd A B) φ
 
-  def sSup {X : Psh C} (P : Set (X ⟶ prop)) : X ⟶ prop where
-    app Γ x :=
-      let P' : Set (Sieve Γ.unop) := { (p.app Γ x : Sieve Γ.unop) | (p : X ⟶ prop) (_h : P p) }
-      (SupSet.sSup P' : Sieve Γ.unop)
+  def sSup₀ {X : Psh C} (P : Set (X ⟶ prop)) : X ⟶ prop where
+    app Γ x := (⨆ p ∈ P, p.app Γ x : Sieve Γ.unop)
+      -- let P' : Set (Sieve Γ.unop) := { (p.app Γ x : Sieve Γ.unop) | (p : X ⟶ prop) (_h : P p) }
+      -- (SupSet.sSup P' : Sieve Γ.unop)
     naturality := by
       intros Γ Δ g
       funext x
       rw [Sieve.ext_iff]
-      intros Ξ f ; constructor
-      · simp only [prop, exists_prop, types_comp_apply, Sieve.sSup_apply, Set.mem_setOf_eq,
-        exists_exists_and_eq_and, Sieve.pullback_apply, forall_exists_index, and_imp] ; intros p hp hf
-        exists p ; constructor ; assumption
+      intros Ξ f ; constructor <;> simp [iSup]
+      · intros p hp hf
+        exists p, (p.app Γ x) ; constructor ; simp ; assumption
         rw [<-types_comp_apply (X.map g) (p.app Δ), p.naturality g] at hf
         simp only [types_comp_apply, Sieve.pullback_apply] at hf
         exact hf
-      · simp only [prop, exists_prop, types_comp_apply, Sieve.pullback_apply, Sieve.sSup_apply,
-        Set.mem_setOf_eq, exists_exists_and_eq_and, forall_exists_index, and_imp] ; intros p hp hf
-        exists p ; constructor ; assumption
+      · intros p hp hf
+        exists p, (p.app Δ (X.map g x)) ; constructor ; simp; assumption
         rw [<-types_comp_apply (X.map g) (p.app Δ), p.naturality g]
         simp only [types_comp_apply, Sieve.pullback_apply]
         exact hf
 
-  def sInf {X : Psh C} (P : Set (X ⟶ prop)) : X ⟶ prop where
+  def sInf₀ {X : Psh C} (P : Set (X ⟶ prop)) : X ⟶ prop where
     app Γ x :=
       let P' : Set (Sieve Γ.unop) := { (p.app Γ x : Sieve Γ.unop) | (p : X ⟶ prop) (_h : P p) }
       (InfSet.sInf P' : Sieve Γ.unop)
@@ -272,8 +270,8 @@ namespace SubobjectClassifier
     bot := ChosenFiniteProducts.toUnit _ ≫ SubobjectClassifier.bot
     sup φ ψ := ChosenFiniteProducts.lift φ ψ ≫ disj
     inf φ ψ := ChosenFiniteProducts.lift φ ψ ≫ conj
-    sSup := SubobjectClassifier.sSup
-    sInf := SubobjectClassifier.sInf
+    sSup := sSup₀
+    sInf := sInf₀
     le_sup_left := by intros ; simp only [prop, not_forall, Classical.not_imp, FunctorToTypes.comp,
       ChosenFiniteProducts.lift_app_pt,disj, prop, le_sup_left, implies_true]
     le_sup_right := by intros ; simp only [prop, not_forall, Classical.not_imp, FunctorToTypes.comp,
@@ -289,28 +287,29 @@ namespace SubobjectClassifier
       simp[conj, h1 c x, h2 c x]
     le_sSup := by
       intros s a h
-      simp[SubobjectClassifier.sSup]
+      simp only[sSup₀]
       intros c x
-      apply @le_sSup (Sieve (c.unop)) _ _ (a.app c x)
-      simp
-      exists a
+      apply le_biSup (α:=Sieve c.unop) (fun p => p.app c x) h
     sSup_le := by
       intros s a h
-      simp only[SubobjectClassifier.sSup]
+      simp only[sSup₀]
       intros c x
-      apply @sSup_le (Sieve (c.unop)) _ _ (a.app c x)
-      simp
-      intros ; apply h ; assumption
+      simp [iSup_le_iff]
+      intros i hi
+      apply (h i hi c x)
+      -- apply @sSup_le (Sieve (c.unop)) _ _ (a.app c x)
+      -- simp
+      -- intros ; apply h ; assumption
     sInf_le := by
       intros s a h
-      simp[SubobjectClassifier.sInf]
+      simp[sInf₀]
       intros c x
       apply @sInf_le (Sieve (c.unop)) _ _ (a.app c x)
       simp
       exists a
     le_sInf := by
       intros s a h
-      simp only[SubobjectClassifier.sInf]
+      simp only[sInf₀]
       intros c x
       apply @le_sInf (Sieve (c.unop)) _ _ (a.app c x)
       simp; intros ; apply h ; assumption
@@ -339,6 +338,17 @@ namespace SubobjectClassifier
     let s1 : Sieve c.unop := φ.app c x
     let s2 : Sieve c.unop := ψ.app c x
     ((φ ⊓ ψ).app c x) = s1 ⊓ s2 := rfl
+
+  theorem psh_sSup_arrows {X : Psh C} (s : Set (X ⟶ prop)) (c : Cᵒᵖ) (x : X.obj c) :
+    (sSup s).app c x = (⨆ φ ∈ s, φ.app c x : Sieve c.unop) := rfl
+
+  theorem psh_iSup_arrows {X : Psh C} (φ : I → (X ⟶ prop)) (c : Cᵒᵖ) (x : X.obj c) :
+    (⨆ i, φ i).app c x = (⨆ i, (φ i).app c x : Sieve c.unop) := by
+    calc
+      (⨆ i, φ i).app c x = (sSup (Set.range φ)).app c x := by simp [iSup]
+      _ = (⨆ ψ ∈ (Set.range φ), ψ.app c x : Sieve c.unop) := by simp [psh_sSup_arrows _ c x]
+      _ = (⨆ i, (φ i).app c x : Sieve c.unop) := by rw [iSup_range (α:=Sieve c.unop) (g:=fun ψ => ψ.app c x) (f:=φ)]
+
 
   theorem to_prop_top {X: Psh C} (f: X⟶ SubobjectClassifier.prop): f = ⊤ ↔
    ∀(c: Cᵒᵖ ) (x: X.obj c),
@@ -390,7 +400,6 @@ namespace SubobjectClassifier
      simp only[Psh_hom_eq]
      simp only[lift_eq_eq]
 
-
   theorem sieve_distr {c: C} (s1 s2 s3: Sieve c) : s1 ⊓ (s2 ⊔ s3) = (s1 ⊓ s2) ⊔ (s1 ⊓ s3) := by
    apply le_antisymm
    · intros c' f
@@ -410,7 +419,24 @@ namespace SubobjectClassifier
    ext c0 x
    simp only[psh_inf_arrows',psh_sup_arrows',sieve_distr]
 
+  theorem sieve_inf_sSup_distr (X : C) :
+    ∀ (a : Sieve X) (s : I → Sieve X), a ⊓ (⨆ i, s i) ≤ ⨆ i, a ⊓ s i := by
+    intros a b X' f
+    simp [iSup]
 
+  -- theorem sieve_inf_sSup_distr (X : C) :
+  --   ∀ (a : Sieve X) (s : Set (Sieve X)), a ⊓ SupSet.sSup s ≤ ⨆ b ∈ s, a ⊓ b := by
+  --   intros a b X' f
+  --   simp
+  --   intros ha c hcb hc
+  --   simp [iSup]
+  --   exists c, (a ⊓ c)
+
+  theorem psh_inf_sSup_distr {X : Psh C} (a : X ⟶ prop) (b : I → (X ⟶ prop)) :
+    a ⊓ (⨆ i, b i) ≤ ⨆ i, a ⊓ b i := by
+    intros c x
+    simp [sSup]
+    simp [psh_inf_arrows' a, psh_iSup_arrows _ c x, sieve_inf_sSup_distr]
 
   theorem complete_lattice_to_prop_top (X:Psh C) : (@SubobjectClassifier.complete_lattice_to_prop C _ X).top =
    ChosenFiniteProducts.toUnit _ ≫ SubobjectClassifier.top := rfl
@@ -879,29 +905,48 @@ namespace BaseChange
     --   φ ≤ ψ → G ≫ φ ≤ G ≫ ψ := by
     --   apply SubobjectClassifier.le_precomp
 
-    theorem pb_prop_sup {X : Psh D} (P : Set (X ⟶ SubobjectClassifier.prop)) :
-      whiskerLeft F.op (sSup P) ≫ pb_prop F = sSup (map_pred F '' P) := by
-      ext c x
-      simp [pb_prop, sSup, SubobjectClassifier.sSup]
-      apply Sieve.ext
-      intros
-      simp ; constructor
-      · rintro ⟨φ, ⟨⟨f, ⟨_, eqφ⟩⟩, _⟩⟩
-        simp [Sieve.sup]
-        exists (whiskerLeft F.op f ≫ pb_prop F)
-        constructor
-        · exists f
-        · simp [pb_prop, eqφ]; assumption
-      · rintro ⟨φ, ⟨⟨f', ⟨⟨f,⟨_,_⟩⟩, eqφ⟩⟩, _⟩⟩
-        simp [Sieve.sup]
-        exists f
-        aesop
+    -- theorem pb_prop_sup {X : Psh D} (P : Set (X ⟶ SubobjectClassifier.prop)) :
+    --   whiskerLeft F.op (sSup P) ≫ pb_prop F = sSup (map_pred F '' P) := by
+    --   ext c x
+    --   simp [pb_prop, SubobjectClassifier.psh_sSup_arrows]
+    --   -- simp [SubobjectClassifier.sSup₀]
+    --   apply Sieve.ext
+    --   intros
+    --   simp ; constructor
+    --   · rintro ⟨φ, ⟨⟨f, ⟨_, eqφ⟩⟩, _⟩⟩
+    --     simp [Sieve.sup]
+    --     exists (whiskerLeft F.op f ≫ pb_prop F)
+    --     constructor
+    --     · exists f
+    --     · simp [pb_prop, eqφ]; assumption
+    --   · rintro ⟨φ, ⟨⟨f', ⟨⟨f,⟨_,_⟩⟩, eqφ⟩⟩, _⟩⟩
+    --     simp [Sieve.sup]
+    --     exists f
+    --     aesop
+
 
     open SubobjectClassifier in
     theorem pb_prop_iSup {X : Psh D} {I} (f : I -> (X ⟶ SubobjectClassifier.prop)) :
       map_pred F (⨆ i : I, f i) = ⨆ i : I, (map_pred F (f i)) := by
-        rw [map_pred, iSup, pb_prop_sup F (Set.range fun i ↦ f i),<-Set.range_comp]
-        rfl
+      ext c x
+      set d := Opposite.op (F.obj c.unop)
+      simp [SubobjectClassifier.psh_iSup_arrows _ _ x]
+      rw [SubobjectClassifier.psh_iSup_arrows f d x]
+      simp [pb_prop]
+      apply Sieve.ext ; intros c' g ; simp; constructor
+      · rintro ⟨i, ⟨⟨i0, hi⟩, hg⟩⟩
+        exists (Sieve.functorPullback F i) ; simp ; constructor <;> try assumption
+        exists i0 ; simp at hi ; rw [<-hi]
+      · rintro ⟨i, ⟨⟨i0, hi⟩, hg⟩⟩
+        simp [iSup]
+        simp at hi ; rw [<-hi] at hg
+        exists i0
+
+    -- open SubobjectClassifier in
+    -- theorem pb_prop_iSup {X : Psh D} {I} (f : I -> (X ⟶ SubobjectClassifier.prop)) :
+    --   map_pred F (⨆ i : I, f i) = ⨆ i : I, (map_pred F (f i)) := by
+    --     rw [map_pred, iSup, pb_prop_sup F (Set.range fun i ↦ f i),<-Set.range_comp]
+    --     rfl
   end SubobjectClassifier
 
 end BaseChange
