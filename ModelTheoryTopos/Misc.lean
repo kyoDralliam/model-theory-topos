@@ -1,5 +1,5 @@
 import Mathlib.Order.Hom.CompleteLattice
-import Mathlib.Order.GaloisConnection
+import Mathlib.Order.GaloisConnection.Defs
 
 
 namespace Fin

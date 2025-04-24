@@ -67,12 +67,12 @@ instance emb : RenCtx ⥤ Type where
 instance tm.substitution : RelativeMonad emb (tm m) where
   ret := fun n i => .var i
   bind := fun f t => t.subst f
-  lunit := by intros ; simp only; funext t ; induction t with
+  lunit := by intros ; funext t ; induction t with
     | var => rw [subst, types_id_apply]
     | op _ _ ih => simp only [subst, types_id_apply, op.injEq, heq_eq_eq, true_and] ; funext i ; rw [ih,
       types_id_apply]
   runit := by intros ; funext i ; simp only [CategoryStruct.comp, Function.comp_apply, subst]
-  assoc := by intros ; simp only; funext t ; induction t with
+  assoc := by intros ; funext t ; induction t with
     | var => simp only [subst, types_comp_apply]
     | op _ _ ih => simp only [subst, types_comp_apply, op.injEq, heq_eq_eq, true_and] ; funext i ; rw [ih,
       types_comp_apply]
@@ -173,7 +173,7 @@ def substn {m} {n n' : Subst m} (σ : n ⟶ n') : (n'+n) ⟶ n' :=
   Fin.casesAdd (tm.substitution.ret _) σ
 
 class ScopedSubstitution (T : Nat -> Type u) (F : Nat -> Type v) where
-  ssubst : forall {k n : Nat} (σ : Fin k → T n), F k -> F n
+  ssubst : forall {k n : Nat} (_σ : Fin k → T n), F k -> F n
 
 -- instance substGetElem (T : Nat -> Type u) (F : Nat -> Type v) [ScopedSubstitution T F] {k n : Nat} :
 --   GetElem (F k) ( Fin k → T n) (F n) (fun _ _ => True) where
