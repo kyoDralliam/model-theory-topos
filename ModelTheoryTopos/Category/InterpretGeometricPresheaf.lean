@@ -416,60 +416,60 @@ theorem soundness {T : theory} {n : RenCtx} (M:Mod T D) (φ ψ: fml T.sig n)
   (h:Hilbert.proof φ ψ): InterpPsh.Str.model M.str (sequent.mk _ φ ψ) := by
   induction h with
   | «axiom» hyp =>
-      simp only [Str.model, SubobjectClassifier.prop, ge_iff_le] at *
-      simp only [subst_interp_fml, SubobjectClassifier.prop]
-      exact SubobjectClassifier.le_precomp _ _ _ (M.valid _ hyp)
+      simp only [Str.model, prop, ge_iff_le] at *
+      simp only [subst_interp_fml, prop]
+      exact le_precomp _ _ _ (M.valid _ hyp)
   | cut phi2tau tau2psi Mphitau Mtaupsi =>
-    simp only [Str.model, SubobjectClassifier.prop] at *
-    apply SubobjectClassifier.complete_lattice_to_prop.le_trans <;> assumption
+    simp only [Str.model, prop] at *
+    apply complete_lattice_to_prop.le_trans <;> assumption
   | var =>
-    simp only [Str.model, SubobjectClassifier.prop]
+    simp only [Str.model, prop]
     apply complete_lattice_to_prop.le_refl
   | true_intro =>
-    simp only [Str.model, SubobjectClassifier.prop, Str.interp_fml]
+    simp only [Str.model, prop, Str.interp_fml]
     apply complete_lattice_to_prop.le_top
   | false_elim a a_ih =>
     rename_i n φ ψ
-    simp only [Str.model, SubobjectClassifier.prop, Str.interp_fml] at *
-    apply SubobjectClassifier.complete_lattice_to_prop.le_trans
+    simp only [Str.model, prop, Str.interp_fml] at *
+    apply complete_lattice_to_prop.le_trans
     assumption
-    simp only [SubobjectClassifier.prop, bot_le]
+    simp only [prop, bot_le]
   | conj_intro _ _ _ _ =>
     simp only[InterpPsh.Str.model] at *
     simp only[Str.interp_fml]
     apply SemilatticeInf.le_inf <;> assumption
   | conj_elim_l =>
-    simp only [Str.model, SubobjectClassifier.prop, Str.interp_fml]
-    apply SubobjectClassifier.complete_lattice_to_prop.inf_le_left
+    simp only [Str.model, prop, Str.interp_fml]
+    apply complete_lattice_to_prop.inf_le_left
   | conj_elim_r =>
-    simp only [Str.model, SubobjectClassifier.prop, Str.interp_fml]
-    apply SubobjectClassifier.complete_lattice_to_prop.inf_le_right
+    simp only [Str.model, prop, Str.interp_fml]
+    apply complete_lattice_to_prop.inf_le_right
   | disj_intro_l =>
-    simp only [Str.model, SubobjectClassifier.prop, Str.interp_fml]
-    apply SubobjectClassifier.complete_lattice_to_prop.le_sup_left
+    simp only [Str.model, prop, Str.interp_fml]
+    apply complete_lattice_to_prop.le_sup_left
   | disj_intro_r =>
-    simp only [Str.model, SubobjectClassifier.prop, Str.interp_fml]
-    apply SubobjectClassifier.complete_lattice_to_prop.le_sup_right
+    simp only [Str.model, prop, Str.interp_fml]
+    apply complete_lattice_to_prop.le_sup_right
   | @disj_elim n f1 f2 f3 f4 f1pf2orf3 f2cf1pf4 f3cf1pf4 h1 h2 h3 =>
-    simp only [Str.model, SubobjectClassifier.prop, Str.interp_fml] at *
+    simp only [Str.model, prop, Str.interp_fml] at *
     set a := M.str.interp_fml f1 with a_def
     set b := M.str.interp_fml f2 with b_def
     set c := M.str.interp_fml f3 with c_def
     set d := M.str.interp_fml f4 with d_def
     simp only[← a_def,← b_def,← c_def,← d_def] at *
-    apply CompleteLatticeLemma.disj_elim_helper (npow M.str.carrier n ⟶ SubobjectClassifier.prop) a b c d <;> try assumption
-    simp only[SubobjectClassifier.psh_distr]
+    apply CompleteLatticeLemma.disj_elim_helper (npow M.str.carrier n ⟶ prop) a b c d <;> try assumption
+    simp only[psh_distr]
   | infdisj_intro =>
-    simp only [Str.model, SubobjectClassifier.prop, Str.interp_fml]
-    apply SubobjectClassifier.complete_lattice_to_prop.le_sSup
+    simp only [Str.model, prop, Str.interp_fml]
+    apply complete_lattice_to_prop.le_sSup
     simp
   | infdisj_elim _ _ ih₁ ih₂ =>
-    simp only [Str.model, SubobjectClassifier.prop, Str.interp_fml] at *
-    apply CompleteLatticeLemma.inf_disj_elim_helper (α:= _ ⟶ SubobjectClassifier.prop) <;> try assumption
-    intros; apply SubobjectClassifier.psh_inf_sSup_distr
+    simp only [Str.model, prop, Str.interp_fml] at *
+    apply CompleteLatticeLemma.inf_disj_elim_helper (α:= _ ⟶ prop) <;> try assumption
+    intros; apply psh_inf_sSup_distr
   | eq_intro =>
-    simp only [Str.model, SubobjectClassifier.prop, interp_fml_eq_refl]
-    simp only [SubobjectClassifier.prop, Str.interp_fml]
+    simp only [Str.model, prop, interp_fml_eq_refl]
+    simp only [prop, Str.interp_fml]
     apply complete_lattice_to_prop.le_refl
   | eq_elim φ γ _ _ _ _ =>
     simp only[InterpPsh.Str.model] at *
@@ -481,50 +481,48 @@ theorem soundness {T : theory} {n : RenCtx} (M:Mod T D) (φ ψ: fml T.sig n)
     set d := M.str.interp_fml (fml.eq t1 t2) with d_def
     set e := M.str.interp_fml (γ⟪t2∷𝟙 _⟫) with e_def
     set f1 := M.str.interp_fml (φ⟪t2∷𝟙 _⟫) with f1_def
-    have := @SubobjectClassifier.Sieve_le_alt _ _ _ (a ⊓ e) f1
+    have := @Sieve_le_alt _ _ _ (a ⊓ e) f1
     simp only[this]
     intros d0 x0 cjae
-    have := @SubobjectClassifier.psh_inf_arrows' _ _ _ a e d0 x0
-    simp only [SubobjectClassifier.prop] at cjae
+    have := @psh_inf_arrows' _ _ _ a e d0 x0
     simp only[this] at cjae
     have := @inf_eq_top_iff _ _ _ a e
     simp only[inf_eq_top_iff] at cjae
     rcases cjae with ⟨ha, he⟩
-    have ad:= @SubobjectClassifier.Sieve_le_alt _ _ _ a d
-    simp only [SubobjectClassifier.prop, <-d_def, ad] at h1
+    have ad:= @Sieve_le_alt _ _ _ a d
+    simp only [prop, <-d_def, ad] at h1
     have hd := h1 _ _ ha
     have beqe : b.app d0 x0 = e.app d0 x0 := by
-      simp only [SubobjectClassifier.prop, b_def, e_def]
+      simp only [prop, b_def, e_def]
       apply interp_tm_eq_conseq_app
       simp only [d_def] at hd
       assumption
     have ceqf1 : c.app d0 x0 = f1.app d0 x0 := by
-      simp only [SubobjectClassifier.prop, c_def, f1_def]
+      simp only [prop, c_def, f1_def]
       apply interp_tm_eq_conseq_app
       simp only [d_def] at hd
       assumption
-    simp only [SubobjectClassifier.prop, ← ceqf1]
-    simp only [SubobjectClassifier.prop] at h2
-    have abc:= @SubobjectClassifier.Sieve_le_alt _ _ _ (a ⊓ b) c
+    simp only [prop, ← ceqf1]
+    have abc:= @Sieve_le_alt _ _ _ (a ⊓ b) c
     simp[Str.interp_fml, <-a_def, <-b_def, abc] at h2
     apply h2
-    have := @SubobjectClassifier.psh_inf_arrows' _ _ _ a b d0 x0
-    simp only [this, SubobjectClassifier.prop, beqe, inf_eq_top_iff]
+    have := @psh_inf_arrows' _ _ _ a b d0 x0
+    simp only [this, prop, beqe, inf_eq_top_iff]
     constructor
     · assumption
     · assumption
   | @existsQ_intro n t φ =>
-    simp only [Str.model, SubobjectClassifier.prop]
+    simp only [Str.model, prop]
     intros dop x l
-    simp only [SubobjectClassifier.prop, l]
+    simp only [prop, l]
     intros d' f h
-    simp only [Str.interp_fml, SubobjectClassifier.existπ,
-      SubobjectClassifier.existQ_app_arrows, snd_app, Opposite.op_unop,
-      SubobjectClassifier.prop]
+    simp only [Str.interp_fml, existπ,
+      existQ_app_arrows, snd_app, Opposite.op_unop,
+      prop]
     simp only[interp_subst_fst] at h
     simp only[CategoryTheory.Sieve.mem_iff_pullback_eq_top] at h
     simp only[← CategoryTheory.Sieve.id_mem_iff_eq_top] at h
-    simp only [← SubobjectClassifier.to_prop_naturality] at h
+    simp only [← to_prop_naturality] at h
     let a: (M.str.carrier ⊗ npow M.str.carrier n).obj (Opposite.op d') :=
       ((ChosenFiniteProducts.lift (M.str.interp_tm t) (𝟙 _)).app dop ≫ (npow M.str.carrier (n+1)).map (Opposite.op f)) x
     exists a
@@ -548,15 +546,15 @@ theorem soundness {T : theory} {n : RenCtx} (M:Mod T D) (φ ψ: fml T.sig n)
         have := (ChosenFiniteProducts.lift (M.str.interp_tm t) (𝟙 (npow M.str.carrier n))).naturality (Opposite.op f)
         simp only [npow,← this,Category.assoc]
         rfl
-      simp only [SubobjectClassifier.prop, hh] at h
+      simp only [prop, hh] at h
       assumption
   | @existsQ_elim m ψ0 ψ hp md =>
-    simp only [Str.model, fml.ren_to_subst, subst_interp_fml, SubobjectClassifier.prop, Str.interp_fml,
-      SubobjectClassifier.existπ] at *
-    have := @SubobjectClassifier.existQ_precomp_adj _ _ _ _ (snd M.str.carrier (npow M.str.carrier m))
+    simp only [Str.model, fml.ren_to_subst, subst_interp_fml, prop, Str.interp_fml,
+      existπ] at *
+    have := @existQ_precomp_adj _ _ _ _ (snd M.str.carrier (npow M.str.carrier m))
         (M.str.interp_fml ψ0) (M.str.interp_fml ψ)
     rw[this]
-    simp only [SubobjectClassifier.prop, SubobjectClassifier.precomp]
+    simp only [prop, SubobjectClassifier.precomp]
     have : snd M.str.carrier (npow M.str.carrier m) =
             npair (npow M.str.carrier (m + 1)) M.str.carrier m fun i ↦ M.str.interp_tm (tm.var i.succ) := by
             simp only [Str.interp_tm]
@@ -566,8 +564,8 @@ theorem soundness {T : theory} {n : RenCtx} (M:Mod T D) (φ ψ: fml T.sig n)
     simp only [this, ge_iff_le]
     assumption
   | ren _ _ =>
-    simp only [Str.model, SubobjectClassifier.prop, fml.ren_to_subst, subst_interp_fml] at *
-    apply SubobjectClassifier.le_precomp
+    simp only [Str.model, prop, fml.ren_to_subst, subst_interp_fml] at *
+    apply le_precomp
     assumption
 
 
