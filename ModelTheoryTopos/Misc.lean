@@ -1,6 +1,7 @@
 import Mathlib.Order.Hom.CompleteLattice
 import Mathlib.Order.GaloisConnection.Defs
 
+-- Collection of lemmas that should either be upstreamed in Mathlib or don't have a definite place in the repo
 
 namespace Fin
 /-- `castAdd' m i` embeds `i : Fin m` in `Fin (n+m)`. See also `Fin.natAdd` and `Fin.addNat`. -/
@@ -64,5 +65,35 @@ namespace CompleteLatticeLemma
       _ ≤ ⨆ i, (b i ⊓ a) := by simp [inf_comm]
       _ ≤ c := by simp [sSup_le, h₂]
 
+  theorem disj_elim_helper (A: Type) [Lattice A] (a b c d: A)
+    (h0:a ⊓ (b ⊔ c) = (a ⊓ b) ⊔ (a ⊓ c) ) (h1:a ≤ b ⊔ c) (h2: b ⊓ a ≤ d) (h3: c ⊓ a ≤ d):
+    a ≤ d := by
+    have p1: a ⊓ (b ⊔ c) = a := by
+      have := @le_inf_sup A
+      simp only [inf_eq_left, ge_iff_le]
+      assumption
+    have p6: a ⊓ (b⊔ c) ≤ d := by
+      simp only [h0, sup_le_iff]
+      exact ⟨by rw[inf_comm a b];assumption,by rw[inf_comm a c];assumption⟩
+    rw [p1] at p6
+    assumption
+
 
 end CompleteLatticeLemma
+
+
+
+theorem prod_ext (A B : Type) (a : A) (b : B) (x : A × B) :
+  x.1 = a -> x.2 = b -> x = (a,b) := by
+  intros eq1 eq2
+  cases x
+  simp only [Prod.mk.injEq,] at *
+  simp only [eq1, eq2, and_self]
+
+theorem prod_ext' (A B : Type) (x y: A × B) :
+  x.1 = y.1 -> x.2 = y.2 -> x = y := by
+  intros eq1 eq2
+  cases x
+  simp only at *
+  simp only [eq1, eq2, Prod.mk.eta]
+
