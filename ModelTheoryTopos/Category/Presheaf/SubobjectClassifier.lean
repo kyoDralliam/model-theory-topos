@@ -64,18 +64,13 @@ namespace SubobjectClassifier
         rw [<-Category.assoc] at this
         exact this
 
-  def top : 𝟙_ (Psh C) ⟶ prop where
+  abbrev top₀ : 𝟙_ (Psh C) ⟶ prop where
     app X := fun _ => (⊤ : Sieve X.unop)
     naturality X Y f := by
       funext
       simp only [prop, types_comp_apply, Sieve.pullback_top]
 
-  theorem top_app (c: Cᵒᵖ) (x: (𝟙_ (Psh C)).obj c) (c' : C) (f : c' ⟶ c.unop)
-    : (SubobjectClassifier.top.app c x).arrows f := by
-    simp only [prop, top, Sieve.top_apply]
-
-
-  def bot : 𝟙_ (Psh C) ⟶ prop where
+  abbrev bot₀ : 𝟙_ (Psh C) ⟶ prop where
     app X := fun _ => (⊥ : Sieve X.unop)
     naturality X Y f := by
       funext
@@ -143,7 +138,7 @@ namespace SubobjectClassifier
   noncomputable
   def existπ {A B : Psh C} (φ : A ⊗ B ⟶ prop) : B ⟶ prop := existQ (snd A B) φ
 
-  def sSup₀ {X : Psh C} (P : Set (X ⟶ prop)) : X ⟶ prop where
+  abbrev sSup₀ {X : Psh C} (P : Set (X ⟶ prop)) : X ⟶ prop where
     app Γ x := (⨆ p ∈ P, p.app Γ x : Sieve Γ.unop)
       -- let P' : Set (Sieve Γ.unop) := { (p.app Γ x : Sieve Γ.unop) | (p : X ⟶ prop) (_h : P p) }
       -- (SupSet.sSup P' : Sieve Γ.unop)
@@ -163,7 +158,7 @@ namespace SubobjectClassifier
         simp only [types_comp_apply, Sieve.pullback_apply]
         exact hf
 
-  def sInf₀ {X : Psh C} (P : Set (X ⟶ prop)) : X ⟶ prop where
+  abbrev sInf₀ {X : Psh C} (P : Set (X ⟶ prop)) : X ⟶ prop where
     app Γ x :=
       let P' : Set (Sieve Γ.unop) := { (p.app Γ x : Sieve Γ.unop) | (p : X ⟶ prop) (_h : P p) }
       (InfSet.sInf P' : Sieve Γ.unop)
@@ -184,13 +179,22 @@ namespace SubobjectClassifier
         simp only [types_comp_apply, Sieve.pullback_apply]
         exact hf _ hp
 
+  section
 
+  variable {X : Psh C}
 
-  noncomputable
-  instance complete_lattice_to_prop {X : Psh C} : CompleteLattice (X ⟶ prop) where
+  instance: LE (X ⟶ prop) where
     le f g := forall Γ (x : X.obj Γ),
       let lhs : Sieve Γ.unop := f.app Γ x
       lhs ≤ (g.app Γ x : Sieve Γ.unop)
+
+  instance: Top (X ⟶ prop) where
+    top := ChosenFiniteProducts.toUnit _ ≫ top₀
+
+  instance: Bot (X ⟶ prop) where
+    bot := ChosenFiniteProducts.toUnit _ ≫ bot₀
+
+  instance: PartialOrder (X ⟶ prop) where
     le_refl := by intros f Γ x ; apply le_refl
     le_trans := by
       intros f g h fg gh Γ x ;
@@ -199,59 +203,79 @@ namespace SubobjectClassifier
       · exact fg _ _
       · exact gh _ _
     le_antisymm := by
-      intros f g fg gf ; ext Γ x ; simp only [prop] ; apply le_antisymm <;> simp_all only [prop]
-    top := ChosenFiniteProducts.toUnit _ ≫ SubobjectClassifier.top
-    bot := ChosenFiniteProducts.toUnit _ ≫ SubobjectClassifier.bot
+      intros f g fg gf ; ext Γ x ; simp only [prop] ; apply le_antisymm <;> simp_all [LE.le, prop]
+
+  instance: SemilatticeSup (X ⟶ prop) where
     sup φ ψ := ChosenFiniteProducts.lift φ ψ ≫ disj
-    inf φ ψ := ChosenFiniteProducts.lift φ ψ ≫ conj
-    sSup := sSup₀
-    sInf := sInf₀
-    le_sup_left := by simp ; intros ; simp [disj]
-    le_sup_right := by simp ; intros ; simp [disj]
+    le_sup_left := by simp [LE.le]; intros ; simp [disj] ; left; assumption
+    le_sup_right := by simp [LE.le]; intros ; simp [disj] ; right; assumption
     sup_le := by
       intros _ _ _ h1 h2 c x
       simp only [prop, disj, FunctorToTypes.comp, ChosenFiniteProducts.lift_app_pt, sup_le_iff,
         h1 c x, h2 c x, and_self]
-    inf_le_left := by simp ; intros ; simp only [conj, prop, inf_le_left, implies_true]
-    inf_le_right := by simp ; intros ;  simp[conj]
+
+  set_option trace.profiler true in
+  instance: SemilatticeInf (X ⟶ prop) where
+    inf φ ψ := ChosenFiniteProducts.lift φ ψ ≫ conj
+    inf_le_left := by simp only [prop, LE.le, lift, conj, Functor.Monoidal.tensorObj_obj,
+      FunctorToTypes.comp, Sieve.inter_apply, and_imp] ; intros ; assumption
+    inf_le_right := by simp [LE.le, conj]
     le_inf := by
       intros _ _ _ h1 h2 c x
       simp[conj, h1 c x, h2 c x]
+
+  instance: SupSet (X ⟶ prop) where
+    sSup := sSup₀ -- Not sure whether this is good practice to have a name in the middle
+
+  instance: InfSet (X ⟶ prop) where
+    sInf := sInf₀
+
+  instance: CompleteSemilatticeSup (X ⟶ prop) where
     le_sSup := by
       intros s a h
-      simp only[sSup₀]
+      simp only[sSup]
       intros c x
       apply le_biSup (α:=Sieve c.unop) (fun p => p.app c x) h
     sSup_le := by
       intros s a h
-      simp only[sSup₀]
+      simp only[sSup]
       intros c x
       simp [iSup_le_iff]
       intros i hi
       apply (h i hi c x)
-      -- apply @sSup_le (Sieve (c.unop)) _ _ (a.app c x)
-      -- simp
-      -- intros ; apply h ; assumption
+
+  instance: CompleteSemilatticeInf (X ⟶ prop) where
+    le_sInf := by
+      intros s a h
+      simp only[sInf]
+      intros c x
+      apply @le_sInf (Sieve (c.unop)) _ _ (a.app c x)
+      simp; intros ; apply h ; assumption
     sInf_le := by
       intros s a h
-      simp[sInf₀]
       intros c x
       apply @sInf_le (Sieve (c.unop)) _ _ (a.app c x)
       simp
       exists a
-    le_sInf := by
-      intros s a h
-      simp only[sInf₀]
-      intros c x
-      apply @le_sInf (Sieve (c.unop)) _ _ (a.app c x)
-      simp; intros ; apply h ; assumption
-    le_top := by intros; simp[SubobjectClassifier.top]
-    bot_le := by simp; intros ; simp[SubobjectClassifier.bot]
+
+    set_option trace.profiler true in
+    noncomputable
+    instance complete_lattice_to_prop {X : Psh C} : CompleteLattice (X ⟶ prop) where
+      le_top := by simp only [prop, LE.le, Top.top, FunctorToTypes.comp]; intros; constructor
+      bot_le := by simp only [prop, LE.le, Bot.bot, FunctorToTypes.comp]; rintro x c xc c' f ⟨⟩
+  end
+
 
   --sup φ ψ := ChosenFiniteProducts.lift φ ψ ≫ disj
-  theorem psh_top {X: Psh C} :  ⊤ = ChosenFiniteProducts.toUnit X ≫ SubobjectClassifier.top  := rfl
+  theorem psh_top {X: Psh C} :  ⊤ = ChosenFiniteProducts.toUnit X ≫ top₀ := rfl
 
-  theorem psh_bot {X: Psh C} :  ⊥ = ChosenFiniteProducts.toUnit X ≫ SubobjectClassifier.bot  := rfl
+  theorem top_app {X : Psh C} (c: Cᵒᵖ) (x: X.obj c) (c' : C) (f : c' ⟶ c.unop)
+    : ((⊤ : X ⟶ prop).app c x).arrows f := by
+    simp only [Top.top, FunctorToTypes.comp, top₀]; constructor
+
+
+
+  theorem psh_bot {X: Psh C} :  ⊥ = ChosenFiniteProducts.toUnit X ≫ bot₀  := rfl
 
   theorem psh_sup {X: Psh C} (φ ψ: X ⟶ SubobjectClassifier.prop) : φ ⊔ ψ = ChosenFiniteProducts.lift φ ψ ≫ SubobjectClassifier.disj := rfl
 
@@ -283,19 +307,14 @@ namespace SubobjectClassifier
 
 
   theorem to_prop_top {X: Psh C} (f: X⟶ SubobjectClassifier.prop): f = ⊤ ↔
-   ∀(c: Cᵒᵖ ) (x: X.obj c),
-     let s : Sieve c.unop := f.app c x
-     s = ⊤ := by
+   ∀(c: Cᵒᵖ ) (x: X.obj c), f.app c x = (⊤ : Sieve c.unop) := by
      simp only[psh_top]
      constructor
      · intro h
        simp[h]
-       intros c x
-       simp[top]
      · intro h
        ext c x
-       simp[h]
-       rfl
+       simp[h, Top.top]
 
 
   theorem Sieve_eq {c: C} (s1 s2: Sieve c): s1 = s2 ↔ s1.arrows = s2.arrows := by
@@ -311,8 +330,7 @@ namespace SubobjectClassifier
     · intros a; funext; simp[a]
 
   theorem lift_eq_eq {X A : Psh C} (t1 t2:X ⟶ A) (c: Cᵒᵖ) (x: X.obj c):
-    let s: Sieve c.unop := (ChosenFiniteProducts.lift t1 t2 ≫ SubobjectClassifier.eq).app c x
-    s = ⊤ ↔ t1.app c x= t2.app c x := by
+    (lift t1 t2 ≫ eq).app c x = (⊤ : Sieve c.unop) ↔ t1.app c x= t2.app c x := by
      simp[psh_top,Sieve_eq',eq_app]
      constructor
      · intro h ; let h1:= h c.unop (𝟙 c.unop);simp at h1; assumption
@@ -327,7 +345,7 @@ namespace SubobjectClassifier
 
 
   theorem lift_eq_eq' {X A : Psh C} (t1 t2:X ⟶ A):
-    (ChosenFiniteProducts.lift t1 t2 ≫ SubobjectClassifier.eq) = ⊤ ↔ t1 = t2:= by
+    (lift t1 t2 ≫ eq) = ⊤ ↔ t1 = t2:= by
      simp only[to_prop_top]
      simp only[Psh_hom_eq]
      simp only[lift_eq_eq]
@@ -371,7 +389,7 @@ namespace SubobjectClassifier
     simp [psh_inf_arrows' a, psh_iSup_arrows _ c x, sieve_inf_sSup_distr]
 
   theorem complete_lattice_to_prop_top (X:Psh C) : (@SubobjectClassifier.complete_lattice_to_prop C _ X).top =
-   ChosenFiniteProducts.toUnit _ ≫ SubobjectClassifier.top := rfl
+   ChosenFiniteProducts.toUnit _ ≫ top₀ := rfl
 
   theorem complete_lattice_to_prop_inf (X:Psh C) (φ ψ: X ⟶ prop): (@SubobjectClassifier.complete_lattice_to_prop C _ X).inf φ ψ  =
    ChosenFiniteProducts.lift φ ψ ≫ conj := rfl
@@ -476,11 +494,11 @@ namespace SubobjectClassifier
           apply GaloisConnection.monotone_u (existQ_precomp_adj _)
           apply GaloisConnection.le_u_l (existQ_precomp_adj _)
       _ ≤ existQ m (precomp (g' ≫ k) (existQ k φ)) := by
-       simp[precomp]
+        apply le_refl
       _ ≤ existQ m (precomp (m ≫ g) (existQ k φ)) := by
-       simp[h]
+        rw [h]
       _ ≤ existQ m (precomp m (precomp g (existQ k φ))) := by
-       simp[precomp]
+        apply le_refl
       _ ≤ precomp g (existQ k φ) := by
         apply GaloisConnection.l_u_le (existQ_precomp_adj _)
 
@@ -605,12 +623,8 @@ namespace SubobjectClassifier
                           apply map_iSup (precomp_sSupHom p) f
                     _  = ⨆ i, p ≫ f i  := by rfl
 
-  theorem lift_same_eq (X Y: Psh C) (f: X ⟶ Y): ChosenFiniteProducts.lift f f ≫ SubobjectClassifier.eq = ⊤ := by
-    ext dop a
-    simp only[SubobjectClassifier.complete_lattice_to_prop]
-    simp only [SubobjectClassifier.prop, FunctorToTypes.comp, ChosenFiniteProducts.lift_app_pt]
-    ext d' g
-    simp only [SubobjectClassifier.top_app, iff_true,SubobjectClassifier.eq, SubobjectClassifier.prop, Opposite.op_unop]
+  theorem lift_same_eq (X Y: Psh C) (f: X ⟶ Y): lift f f ≫ eq = ⊤ := by
+    rw [lift_eq_eq']
 
 
 end SubobjectClassifier

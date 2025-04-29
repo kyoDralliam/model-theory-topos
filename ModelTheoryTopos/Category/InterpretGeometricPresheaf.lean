@@ -411,7 +411,7 @@ theorem interp_tm_eq_conseq_app (L: Str msig D) (t1 t2 : tm msig n) ( γ: (Fml m
   rw [h]
 
 
-
+open SubobjectClassifier in
 theorem soundness {T : theory} {n : RenCtx} (M:Mod T D) (φ ψ: fml T.sig n)
   (h:Hilbert.proof φ ψ): InterpPsh.Str.model M.str (sequent.mk _ φ ψ) := by
   induction h with
@@ -423,9 +423,11 @@ theorem soundness {T : theory} {n : RenCtx} (M:Mod T D) (φ ψ: fml T.sig n)
     simp only [Str.model, SubobjectClassifier.prop] at *
     apply SubobjectClassifier.complete_lattice_to_prop.le_trans <;> assumption
   | var =>
-    simp only [Str.model, SubobjectClassifier.prop, le_refl]
+    simp only [Str.model, SubobjectClassifier.prop]
+    apply complete_lattice_to_prop.le_refl
   | true_intro =>
-    simp only [Str.model, SubobjectClassifier.prop, Str.interp_fml, le_top]
+    simp only [Str.model, SubobjectClassifier.prop, Str.interp_fml]
+    apply complete_lattice_to_prop.le_top
   | false_elim a a_ih =>
     rename_i n φ ψ
     simp only [Str.model, SubobjectClassifier.prop, Str.interp_fml] at *
@@ -467,7 +469,8 @@ theorem soundness {T : theory} {n : RenCtx} (M:Mod T D) (φ ψ: fml T.sig n)
     intros; apply SubobjectClassifier.psh_inf_sSup_distr
   | eq_intro =>
     simp only [Str.model, SubobjectClassifier.prop, interp_fml_eq_refl]
-    simp only [SubobjectClassifier.prop, Str.interp_fml, le_refl]
+    simp only [SubobjectClassifier.prop, Str.interp_fml]
+    apply complete_lattice_to_prop.le_refl
   | eq_elim φ γ _ _ _ _ =>
     simp only[InterpPsh.Str.model] at *
     rename_i n f t1 t2 p1 p2 h1 h2
