@@ -143,8 +143,8 @@ namespace BaseChange
 variable {D : Type} [Category D] (F : Functor C D) [SmallUniverse] (T : theory)
 
 
-open BaseChange.SubobjectClassifier
-open BaseChange.ChosenFiniteProducts
+open SubobjectClassifier.BaseChange
+open ChosenFiniteProducts.BaseChange
 
 noncomputable
 def pb_obj (L : Str T.sig D) : Str T.sig C where
