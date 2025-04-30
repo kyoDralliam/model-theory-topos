@@ -527,34 +527,18 @@ theorem soundness {T : theory} {n : RenCtx} (M:Mod T D) (φ ψ: fml T.sig n)
       existQ_app_arrows, snd_app, Opposite.op_unop]
     let opd' := Opposite.op d'
     let opf := Opposite.op f
-    let a: (npow M.str.carrier (n+1)).obj opd' :=
-      ((lift (M.str.interp_tm t) (𝟙 _)).app dop ≫ (npow M.str.carrier (n+1)).map opf) x
+    let x' := (npow M.str.carrier n).map opf x
+    let a := (lift (M.str.interp_tm t) (𝟙 _)).app opd' x'
     exists a ; constructor
     · simp only [types_comp_apply, lift_app_pt, NatTrans.id_app, types_id_apply,
       npow_suc_map_snd, a] ; rfl
     · simp only[interp_subst_fst] at h
+      simp only [a]
       simp only[CategoryTheory.Sieve.mem_iff_pullback_eq_top] at h
       simp only[← CategoryTheory.Sieve.id_mem_iff_eq_top] at h
       simp only [← to_prop_naturality] at h
-      have hh :
-        (lift (M.str.interp_tm t) (𝟙 (npow M.str.carrier n)) ≫ M.str.interp_fml φ).app opd' ((npow M.str.carrier n).map opf x)
-        = ((M.str.interp_fml φ).app opd' a) := by
-        simp only[a]
-        sorry
-        -- have := types_comp_apply
-        --       ((npow M.str.carrier n).map opf)
-        --       ((lift (M.str.interp_tm t) (𝟙 (npow M.str.carrier n)) ≫ M.str.interp_fml φ).app opd')
-        -- simp only[← this]
-        -- have := types_comp_apply
-        --       (((lift (M.str.interp_tm t) (𝟙 (npow M.str.carrier n))).app dop ≫ (npow M.str.carrier (n + 1)).map opf))
-        --       ((M.str.interp_fml φ).app opd')
-        -- simp only[← this]
-        -- have := (lift (M.str.interp_tm t) (𝟙 (npow M.str.carrier n))).naturality opf
-        -- simp only [NatTrans.comp_app] at this
-        -- simp only [← this,Category.assoc]
-        -- rfl
-      simp only [opd', <-hh]
-      assumption
+      simp only [NatTrans.comp_app] at h
+      apply h
   | @existsQ_elim m ψ0 ψ hp md =>
     simp only [Str.model, fml.ren_to_subst, subst_interp_fml, Str.interp_fml,
       existπ] at *
