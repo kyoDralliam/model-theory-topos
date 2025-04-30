@@ -144,8 +144,9 @@ theorem proof.eqs_iff  {T: theory} {k : ℕ} {n : RenCtx} (φ: fml T.sig n) (ts1
   (∀ (i: Fin k), Hilbert.proof φ (fml.eq  (ts1 i) (ts2 i))) :=
   ⟨proof.eqs' _ ts1 ts2, proof.eqs _ _ _⟩
 
-theorem any_eq_intro {T: theory} {n : RenCtx} (φ: fml T.sig n) (t: tm T.sig n):
-  Hilbert.proof φ (.eq t t) := by
+theorem any_eq_intro {T: theory} {n : RenCtx} (φ: fml T.sig n) (t u: tm T.sig n):
+  t = u → Hilbert.proof φ (.eq t u) := by
+  intro h ; rw [h]
   apply @Hilbert.proof.cut _ _ _ _ .true
   · apply Hilbert.proof.true_intro
   · apply Hilbert.proof.eq_intro

@@ -9,19 +9,13 @@ class SmallUniverse where
   U : Type
   El : U -> Type
 
--- instance natSU : SmallUniverse where
---   U := Unit
---   El _ := Nat
-
 inductive fml [SmallUniverse] (m : monosig) : RenCtx -> Type where
---inductive fml.{u} (m : monosig) : RenCtx -> Type (u+1) where
   | pred : (p : m.preds) -> (Fin (m.arity_preds p) -> tm m n) -> fml m n
   | true : fml m n
   | false : fml m n
   | conj : fml m n -> fml m n -> fml m n
   | disj : fml m n -> fml m n -> fml m n
   | infdisj : (a : SmallUniverse.U) -> (SmallUniverse.El a -> fml m n) -> fml m n
---  | infdisj : (A : Type u) -> (A -> fml m n) -> fml m n
   | eq : tm m n -> tm m n -> fml m n
   | existsQ : fml m (n + 1) -> fml m n
 
@@ -52,7 +46,6 @@ def ren {n n' : RenCtx} (f : n ⟶ n') : fml m n -> fml m n'
 | .conj φ ψ => .conj (φ.ren f) (ψ.ren f)
 | .disj φ ψ => .disj (φ.ren f) (ψ.ren f)
 | .infdisj a φ => .infdisj a (fun i => (φ i).ren f)
--- | .infdisj A φ => .infdisj A (fun a => (φ a).ren f)
 | .eq t u => .eq (t.ren f) (u.ren f)
 | .existsQ φ => .existsQ (φ.ren (lift₁ f))
 
@@ -63,7 +56,6 @@ def subst {n n' : Subst m} (f : n ⟶ n') : fml m n → fml m n'
 | .conj φ ψ => .conj (φ.subst f) (ψ.subst f)
 | .disj φ ψ => .disj (φ.subst f) (ψ.subst f)
 | .infdisj a φ => .infdisj a (fun i => (φ i).subst f)
--- | .infdisj A φ => .infdisj A (fun a => (φ a).subst f)
 | .eq t u => .eq (t.subst f) (u.subst f)
 | .existsQ φ => .existsQ (φ.subst (lift_subst f))
 

@@ -1,8 +1,100 @@
 
 import ModelTheoryTopos.Syntax.GeometricLogic.Defs
 import ModelTheoryTopos.Syntax.GeometricLogic.Hilbert
+import Mathlib.CategoryTheory.Sites.Sieves
+import Mathlib.CategoryTheory.Sites.Grothendieck
 
 open CategoryTheory
+
+-- TODO : move to the appropriate place once fully finished
+class SmallUniverse.UniverseClosureProps [SmallUniverse] where
+  uUnit : U
+  utt : El uUnit
+
+namespace Joshua
+  variable [SmallUniverse]
+
+  structure fmlInCtx (m : theory) where
+    ctx : RenCtx
+    formula : fml m.sig ctx
+
+  structure fmlMap (xφ yψ : fmlInCtx m) where
+    map : yψ.ctx ⟶ xφ.ctx
+    preserves_formula : xφ.formula ⊢ yψ.formula.ren map
+
+  def idMap (xφ : fmlInCtx m) : fmlMap xφ xφ where
+    map := 𝟙 xφ.ctx
+    preserves_formula := by
+      simp [fml.ren_id]
+      apply Hilbert.proof.var
+
+  def compMap {xφ yψ zξ : fmlInCtx m}  (g : fmlMap xφ yψ) (f : fmlMap yψ zξ)
+    : fmlMap xφ zξ where
+    map := f.map ≫ g.map
+    preserves_formula := by
+      simp [fml.ren_comp]
+      apply Hilbert.proof.cut g.preserves_formula f.preserves_formula.ren
+
+  instance : Category (fmlInCtx m) where
+    Hom := fmlMap
+    id := idMap
+    comp := compMap
+
+  def cover_from_over (xφ : fmlInCtx m) (σ : Over xφ) : fml m.sig xφ.ctx :=
+    let yψ := σ.left
+    let r : Fin xφ.ctx → Fin yψ.ctx := σ.hom.map
+    let yψr : fml m.sig (xφ.ctx + yψ.ctx) := yψ.formula.ren (Fin.natAdd xφ.ctx)
+    let represent_renaming : fml m.sig (xφ.ctx + yψ.ctx) :=
+      .eqs (k:=xφ.ctx)
+        (fun i => .var (i.castAdd yψ.ctx)) -- x_i
+        (fun i => .var ((r i).natAdd xφ.ctx)) -- σ(x_i)
+    .existsn (n':=yψ.ctx) (.conj yψr represent_renaming)
+
+  open SmallUniverse
+
+  structure CoveringFamily (xφ : fmlInCtx m) where
+    index : U
+    maps : El index -> Over xφ
+    covering : xφ.formula ⊢ fml.infdisj index (fun i => cover_from_over xφ (maps i))
+
+  def covering_family_to_presieve {xφ : fmlInCtx m} (σs : CoveringFamily xφ)
+    : Presieve xφ :=
+    fun _yψ f => ∃ (i : El σs.index), σs.maps i = Over.mk f
+
+
+
+
+  variable [UniverseClosureProps]
+  open UniverseClosureProps
+
+  def id_covers (xφ : fmlInCtx m) : CoveringFamily xφ where
+    index := uUnit
+    maps := fun _ => Over.mk (𝟙 xφ)
+    covering := by
+      apply Hilbert.proof.cut (τ:=cover_from_over xφ (Over.mk (𝟙 xφ)))
+      · simp [cover_from_over, fml.ren]
+        apply Hilbert.proof.existn_intro (𝟙 _)
+        apply Hilbert.proof.conj_intro
+        · sorry
+        · simp [fml.subst_eqs, tm.subst]
+          apply Hilbert.proof.eqs
+          intro i
+          apply Hilbert.any_eq_intro
+          sorry
+      · apply Hilbert.proof.infdisj_intro (φ:=fun _ => _) utt
+
+
+  instance : GrothendieckTopology (fmlInCtx m) where
+    sieves xφ S := ∃ σ : CoveringFamily xφ, covering_family_to_presieve σ ≤ S
+    top_mem' := by
+      intro xφ
+      exists (id_covers xφ)
+      intros yψ f h
+      constructor
+    pullback_stable' := sorry
+    transitive' := sorry
+
+end Joshua
 
 namespace SyntacticSite
 
