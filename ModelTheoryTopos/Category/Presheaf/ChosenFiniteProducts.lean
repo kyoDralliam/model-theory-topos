@@ -22,16 +22,12 @@ open CategoryTheory MonoidalCategory ChosenFiniteProducts
 namespace ChosenFiniteProducts
   variable {C : Type} [Category C]
 
-  noncomputable
   def npow_pt (X : Psh C) (n : Nat) d : (npow X n).obj d ⟶ npow (X.obj d) n :=
     npair _ _ n (fun i => (nproj X n i).app d)
 
-
   theorem npow_pt_succ : npow_pt X (n+1) d = lift (fst _ _) (snd _ _ ≫ npow_pt (C:=C) X n d) := by
-    simp only [npow_pt, npair, Fin.coe_eq_castSucc, Fin.coeSucc_eq_succ]; apply hom_ext <;> simp only [nproj,
-      Nat.succ_eq_add_one, Fin.succRecOn_zero, Fin.succRecOn_succ, NatTrans.comp_app, lift_fst]
-    · rfl
-    · simp only [npair_natural, lift_snd] ;rfl
+    simp [npow_pt, npair_succ, nproj_zero, nproj_succ, NatTrans.comp_app, lift_fst, npair_natural]
+    congr
 
   theorem npow_pt_iso X n d : IsIso (npow_pt (C:=C) X n d) := by
     induction n with
@@ -39,8 +35,11 @@ namespace ChosenFiniteProducts
       | succ n ih =>
         exists (𝟙 (X.obj d) ⊗ inv (npow_pt X n d)) ; constructor
         · rw [npow_pt_succ, lift_map] ; apply hom_ext <;> simp <;> rfl
-        · simp only [npow, id_tensorHom, npow_pt_succ, comp_lift, whiskerLeft_fst,
-          whiskerLeft_snd_assoc, IsIso.inv_hom_id, Category.comp_id, lift_fst_snd]
+        · simp [npow_pt_succ, comp_lift] ; apply hom_ext
+          · simp
+            apply whiskerLeft_fst
+          · have:= whiskerLeft_snd_assoc (C:=Type) (X.obj d) (inv (npow_pt X n d)) (npow_pt X n d)
+            simp [this, IsIso.inv_hom_id]
 
   theorem bin_prod_pointwise (X Y : Psh C) c : (X ⊗ Y).obj c = X.obj c ⊗ Y.obj c := rfl
 
@@ -134,13 +133,13 @@ namespace ChosenFiniteProducts.BaseChange
 
     theorem pb_prod_succ (X : Psh D) (m : Nat) :
       pb_prod F X (m + 1) = pb_prod_pair F X _ ≫ (_ ◁ pb_prod F X m) := by
-      simp [pb_prod, npair]
+      simp [pb_prod, npair_succ]
       congr
       simp [<-npair_natural]
       congr
 
     theorem pb_prod_succ' (X : Psh D) (m : Nat) :
-      (pb_prod_pair_iso F X _).inv ≫ pb_prod F X (m + 1) = (_ ◁ pb_prod F X m) := by
+      (pb_prod_pair_iso F X (npow X m)).inv ≫ pb_prod F X (m + 1) = ((F.op ⋙ X) ◁ pb_prod F X m) := by
         rw [Iso.inv_comp_eq]
         apply pb_prod_succ
 

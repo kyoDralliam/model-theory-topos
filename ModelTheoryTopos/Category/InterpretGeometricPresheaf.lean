@@ -66,7 +66,11 @@ theorem interp_ren_succ (L: Str S C) (m : Subst S) (t: tm S m):
   simp only [tm.ren_to_subst, subst_interp_tm]
   congr 1
   apply npair_univ'
-  simp only [Str.interp_subst, npow, Str.interp_tm, Function.comp, nproj_succ, npair_nproj, implies_true]
+  intros i
+  simp [Str.interp_subst, Str.interp_tm, nproj_succ]
+  symm
+  apply npair_nproj
+
 
 theorem interp_lift_subst (L: Str S C) {m n: Subst S} (σ : m ⟶ n) :
   L.interp_subst (lift_subst σ) = 𝟙 _ ⊗ L.interp_subst σ := by
@@ -75,7 +79,9 @@ theorem interp_lift_subst (L: Str S C) {m n: Subst S} (σ : m ⟶ n) :
   intro i
   simp only [npair_nproj]
   induction i using Fin.cases
-  · simp only [lift_subst, Fin.cases_zero,Str.interp_tm, nproj, Fin.succRecOn_zero, whiskerLeft_fst]
+  · simp only [lift_subst, Fin.cases_zero,Str.interp_tm, nproj_zero, Fin.succRecOn_zero]
+    symm
+    apply whiskerLeft_fst
   · simp only [lift_subst, Fin.cases_succ, Function.comp_apply, ← interp_ren_succ, nproj_succ,
     whiskerLeft_snd_assoc, npair_nproj]
 
@@ -254,6 +260,7 @@ theorem pb_prop_interp_fml {n : Nat} (L : Str T.sig D) (φ : fml T.sig n) :
     | eq t1 t2 =>
       simp only [Str.interp_fml, map_pred_comp, pb_prop_eq, whiskerLeft_lift, pb_prop_interp_tm, ← comp_lift, Category.assoc]
     | existsQ f ih =>
+      rename_i k
       simp only [Str.interp_fml, pb_prop_existπ, ih, <-Category.assoc, pb_prod_hom, pb_prod_succ']
       rw [<-pb_prod_hom, SubobjectClassifier.precomp_existsπ_iso]
       rfl
@@ -357,7 +364,7 @@ theorem subst_interp_fml (L: Str S C) (n : RenCtx) (m : Subst S) (σ : Fin n →
       · simp only [ih, SubobjectClassifier.prop, FunctorToTypes.comp]
         have liftsubstρ'' : (L.interp_subst (lift_subst σ)).app _  ρ'' = ρ' := by
           apply prod_ext
-          · simp only [Str.interp_subst, lift_subst, Fin.cases_zero, npair_app_pt, Str.interp_tm, nproj,
+          · simp only [Str.interp_subst, lift_subst, Fin.cases_zero, npair_app_pt, Str.interp_tm, nproj_zero,
             Fin.succRecOn_zero, fst_app, ρ'']
           · simp only [Str.interp_lift_subst_snd, ρ'']
             have opeq: (Opposite.op f1) = f1.op := rfl
@@ -512,49 +519,49 @@ theorem soundness {T : theory} {n : RenCtx} (M:Mod T D) (φ ψ: fml T.sig n)
     · assumption
     · assumption
   | @existsQ_intro n t φ =>
-    simp only [Str.model, prop]
+    simp only [Str.model]
     intros dop x l
-    simp only [prop, l]
+    simp only [l]
     intros d' f h
     simp only [Str.interp_fml, existπ,
-      existQ_app_arrows, snd_app, Opposite.op_unop,
-      prop]
-    simp only[interp_subst_fst] at h
-    simp only[CategoryTheory.Sieve.mem_iff_pullback_eq_top] at h
-    simp only[← CategoryTheory.Sieve.id_mem_iff_eq_top] at h
-    simp only [← to_prop_naturality] at h
-    let a: (M.str.carrier ⊗ npow M.str.carrier n).obj (Opposite.op d') :=
-      ((ChosenFiniteProducts.lift (M.str.interp_tm t) (𝟙 _)).app dop ≫ (npow M.str.carrier (n+1)).map (Opposite.op f)) x
-    exists a
-    constructor
+      existQ_app_arrows, snd_app, Opposite.op_unop]
+    let opd' := Opposite.op d'
+    let opf := Opposite.op f
+    let a: (npow M.str.carrier (n+1)).obj opd' :=
+      ((lift (M.str.interp_tm t) (𝟙 _)).app dop ≫ (npow M.str.carrier (n+1)).map opf) x
+    exists a ; constructor
     · simp only [types_comp_apply, lift_app_pt, NatTrans.id_app, types_id_apply,
       npow_suc_map_snd, a] ; rfl
-      --snd_app_npow?
-    · have hh :((ChosenFiniteProducts.lift (M.str.interp_tm t) (𝟙 (npow M.str.carrier n)) ≫ M.str.interp_fml φ).app (Opposite.op d')
-  ((npow M.str.carrier n).map (Opposite.op f) x)) =
-      ((M.str.interp_fml φ).app (Opposite.op d') a) := by
+    · simp only[interp_subst_fst] at h
+      simp only[CategoryTheory.Sieve.mem_iff_pullback_eq_top] at h
+      simp only[← CategoryTheory.Sieve.id_mem_iff_eq_top] at h
+      simp only [← to_prop_naturality] at h
+      have hh :
+        (lift (M.str.interp_tm t) (𝟙 (npow M.str.carrier n)) ≫ M.str.interp_fml φ).app opd' ((npow M.str.carrier n).map opf x)
+        = ((M.str.interp_fml φ).app opd' a) := by
         simp only[a]
-        have := @types_comp_apply _ _ _
-              ((npow M.str.carrier n).map (Opposite.op f))
-              ((ChosenFiniteProducts.lift (M.str.interp_tm t) (𝟙 (npow M.str.carrier n)) ≫ M.str.interp_fml φ).app (Opposite.op d'))
-        simp only[← this]
-        have := @types_comp_apply _ _ _
-              (((ChosenFiniteProducts.lift (M.str.interp_tm t) (𝟙 (npow M.str.carrier n))).app dop ≫
-    (npow M.str.carrier (n + 1)).map (Opposite.op f)))
-                ((M.str.interp_fml φ).app (Opposite.op d'))
-        simp only[← this]
-        have := (ChosenFiniteProducts.lift (M.str.interp_tm t) (𝟙 (npow M.str.carrier n))).naturality (Opposite.op f)
-        simp only [npow,← this,Category.assoc]
-        rfl
-      simp only [prop, hh] at h
+        sorry
+        -- have := types_comp_apply
+        --       ((npow M.str.carrier n).map opf)
+        --       ((lift (M.str.interp_tm t) (𝟙 (npow M.str.carrier n)) ≫ M.str.interp_fml φ).app opd')
+        -- simp only[← this]
+        -- have := types_comp_apply
+        --       (((lift (M.str.interp_tm t) (𝟙 (npow M.str.carrier n))).app dop ≫ (npow M.str.carrier (n + 1)).map opf))
+        --       ((M.str.interp_fml φ).app opd')
+        -- simp only[← this]
+        -- have := (lift (M.str.interp_tm t) (𝟙 (npow M.str.carrier n))).naturality opf
+        -- simp only [NatTrans.comp_app] at this
+        -- simp only [← this,Category.assoc]
+        -- rfl
+      simp only [opd', <-hh]
       assumption
   | @existsQ_elim m ψ0 ψ hp md =>
-    simp only [Str.model, fml.ren_to_subst, subst_interp_fml, prop, Str.interp_fml,
+    simp only [Str.model, fml.ren_to_subst, subst_interp_fml, Str.interp_fml,
       existπ] at *
     have := @existQ_precomp_adj _ _ _ _ (snd M.str.carrier (npow M.str.carrier m))
         (M.str.interp_fml ψ0) (M.str.interp_fml ψ)
     rw[this]
-    simp only [prop, SubobjectClassifier.precomp]
+    simp only [SubobjectClassifier.precomp]
     have : snd M.str.carrier (npow M.str.carrier m) =
             npair (npow M.str.carrier (m + 1)) M.str.carrier m fun i ↦ M.str.interp_tm (tm.var i.succ) := by
             simp only [Str.interp_tm]
@@ -564,7 +571,7 @@ theorem soundness {T : theory} {n : RenCtx} (M:Mod T D) (φ ψ: fml T.sig n)
     simp only [this, ge_iff_le]
     assumption
   | ren _ _ =>
-    simp only [Str.model, prop, fml.ren_to_subst, subst_interp_fml] at *
+    simp only [Str.model, fml.ren_to_subst, subst_interp_fml] at *
     apply le_precomp
     assumption
 
