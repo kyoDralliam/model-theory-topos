@@ -11,6 +11,17 @@ class SmallUniverse.UniverseClosureProps [SmallUniverse] where
   uUnit : U
   utt : El uUnit
 
+namespace R
+abbrev in10 (i : Fin n) : Fin (n + k) := i.addNat k
+abbrev in01 (i : Fin n) : Fin (k + n) := i.castAdd' k
+abbrev in101 : Fin (n + k) -> Fin (n + k + k) :=
+  Fin.casesAdd (in10 ∘ in10) in01
+abbrev in110 : Fin (n + k) -> Fin (n + k + k) := in10
+abbrev in001 : Fin k -> Fin (n + k + k) := in01
+abbrev in010 : Fin k -> Fin (n + k + k) := in10 ∘ in01
+abbrev in100 : Fin n -> Fin (n + k + k) := in10 ∘ in10
+end R
+
 namespace Joshua
   variable [SmallUniverse]
 
@@ -43,12 +54,32 @@ namespace Joshua
   def cover_from_over (xφ : fmlInCtx m) (σ : Over xφ) : fml m.sig xφ.ctx :=
     let yψ := σ.left
     let r : Fin xφ.ctx → Fin yψ.ctx := σ.hom.map
-    let yψr : fml m.sig (xφ.ctx + yψ.ctx) := yψ.formula.ren (Fin.natAdd xφ.ctx)
+    let yψr : fml m.sig (xφ.ctx + yψ.ctx) := yψ.formula.ren R.in01
     let represent_renaming : fml m.sig (xφ.ctx + yψ.ctx) :=
       .eqs (k:=xφ.ctx)
-        (fun i => .var (i.castAdd yψ.ctx)) -- x_i
-        (fun i => .var ((r i).natAdd xφ.ctx)) -- σ(x_i)
+        (fun i => .var (R.in10 i)) -- x_i
+        (fun i => .var (R.in01 (r i))) -- σ(x_i)
     .existsn (n':=yψ.ctx) (.conj yψr represent_renaming)
+
+  -- given a map f : {x | φ} → {y | ψ}, "pulls back" a map over {y | ψ} to a map over {x | φ}
+  -- Beware, it does not correspond to the pullback in the underlying category fmlInCtx; need to uncomment the var_eqs to get the pullback
+  def pb_over (xφ yψ : fmlInCtx m) (f : xφ ⟶ yψ) (σ : Over yψ) : Over xφ :=
+    let zξ := σ.left
+    let φ' := xφ.formula.ren R.in10
+    let ξ' := zξ.formula.ren R.in01
+    -- let r : Fin yψ.ctx → Fin zξ.ctx := σ.hom.map
+    -- let var_eqs := fml.eqs (k:=yψ.ctx) (fun i => .var (R.in10 (f.map i))) (fun i => .var (R.in01 (r i)))
+    let xzφξ : fmlInCtx m := {
+        ctx := xφ.ctx + zξ.ctx
+        formula := (φ'.conj ξ') --.conj var_eqs
+      }
+    let f : xzφξ ⟶ xφ := {
+      map := R.in10
+      preserves_formula := by
+        simp [xzφξ]
+        apply Hilbert.proof.conj_elim_l
+    }
+    Over.mk f
 
   open SmallUniverse
 
@@ -98,18 +129,7 @@ end Joshua
 
 namespace SyntacticSite
 
-namespace R
-abbrev in10 (i : Fin n) : Fin (n + k) := i.addNat k
-abbrev in01 (i : Fin n) : Fin (k + n) := i.castAdd' k
-abbrev in101 : Fin (n + k) -> Fin (n + k + k) :=
-  Fin.casesAdd (in10 ∘ in10) in01
-abbrev in110 : Fin (n + k) -> Fin (n + k + k) := in10
-abbrev in001 : Fin k -> Fin (n + k + k) := in01
-abbrev in010 : Fin k -> Fin (n + k + k) := in10 ∘ in01
-abbrev in100 : Fin n -> Fin (n + k + k) := in10 ∘ in10
-end R
 #check substn
-
 
 
 --theorem in10_substn (φ: fml m k): fml.ren (@R.in01 n k) φ  =  fml.subst (substn (@R.in01 n k)) φ := sorry
