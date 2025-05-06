@@ -175,6 +175,14 @@ namespace ChosenFiniteProducts.BaseChange
       ext c a
       simp[npair_nproj,pb_prod]
 
+    theorem npair_pb_prod (X Y: Psh D) (n: ℕ) (cone : Fin n → (X ⟶ Y)) :
+      npair (F.op⋙ X) (F.op⋙ Y) n (fun i => whiskerLeft F.op (cone i))  =
+      whiskerLeft F.op (npair X Y n cone) ≫ (pb_prod_iso F Y n).hom := by
+      apply npair_univ
+      intros
+      simp[pb_prod_hom, nproj_pb_prod]
+      simp[← CategoryTheory.whiskerLeft_comp]
+
 
     instance nlift_whisker0 (L₁ L₂ : Psh D)  (n : Nat) (k : Fin n → (L₁ ⟶ L₂)):
       CategoryTheory.whiskerLeft F.op (nlift L₁ L₂ n k) ≫ (pb_prod_iso F L₂ n).hom =
@@ -197,17 +205,6 @@ namespace ChosenFiniteProducts.BaseChange
       nlift_diag (F.op ⋙ L₁) (F.op ⋙ L₂) n (CategoryTheory.whiskerLeft F.op f) =
       (pb_prod_iso F L₁ n).inv ≫ CategoryTheory.whiskerLeft F.op (nlift_diag L₁ L₂ n f) ≫ (pb_prod_iso F L₂ n).hom := by
       simp only [← Category.assoc,← Iso.comp_inv_eq,nlift_diag,nlift_whisker]
-
-    theorem pb_npair_compatible (P : Psh D) (n : Nat) (k: Fin n → (X ⟶  P)):
-     npair (F.op⋙ X) (F.op⋙ P) n (fun i => whiskerLeft F.op (k i)) ≫ (pb_prod_iso F P  n).inv  =
-     whiskerLeft F.op (npair X P n k)
-     := by
-      simp[Iso.comp_inv_eq]
-      apply npair_univ'
-      intros
-      simp[pb_prod_hom, nproj_pb_prod]
-      simp[← CategoryTheory.whiskerLeft_comp]
-
 
     theorem whiskerLeft_lift (X Y Z:Psh D) (f:X⟶ Y) (g:X⟶ Z):
       CategoryTheory.whiskerLeft F.op (lift f g) =

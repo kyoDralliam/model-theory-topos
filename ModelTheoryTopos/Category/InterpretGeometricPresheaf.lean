@@ -203,33 +203,22 @@ theorem pb_obj_interp_ops (L : Str T.sig D)  (o: T.sig.ops):
   simp only [← Iso.inv_comp_eq,pb_obj, SubobjectClassifier.prop]
 
 
-theorem pb_obj_interp_ops0 (L : Str T.sig D)  (o: T.sig.ops):
-    (pb_prod_iso F L.carrier (T.sig.arity_ops o)).inv ≫ whiskerLeft F.op (L.interp_ops o) =
-    (pb_obj F T L).interp_ops o := by
-    simp only [Iso.inv_comp_eq,pb_obj, SubobjectClassifier.prop, Iso.hom_inv_id_assoc]
-
-
-
-
 theorem pb_prop_interp_tm (L : Str T.sig D) (n : ℕ ) (t : tm T.sig n) :
   whiskerLeft F.op (L.interp_tm t) =
   (pb_prod_iso F _ n).hom ≫ (pb_obj F T L).interp_tm t := by
     induction t with
     | var _ =>
-      simp only [Str.interp_tm, ← nproj_pb_prod, pb_obj, SubobjectClassifier.prop,
-        pb_prod_hom]
+      simp only [Str.interp_tm, ←nproj_pb_prod, pb_prod_hom]
+      rfl
     | op o a a_ih =>
-      simp only [Str.interp_tm, CategoryTheory.whiskerLeft_comp,
-      pb_obj_interp_ops,← Category.assoc]
+      simp only [Str.interp_tm_op, CategoryTheory.whiskerLeft_comp]
+      simp only [pb_obj_interp_ops, ←Category.assoc]
       congr 1
-      simp only [← pb_npair_compatible, Category.assoc, Iso.inv_hom_id, Category.comp_id]
-      apply npair_univ
-      intro i
-      simp_all only [pb_obj, SubobjectClassifier.prop.eq_1, Category.assoc, npair_nproj]
+      simp only [Str.interp_subst, ←npair_pb_prod, pb_obj, ←npair_natural, a_ih]
 
 theorem pb_prop_interp_subst (L : Str T.sig D) {n m : Subst T.sig} (σ : n ⟶ m) :
   whiskerLeft F.op (L.interp_subst σ) ≫ (pb_prod_iso F _ n).hom = (pb_prod_iso F _ m).hom ≫ (pb_obj F T L).interp_subst σ := by
-  simp only [Str.interp_subst,← pb_npair_compatible, <-npair_natural]
+  simp only [Str.interp_subst, ←npair_pb_prod]
   simp [pb_prop_interp_tm, npair_natural]
   rfl
 
