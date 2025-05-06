@@ -18,6 +18,7 @@ import ModelTheoryTopos.Misc
 namespace InterpPsh
 open CategoryTheory MonoidalCategory ChosenFiniteProducts
 
+-- S-Structure over C: interpretation of the operations and predicates of a signature S on a presheaf on C
 structure Str (S : monosig) (C : Type) [Category C]  where
   carrier : Psh C
   interp_ops : forall (o : S.ops), npow carrier (S.arity_ops o) ⟶ carrier
@@ -27,7 +28,7 @@ variable {C : Type} [Category C]
 
 namespace Str
 
-
+-- Any S-signature L over C induces a right-module for the monad Tm^S
 noncomputable
 def interp_tm {S : monosig} (L : Str S C) : tm S n -> (npow L.carrier n ⟶ L.carrier)
   | .var k => nproj _ _ k
@@ -61,6 +62,7 @@ L.interp_subst τ ≫ L.interp_subst σ = L.interp_subst (σ ≫ τ) := by
   simp only [tm.subst_comp_app, subst_interp_tm, Str.interp_subst, Category.assoc, npair_nproj,
   implies_true]
 
+-- the next 3 lemmas look a bit too specific
 theorem interp_ren_succ (L: Str S C) (m : Subst S) (t: tm S m):
   snd L.carrier (npow L.carrier m) ≫ L.interp_tm t = L.interp_tm (tm.ren Fin.succ t) := by
   simp only [tm.ren_to_subst, subst_interp_tm]
@@ -70,7 +72,6 @@ theorem interp_ren_succ (L: Str S C) (m : Subst S) (t: tm S m):
   simp [Str.interp_subst, Str.interp_tm, nproj_succ]
   symm
   apply npair_nproj
-
 
 theorem interp_lift_subst (L: Str S C) {m n: Subst S} (σ : m ⟶ n) :
   L.interp_subst (lift_subst σ) = 𝟙 _ ⊗ L.interp_subst σ := by
@@ -89,23 +90,7 @@ theorem interp_lift_subst_snd (L: Str S C) {m n: Subst S} (σ : m ⟶ n) {c} {x 
   ((L.interp_subst (lift_subst σ)).app c x).2 = (L.interp_subst σ).app c x.2 := by
   simp only [interp_lift_subst, id_tensorHom, ChosenFiniteProducts.whiskerLeft_app]
 
-variable [SmallUniverse]
-
-noncomputable
-def interp_fml {S : monosig} {n} (L : Str S C) : fml S n -> (npow L.carrier n ⟶ SubobjectClassifier.prop)
-| .pred p k => L.interp_subst k ≫ L.interp_preds p
-| .true => ⊤
-| .false => ⊥
-| .conj φ ψ => L.interp_fml φ ⊓ L.interp_fml ψ
-| .disj φ ψ => L.interp_fml φ ⊔ L.interp_fml ψ
-| .infdisj a φ => ⨆ i: SmallUniverse.El a, interp_fml L (φ i)
-| .existsQ φ => SubobjectClassifier.existπ (L.interp_fml φ)
-| .eq t u => lift (L.interp_tm t) (interp_tm L u) ≫ SubobjectClassifier.eq
-
-
-def model {S : monosig} (L : Str S C) (s : sequent S) : Prop :=
-  L.interp_fml s.premise ≤ L.interp_fml s.concl
-
+-- Morphisms of S-Structure over C
 structure morphism {S : monosig} (L L' : Str S C) where
   map : L.carrier ⟶ L'.carrier
   ops_comm : forall (o : S.ops), nlift_diag _ _ _ map ≫ L'.interp_ops o = L.interp_ops o ≫ map
@@ -131,9 +116,28 @@ instance category : {S : monosig} → Category (Str S C) where
   }
 
 
+variable [SmallUniverse]
+
+-- Interpretation of geometric formula on a S-structure L over C
+noncomputable
+def interp_fml {S : monosig} {n} (L : Str S C) : fml S n -> (npow L.carrier n ⟶ SubobjectClassifier.prop)
+| .pred p k => L.interp_subst k ≫ L.interp_preds p
+| .true => ⊤
+| .false => ⊥
+| .conj φ ψ => L.interp_fml φ ⊓ L.interp_fml ψ
+| .disj φ ψ => L.interp_fml φ ⊔ L.interp_fml ψ
+| .infdisj a φ => ⨆ i: SmallUniverse.El a, interp_fml L (φ i)
+| .existsQ φ => SubobjectClassifier.existπ (L.interp_fml φ)
+| .eq t u => lift (L.interp_tm t) (interp_tm L u) ≫ SubobjectClassifier.eq
+
+
+def model {S : monosig} (L : Str S C) (s : sequent S) : Prop :=
+  L.interp_fml s.premise ≤ L.interp_fml s.concl
+
 end Str
 
 
+-- A model of a geometric theory T over C is an S-structure str over C validating all axioms of T
 structure Mod [SmallUniverse] (T : theory) (C : Type) [Category C] where
   str : Str T.sig C
   valid : forall s, s ∈ T.axioms → str.model s
@@ -286,25 +290,10 @@ def pb_model (M: Mod T D ) : Mod T C where
     have := M.valid a ax
     exact (pb_prop_preserves_interp F T M.str a this)
 
-def pb_morphism {X Y : Mod T D} (f : X ⟶ Y) : pb_model F T X ⟶ pb_model F T Y where
-  map := CategoryTheory.whiskerLeft F.op f.map
-  ops_comm := by
-    simp only [pb_model, pullback, pb_obj_carrier,
-    nlift_diag_whisker, Category.assoc,
-    ← pb_obj_interp_ops0, Iso.hom_inv_id_assoc, Category.assoc,
-    Iso.cancel_iso_inv_left,
-    ← CategoryTheory.whiskerLeft_comp, f.ops_comm, implies_true]
-  preds_comm := by
-    simp only [pb_model, pullback, pb_obj_carrier, nlift_diag_whisker,
-      pb_obj_interp_preds, map_pred]
-    simp only [Category.assoc, Iso.hom_inv_id_assoc, Iso.cancel_iso_inv_left]
-    simp only [<-Category.assoc, ←CategoryTheory.whiskerLeft_comp]
-    simp only [f.preds_comm, implies_true]
-
 noncomputable
 def pullback_Mod : Mod T D ⥤ Mod T C where
   obj M := pb_model F T M
-  map f := pb_morphism F T f
+  map f := pb_map _ _ _ _ f
 
 theorem subst_interp_fml (L: Str S C) (n : RenCtx) (m : Subst S) (σ : Fin n → tm S m) (φ: fml S n) :
   L.interp_fml (fml.subst σ φ) = L.interp_subst σ ≫ L.interp_fml φ := by
