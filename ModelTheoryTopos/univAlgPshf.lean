@@ -333,32 +333,20 @@ def Model2Semigrp_to_Semigrp2Model : Model2Semigrp ⋙ Semigrp2Model ⟶ 𝟭 se
       }
 
 
+
+def Semigrp2Model_to_Model2Semigrp : Semigrp2Model ⋙ Model2Semigrp ⟶ 𝟭 Semigrp where
+  app := fun
+    m => by
+      simp only[id_obj]
+      exact (𝟙 m)
+
+
+
 #check NatIso.ofComponents
 #check NatIso.ofNatTrans
 #check NatIso.ofNatTrans_pt_inv
 
--- def Type_Psh_to_Psh_itself (P: Psh Unit) : Type_Psh.obj (Psh_Type.obj P) ⟶ P where
---   app _ := 𝟙 _
---   naturality := by
---     intro X Y f
---     simp_all only [Category.comp_id, Category.id_comp,Type_Psh_obj,Type_to_Psh]
---     simp only [Unit_op_id] at *
---     have := map_id P (Opposite.op ())
---     simp only [this]
---     rfl
 
-
--- lemma Model2Semigrp_Semigrp2Model.obj (m : semigroup_set_models) :
---  (Model2Semigrp ⋙ Semigrp2Model).obj m = m := by
---   simp;
-
---   simp[Model2Semigrp,Model2Semigrp_obj,Semigrp2Model,semigroup_to_model];
---   congr
-
---   simp[Semigroup_Str]
-
-
---   sorry
 
 def Model2Semigrp2Model_itself (m : semigroup_set_models) :
  m ⟶ (Model2Semigrp ⋙ Semigrp2Model).obj m where
@@ -366,7 +354,6 @@ def Model2Semigrp2Model_itself (m : semigroup_set_models) :
      app _ := 𝟙 _
      naturality {X Y } _ := by
       ext
-      --simp only[Model2Semigrp_Semigrp2Model.obj]
       simp only [Unit_op_id,map_id] at *
       simp only [comp_obj, Category.comp_id, Category.id_comp]
       have a:=CategoryTheory.Functor.map_id (Semigrp2Model.obj (Model2Semigrp.obj m)).str.carrier (Opposite.op ())
@@ -379,23 +366,33 @@ def Model2Semigrp2Model_itself (m : semigroup_set_models) :
     ext
     rfl
    preds_comm := Empty.rec
-  -- where
-  -- app _ := 𝟙 _
-  -- naturality := by
-  --   intro X Y f
-  --   simp_all only [Category.comp_id, Category.id_comp,Type_Psh_obj,Type_to_Psh]
-  --   simp only [Unit_op_id] at *
-  --   have := map_id P (Opposite.op ())
-  --   simp only [this]
-  --   rfl
+
+
+def Semigrp2Model2Semigrp_itself (m : Semigrp) :
+ m ⟶ (Semigrp2Model ⋙ Model2Semigrp ).obj m := Semigrp.ofHom {
+   toFun := 𝟙 m
+   map_mul' := by
+     intros
+     rfl
+ }
+
+
 
 noncomputable
 def Model2Semigrp_Semigrp2Model_equiv :
  Model2Semigrp ⋙ Semigrp2Model ≅ 𝟭 semigroup_set_models :=
  NatIso.ofNatTrans_pt_inv Model2Semigrp_to_Semigrp2Model Model2Semigrp2Model_itself
- fun
- | .mk str valid => by
-  rfl
+
+
+noncomputable
+def Semigrp2Model_Model2Semigrp_equiv :
+ Semigrp2Model ⋙Model2Semigrp  ≅ 𝟭 Semigrp :=
+ NatIso.ofNatTrans_pt_inv Semigrp2Model_to_Model2Semigrp Semigrp2Model2Semigrp_itself
+
+noncomputable
+def Semigrp_equiv_model : semigroup_set_models ≌ Semigrp   :=
+ CategoryTheory.Equivalence.mk Model2Semigrp Semigrp2Model Model2Semigrp_Semigrp2Model_equiv.symm Semigrp2Model_Model2Semigrp_equiv
+
 
 
 end SemigroupExample
