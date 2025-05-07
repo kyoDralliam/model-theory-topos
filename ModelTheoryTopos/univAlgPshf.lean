@@ -199,16 +199,16 @@ instance semigrp_mod : Category semigroup_set_models where
   id sg :=  𝟙 sg.str.carrier
   comp {sg1 sg2 sg3} f1 f2 := NatTrans.vcomp f1 f2
 -/
-
+#check Semigrp.Hom
 --instance semigrp_mod: Category semigroup_set_models := sorry
 noncomputable
 def Semigrp2Model : Semigrp ⥤ semigroup_set_models where
-  obj sg := @semigroup_to_model sg.α sg.str
+  obj sg := @semigroup_to_model sg.carrier sg.str
   map {sg1 sg2} h:= {
-    map := Type_Psh.map h.toFun
+    map := Type_Psh.map h.hom'.toFun
     ops_comm _ := by
       ext
-      apply (h.map_mul' _ _ ).symm
+      apply (h.hom'.map_mul' _ _ ).symm
     preds_comm := Empty.rec
   }
     -- let psh1: Psh Unit := (@semigroup_to_model sg1.α sg1.str).str.carrier
@@ -242,7 +242,7 @@ instance model_to_semigroup (m : semigroup_set_models)
 --     apply this
 
 --Opposite.op
-#check congr_app
+#check Semigrp.Hom
 
 -- lemma comp_app_app {C: Type*} [Category C] (F G H:Psh C)
 --  (η1: F⟶ G) (η2: G⟶ H) (c: Cᵒᵖ ) : (η2.app c (η1.app c x)) = (η1 ≫ η2).app c x := sorry
@@ -255,11 +255,25 @@ in
 def Model2Semigrp: semigroup_set_models ⥤ Semigrp where
   obj := fun m => Semigrp.of (m.str.carrier.obj ⟨⟨⟩⟩)
   map {X Y} := fun
-    | .mk map ops_comm preds_comm => {
+    | .mk map ops_comm preds_comm => Semigrp.ofHom {
       toFun := map.app ot
       map_mul' x1 x2 := by
-       symm
-       exact congr_fun (congr_app (ops_comm ()) ot) (x1, (x2, ()))
+        symm
+        exact congr_fun (congr_app (ops_comm ()) ot) (x1, (x2, ()))}
+
+    -- {
+    --   hom' :=
+    --   {toFun := map.app ot
+    --    map_mul' x1 x2 := by
+    --     symm
+    --     exact congr_fun (congr_app (ops_comm ()) ot) (x1, (x2, ()))}
+    -- }
+  -- fun
+  --   | .mk map ops_comm preds_comm => {
+  --     toFun := map.app ot
+  --     map_mul' x1 x2 := by
+  --      symm
+  --      exact congr_fun (congr_app (ops_comm ()) ot) (x1, (x2, ()))
       --  let x2' : (ChosenFiniteProducts.npow X.str.carrier 1).obj ot := ( x2, () )
       --  let x12: (ChosenFiniteProducts.npow X.str.carrier (semigroup_thy.sig.arity_ops ())).obj ot := (x1, x2')
       --  have a' := congr_fun a x12
@@ -286,7 +300,7 @@ def Model2Semigrp: semigroup_set_models ⥤ Semigrp where
       --  simp[← NatTrans.vcomp_app']
       --  apply
       --  sorry
-    }
+
 
 lemma Model2Semigrp_obj (m : semigroup_set_models) : Model2Semigrp.obj m =  Semigrp.of (m.str.carrier.obj ⟨⟨⟩⟩) := rfl
 
@@ -334,17 +348,17 @@ def Model2Semigrp_to_Semigrp2Model : Model2Semigrp ⋙ Semigrp2Model ⟶ 𝟭 se
 --     rfl
 
 
-lemma Model2Semigrp_Semigrp2Model.obj (m : semigroup_set_models) :
- (Model2Semigrp ⋙ Semigrp2Model).obj m = m := by
-  simp;
+-- lemma Model2Semigrp_Semigrp2Model.obj (m : semigroup_set_models) :
+--  (Model2Semigrp ⋙ Semigrp2Model).obj m = m := by
+--   simp;
 
-  simp[Model2Semigrp,Model2Semigrp_obj,Semigrp2Model,semigroup_to_model];
-  congr
+--   simp[Model2Semigrp,Model2Semigrp_obj,Semigrp2Model,semigroup_to_model];
+--   congr
 
-  simp[Semigroup_Str]
+--   simp[Semigroup_Str]
 
 
-  sorry
+--   sorry
 
 def Model2Semigrp2Model_itself (m : semigroup_set_models) :
  m ⟶ (Model2Semigrp ⋙ Semigrp2Model).obj m where
@@ -352,7 +366,7 @@ def Model2Semigrp2Model_itself (m : semigroup_set_models) :
      app _ := 𝟙 _
      naturality {X Y } _ := by
       ext
-      simp only[ Model2Semigrp_Semigrp2Model.obj]
+      --simp only[Model2Semigrp_Semigrp2Model.obj]
       simp only [Unit_op_id,map_id] at *
       simp only [comp_obj, Category.comp_id, Category.id_comp]
       have a:=CategoryTheory.Functor.map_id (Semigrp2Model.obj (Model2Semigrp.obj m)).str.carrier (Opposite.op ())

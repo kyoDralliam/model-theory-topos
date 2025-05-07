@@ -177,6 +177,7 @@ theorem pb_obj_interp_preds (L : Str T.sig D) (p: T.sig.preds) :
   (pb_prod_iso F L.carrier (T.sig.arity_preds p)).inv ≫ map_pred F (L.interp_preds p) := by
     simp [pb_obj]
 
+noncomputable
 def pb_map (L₁ L₂ : Str T.sig D) (f : L₁ ⟶ L₂) :
   pb_obj F T L₁ ⟶ pb_obj F T L₂ where
   map := whiskerLeft F.op f.map

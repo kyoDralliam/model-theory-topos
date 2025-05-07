@@ -613,6 +613,7 @@ namespace SubobjectClassifier
       apply l _ (p.app _ x) h _ (𝟙 _)
       simp
 
+noncomputable
   local instance precomp_sSupHom {A B : Psh C} (p : A ⟶ B) : sSupHom (B ⟶ prop) (A ⟶ prop) :=
     GaloisConnection.sSupHomLeft (precomp_forallQ_adj p)
 
