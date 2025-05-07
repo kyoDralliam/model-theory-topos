@@ -15,50 +15,13 @@ import Mathlib.Algebra.Category.Semigrp.Basic
 open CategoryTheory
 -- Keep this file as main example
 
-section SemigroupExample
+abbrev ot := Opposite.op ()
 
---variable [SmallUniverse]
-/-class SmallUniverse where
-  U : Type
-  El : U -> Type-/
-
-instance empty : SmallUniverse where
-  U := Empty
-  El := Empty.rec
-
-def semigroup_sig : monosig where
-  ops := Unit
-  arity_ops := fun _ => 2
-  preds := Empty
-  arity_preds := Empty.rec
-
-abbrev mk_mul (t1 t2: tm semigroup_sig n) : tm semigroup_sig n :=
- .op () (fun i => [t1 , t2][i])
-
-abbrev mk_mul_left (t1 t2 t3: tm semigroup_sig n) := mk_mul (mk_mul t1 t2) t3
-
-abbrev mk_mul_right (t1 t2 t3: tm semigroup_sig n) := mk_mul t1 (mk_mul t2 t3)
-
-def assoc : @sequent empty semigroup_sig where
-  ctx := 3
-  premise := .true
-  concl := fml.eq (mk_mul_left (.var 0) (.var 1) (.var 2)) (mk_mul_right (.var 0) (.var 1) (.var 2))
-
-def semigroup_thy : theory where
-  sig := semigroup_sig
-  axioms := [ assoc ]
-
-def semigroup_set_models :=
-  InterpPsh.Mod semigroup_thy Unit
-
-instance Unit_cat : Category Unit := inferInstance
-
-instance semigrp_cat : Category semigroup_set_models := @InterpPsh.Mod_Category _ _ _ _
-
+section TypePshUnitEquiv
 def Type_to_Psh (α : Type) :
   CategoryTheory.Psh Unit where
   obj _ := α
-  map _ := id
+  map _ := 𝟙 _
 
 open CategoryTheory
 
@@ -72,30 +35,25 @@ theorem Type_Psh_obj (α : Type) : (Type_Psh.obj α)= Type_to_Psh α := rfl
 theorem Type_Psh_map {α β : Type} (f: α → β) : (Type_Psh.map f).app (Opposite.op ())  = f := rfl
 
 def Psh_Type:  CategoryTheory.Psh Unit ⥤ Type where
-  obj P := P.obj (Opposite.op ())
-  map f := f.app (Opposite.op ())
+  obj P := P.obj ot
+  map f := f.app ot
 
-theorem Psh_Type_obj (P: Psh Unit) : Psh_Type.obj P = P.obj (Opposite.op ()) := rfl
-theorem Psh_Type_map {P1 P2: Psh Unit} (f: P1 ⟶ P2) : Psh_Type.map f = f.app (Opposite.op ()) := rfl
+theorem Psh_Type_obj (P: Psh Unit) : Psh_Type.obj P = P.obj ot := rfl
+theorem Psh_Type_map {P1 P2: Psh Unit} (f: P1 ⟶ P2) : Psh_Type.map f = f.app ot := rfl
 
 
 open CategoryTheory.Functor
 
 
-theorem Unit_id {X Y: Unit} (f: X ⟶  Y) : f = 𝟙 () :=rfl
+theorem Unit_id {X Y: Unit} (f: X ⟶ Y) : f = 𝟙 () :=rfl
 
-theorem Unit_op_id {X Y: Unitᵒᵖ } (f: X ⟶  Y) : f = 𝟙 (Opposite.op ()) :=rfl
+theorem Unit_op_id {X Y: Unitᵒᵖ } (f: X ⟶ Y) : f = 𝟙 ot :=rfl
 
 def Psh_itself_to_Type_Psh (P: Psh Unit) : P ⟶ Type_Psh.obj (Psh_Type.obj P) where
   app _ := 𝟙 _
   naturality := by
-   intros X Y f
-   simp_all only [Category.comp_id, Category.id_comp]
-   simp only [Type_Psh_obj, Type_to_Psh]
-   simp only [Unit_op_id] at *
-   have := map_id P (Opposite.op ())
-   simp only [this]
-   rfl
+    intros X Y f
+    simp [Type_Psh_obj, Type_to_Psh, Psh_Type_obj, Unit_op_id, P.map_id ot]
 
 theorem Psh_itself_to_Type_Psh_app (P: Psh Unit) :
   (Psh_itself_to_Type_Psh P).app _ = 𝟙 _ := rfl
@@ -104,11 +62,7 @@ def Type_Psh_to_Psh_itself (P: Psh Unit) : Type_Psh.obj (Psh_Type.obj P) ⟶ P w
   app _ := 𝟙 _
   naturality := by
     intro X Y f
-    simp_all only [Category.comp_id, Category.id_comp,Type_Psh_obj,Type_to_Psh]
-    simp only [Unit_op_id] at *
-    have := map_id P (Opposite.op ())
-    simp only [this]
-    rfl
+    simp [Type_Psh_obj, Type_to_Psh, Psh_Type_obj, Unit_op_id, P.map_id ot]
 
 theorem Type_Psh_to_Psh_itself_app (P: Psh Unit) :
   (Type_Psh_to_Psh_itself P).app _ = 𝟙 _ := rfl
@@ -146,6 +100,56 @@ def Type_equiv_Psh_epsilpon: 𝟭 Type ≅
 
 def Type_equiv_Psh : CategoryTheory.Psh Unit ≌ Type   :=
  CategoryTheory.Equivalence.mk Psh_Type Type_Psh Type_equiv_Psh_eta' Type_equiv_Psh_epsilpon
+
+section TypePshUnitEquiv
+
+
+
+section SemigroupExample
+
+
+-- An empty universe instance,
+-- we do not need any "large" disjunctions for the equational theory of semigroups
+local
+instance empty : SmallUniverse where
+  U := Empty
+  El := Empty.rec
+
+-- The signature of semigroups
+def semigroup_sig : monosig where
+  ops := Unit -- A single operation for multiplication
+  arity_ops := fun _ => 2 -- multiplication is binary
+  preds := Empty -- no predicate
+  arity_preds := Empty.rec
+
+abbrev mk_mul (t1 t2: tm semigroup_sig n) : tm semigroup_sig n :=
+ .op () (fun i => [t1 , t2][i])
+
+def assoc : @sequent empty semigroup_sig where
+  ctx := 3
+  premise := .true
+  concl :=
+    let x := .var 0
+    let y := .var 1
+    let z := .var 2
+    .eq (mk_mul (mk_mul x y) z) (mk_mul x (mk_mul y z))
+
+-- The theory of semigroups
+def semigroup_thy : theory where
+  sig := semigroup_sig
+  axioms := [ assoc ]
+
+-- We automatically obtain a category of models in presheaves over any category
+-- in particular over the terminal category
+def semigroup_set_models :=
+  InterpPsh.Mod semigroup_thy Unit
+
+instance Unit_cat : Category Unit := inferInstance
+
+instance semigrp_cat : Category semigroup_set_models := @InterpPsh.Mod_Category _ _ _ _
+
+
+
 
 
 noncomputable
@@ -249,9 +253,7 @@ instance model_to_semigroup (m : semigroup_set_models)
 
 
 
-def ot := (Opposite.op ())
-open ChosenFiniteProducts
-in
+open ChosenFiniteProducts in
 def Model2Semigrp: semigroup_set_models ⥤ Semigrp where
   obj := fun m => Semigrp.of (m.str.carrier.obj ⟨⟨⟩⟩)
   map {X Y} := fun
