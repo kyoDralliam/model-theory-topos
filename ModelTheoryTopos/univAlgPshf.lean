@@ -78,10 +78,12 @@ def eta_from_Psh_Unit : 𝟭 (Psh Unit) ⟶ Psh_Type ⋙ Type_Psh where
 
 def Type_equiv_Psh_eta' : 𝟭 (CategoryTheory.Psh Unit) ≅
   Psh_Type ⋙ Type_Psh :=
-  NatIso.ofNatTrans_pt_inv eta_from_Psh_Unit
-  Type_Psh_to_Psh_itself
-  (by intros P; ext ; simp only [id_obj, comp_obj, eta_from_Psh_Unit, FunctorToTypes.comp,
-    Psh_itself_to_Type_Psh_app P, types_id_apply, Type_Psh_to_Psh_itself_app P, NatTrans.id_app])
+  NatIso.ofNatTrans_pt_inv
+    eta_from_Psh_Unit
+    Type_Psh_to_Psh_itself
+    (by
+      intros P; ext
+      simp only [id_obj, comp_obj, eta_from_Psh_Unit, FunctorToTypes.comp, Psh_itself_to_Type_Psh_app P, types_id_apply, Type_Psh_to_Psh_itself_app P, NatTrans.id_app])
 
 lemma Type_equiv_Psh_eta'.hom : Type_equiv_Psh_eta'.hom = eta_from_Psh_Unit := rfl
 
@@ -93,13 +95,12 @@ lemma Type_equiv_Psh_eta'.inv (P: Psh Unit): Type_equiv_Psh_eta'.inv.app P = Typ
 -- KM: you can simplify probably simplify this code with NatIso.ofComponents or NatIso.ofNatTrans
 
 
-def Type_equiv_Psh_epsilpon: 𝟭 Type ≅
-  Type_Psh ⋙ Psh_Type  where
-    hom := { app a := 𝟙 a }
-    inv := { app a := 𝟙 a }
+def Type_equiv_Psh_epsilpon: 𝟭 Type ≅ Type_Psh ⋙ Psh_Type  where
+    hom := 𝟙 _
+    inv := 𝟙 _
 
 def Type_equiv_Psh : CategoryTheory.Psh Unit ≌ Type   :=
- CategoryTheory.Equivalence.mk Psh_Type Type_Psh Type_equiv_Psh_eta' Type_equiv_Psh_epsilpon
+ .mk Psh_Type Type_Psh Type_equiv_Psh_eta' Type_equiv_Psh_epsilpon
 
 section TypePshUnitEquiv
 
@@ -149,10 +150,11 @@ instance Unit_cat : Category Unit := inferInstance
 instance semigrp_cat : Category semigroup_set_models := @InterpPsh.Mod_Category _ _ _ _
 
 
+-- This category of models over the terminal category is equivalent
+-- to the category of semigroups which we show below
 
+-- First, we define a functor from semigroups to models over 1
 
-
-noncomputable
 def Semigroup_Str (α : Type) [Semigroup α] :
  InterpPsh.Str semigroup_sig Unit :=
  {
@@ -166,21 +168,6 @@ def Semigroup_Str (α : Type) [Semigroup α] :
       interp_preds := Empty.rec
     }
 
--- instance (X:semigroup_set_models) :
---  Mul (X.str.carrier.obj (Opposite.op PUnit.unit)) where
---    mul x1 x2 := sorry
-
--- lemma Semigroup_Str_interp_ops (X:semigroup_set_models)
---    (x1 x2: (X.str.carrier.obj (Opposite.op PUnit.unit)))
---    (x2': (ChosenFiniteProducts.npow X.str.carrier 1).obj (Opposite.op ()) := ( x2, () ))
---  : (X.str.interp_ops ()).app (Opposite.op ()) (x1, x2') = x1 * x2 := sorry
-
--- lemma Semigroup_Str_interp_ops' (X:semigroup_set_models)
--- (x12: (ChosenFiniteProducts.npow X.str.carrier (semigroup_thy.sig.arity_ops ())).obj (Opposite.op ()))
-
---  : (X.str.interp_ops ()).app (Opposite.op ()) x12 = x12.1 * x12.2.1 := sorry
-
-noncomputable
 def semigroup_to_model (α : Type) [Semigroup α]
   : semigroup_set_models where
   str := Semigroup_Str α
@@ -192,20 +179,6 @@ def semigroup_to_model (α : Type) [Semigroup α]
     simp
     apply mul_assoc (G:=α) a b c
 
-lemma semigroup_to_model.str (α : Type)  [Semigroup α] : (semigroup_to_model α).str = Semigroup_Str α := rfl
-
-lemma semigroup_to_model.str.carrier (α : Type)  [Semigroup α] :
-  (semigroup_to_model α).str.carrier = Type_to_Psh α := rfl
-
-/-
-instance semigrp_mod : Category semigroup_set_models where
-  Hom sg1 sg2 := sg1.str.carrier ⟶ sg2.str.carrier
-  id sg :=  𝟙 sg.str.carrier
-  comp {sg1 sg2 sg3} f1 f2 := NatTrans.vcomp f1 f2
--/
-#check Semigrp.Hom
---instance semigrp_mod: Category semigroup_set_models := sorry
-noncomputable
 def Semigrp2Model : Semigrp ⥤ semigroup_set_models where
   obj sg := @semigroup_to_model sg.carrier sg.str
   map {sg1 sg2} h:= {
@@ -215,189 +188,77 @@ def Semigrp2Model : Semigrp ⥤ semigroup_set_models where
       apply (h.hom'.map_mul' _ _ ).symm
     preds_comm := Empty.rec
   }
-    -- let psh1: Psh Unit := (@semigroup_to_model sg1.α sg1.str).str.carrier
-    -- let psh2: Psh Unit := (@semigroup_to_model sg2.α sg2.str).str.carrier
-
-    -- Type_equiv_Psh.inverse.map h.toFun
 
 
-
+-- Second, we define a functor from models over 1 to semigroups
 
 instance model_to_semigroup (m : semigroup_set_models)
   : Semigroup (m.str.carrier.obj ⟨⟨⟩⟩) where
   mul a1 a2:=  (m.str.interp_ops ()).app ⟨()⟩ ⟨ a1, a2, () ⟩
   mul_assoc a b c := by
     have := m.valid assoc (by simp only [semigroup_thy, List.mem_singleton]) ⟨()⟩ ⟨ a, b, c , () ⟩ (𝟙 _) ⟨⟩
-    simp only [assoc, Fin.isValue, SubobjectClassifier.prop.eq_1, InterpPsh.Str.interp_fml,
-      InterpPsh.Str.interp_tm, SubobjectClassifier.eq, Opposite.op_unop, FunctorToTypes.comp,
-      ChosenFiniteProducts.lift_app_pt, op_id, FunctorToTypes.map_id_apply] at this
-    apply this
-
--- instance model_to_semigroup' (m : semigroup_set_models)
---   : Semigroup (m.str.carrier.obj (Opposite.op PUnit.unit)) where
---   mul a1 a2:= by
---     exact (m.str.interp_ops ()).app ⟨()⟩ ⟨ a1, a2, () ⟩
---   mul_assoc := by
---     intros a b c
---     have := m.valid assoc (by simp only [semigroup_thy, List.mem_singleton]) ⟨()⟩ ⟨ a, b, c , () ⟩ (𝟙 _) ⟨⟩
---     simp only [assoc, Fin.isValue, SubobjectClassifier.prop.eq_1, InterpPsh.Str.interp_fml,
---       InterpPsh.Str.interp_tm, SubobjectClassifier.eq, Opposite.op_unop, FunctorToTypes.comp,
---       ChosenFiniteProducts.lift_app_pt, op_id, FunctorToTypes.map_id_apply] at this
---     apply this
-
---Opposite.op
-#check Semigrp.Hom
-
--- lemma comp_app_app {C: Type*} [Category C] (F G H:Psh C)
---  (η1: F⟶ G) (η2: G⟶ H) (c: Cᵒᵖ ) : (η2.app c (η1.app c x)) = (η1 ≫ η2).app c x := sorry
-
-
+    simp only [assoc, InterpPsh.Str.interp_fml, InterpPsh.Str.interp_tm, SubobjectClassifier.eq, FunctorToTypes.comp,
+      ChosenFiniteProducts.lift_app_pt, op_id, FunctorToTypes.map_id_apply ] at this
+    exact this
 
 open ChosenFiniteProducts in
 def Model2Semigrp: semigroup_set_models ⥤ Semigrp where
   obj := fun m => Semigrp.of (m.str.carrier.obj ⟨⟨⟩⟩)
-  map {X Y} := fun
-    | .mk map ops_comm preds_comm => Semigrp.ofHom {
-      toFun := map.app ot
+  map {X Y} f := Semigrp.ofHom {
+      toFun := f.map.app ot
       map_mul' x1 x2 := by
         symm
-        exact congr_fun (congr_app (ops_comm ()) ot) (x1, (x2, ()))}
+        exact congr_fun (congr_app (f.ops_comm ()) ot) (x1, (x2, ()))
+    }
 
-    -- {
-    --   hom' :=
-    --   {toFun := map.app ot
-    --    map_mul' x1 x2 := by
-    --     symm
-    --     exact congr_fun (congr_app (ops_comm ()) ot) (x1, (x2, ()))}
-    -- }
-  -- fun
-  --   | .mk map ops_comm preds_comm => {
-  --     toFun := map.app ot
-  --     map_mul' x1 x2 := by
-  --      symm
-  --      exact congr_fun (congr_app (ops_comm ()) ot) (x1, (x2, ()))
-      --  let x2' : (ChosenFiniteProducts.npow X.str.carrier 1).obj ot := ( x2, () )
-      --  let x12: (ChosenFiniteProducts.npow X.str.carrier (semigroup_thy.sig.arity_ops ())).obj ot := (x1, x2')
-      --  have a' := congr_fun a x12
-      --  simp at a'
-      --  exact a'.symm
-      --  simp[x12] at a'
-      --  have e1 : ((X.str.interp_ops ()).app ot (x1, x2')) = x1 * x2 := by
-
-      --    sorry
-      --  simp[Semigroup_Str_interp_ops,x2'] at a'
-      --  simp[← e1]
-      --  simp at a
-      --  have e2 : map.app ot ((X.str.interp_ops ()).app ot (x1, x2')) =
-      --   ((X.str.interp_ops ()).app ot ≫ map.app (Opposite.op ())) (x1, x2')  := sorry
-      --  simp only[e2]
-      --  simp only[← a]
-      --  simp
-      --  simp[ChosenFiniteProducts.nlift_diag]
-      --  simp[Semigroup_Str_interp_ops']
-      --  congr
-
-      --  simp[ChosenFiniteProducts.nlift]
-      --  apply (ChosenFiniteProducts.nlift X.str.carrier Y.str.carrier (semigroup_thy.sig.arity_ops ()) fun x ↦ map).naturality
-      --  simp[← NatTrans.vcomp_app']
-      --  apply
-      --  sorry
-
-
-lemma Model2Semigrp_obj (m : semigroup_set_models) : Model2Semigrp.obj m =  Semigrp.of (m.str.carrier.obj ⟨⟨⟩⟩) := rfl
-
--- lemma Semigrp2Model_obj
-
--- lemma Model2Semigrp_Semigrp2Model.obj (m : semigroup_set_models) :
---  (Model2Semigrp ⋙ Semigrp2Model).obj m = m := by
---   simp;
---   simp[Model2Semigrp,Model2Semigrp_obj,Semigrp2Model,semigroup_to_model];
---   congr
-
---   sorry
+-- Third, we show that the composition of these functors is naturally
+-- isomorphic to the identity
 
 def Model2Semigrp_to_Semigrp2Model : Model2Semigrp ⋙ Semigrp2Model ⟶ 𝟭 semigroup_set_models where
-  app := fun
-    m => by
-      --simp[Model2Semigrp,Semigrp2Model]
-      simp only[id_obj]
-      exact {
-        map := Type_Psh_to_Psh_itself m.str.carrier
-        ops_comm := by
-         intro ()
-         ext
-         rfl
-        --  simp only[Model2Semigrp_Semigrp2Model.obj]
-        --  ext
-        --  have := m.ops_comm
-        --  sorry
-        preds_comm := Empty.rec
-      }
-
-
-
-def Semigrp2Model_to_Model2Semigrp : Semigrp2Model ⋙ Model2Semigrp ⟶ 𝟭 Semigrp where
-  app := fun
-    m => by
-      simp only[id_obj]
-      exact (𝟙 m)
-
-
-
-#check NatIso.ofComponents
-#check NatIso.ofNatTrans
-#check NatIso.ofNatTrans_pt_inv
-
-
+  app m := {
+      map := Type_Psh_to_Psh_itself m.str.carrier
+      ops_comm := by
+        intro ()
+        ext
+        rfl
+      preds_comm := Empty.rec
+    }
 
 def Model2Semigrp2Model_itself (m : semigroup_set_models) :
- m ⟶ (Model2Semigrp ⋙ Semigrp2Model).obj m where
-   map := {
-     app _ := 𝟙 _
-     naturality {X Y } _ := by
-      ext
-      simp only [Unit_op_id,map_id] at *
-      simp only [comp_obj, Category.comp_id, Category.id_comp]
-      have a:=CategoryTheory.Functor.map_id (Semigrp2Model.obj (Model2Semigrp.obj m)).str.carrier (Opposite.op ())
-      simp [a];
-      have a':= CategoryTheory.Functor.map_id  m.str.carrier (Opposite.op ())
-      simp [a'];
-   }
-   ops_comm := by
+  m ⟶ (Model2Semigrp ⋙ Semigrp2Model).obj m where
+  map := {
+    app _ := 𝟙 _
+    naturality {X Y } _ := by
+      simp [Unit_op_id, m.str.carrier.map_id ot, (Semigrp2Model.obj (Model2Semigrp.obj m)).str.carrier.map_id ot]
+  }
+  ops_comm := by
     intro
     ext
     rfl
-   preds_comm := Empty.rec
+  preds_comm := Empty.rec
 
-
-def Semigrp2Model2Semigrp_itself (m : Semigrp) :
- m ⟶ (Semigrp2Model ⋙ Model2Semigrp ).obj m := Semigrp.ofHom {
-   toFun := 𝟙 m
-   map_mul' := by
-     intros
-     rfl
- }
-
-
-
-noncomputable
 def Model2Semigrp_Semigrp2Model_equiv :
- Model2Semigrp ⋙ Semigrp2Model ≅ 𝟭 semigroup_set_models :=
- NatIso.ofNatTrans_pt_inv Model2Semigrp_to_Semigrp2Model Model2Semigrp2Model_itself
+  Model2Semigrp ⋙ Semigrp2Model ≅ 𝟭 semigroup_set_models :=
+  NatIso.ofNatTrans_pt_inv Model2Semigrp_to_Semigrp2Model Model2Semigrp2Model_itself
 
+def Semigrp2Model_to_Model2Semigrp : Semigrp2Model ⋙ Model2Semigrp ⟶ 𝟭 Semigrp where
+  app m := 𝟙 m
 
-noncomputable
+def Semigrp2Model2Semigrp_itself (m : Semigrp) : m ⟶ (Semigrp2Model ⋙ Model2Semigrp ).obj m := 𝟙 m
+
 def Semigrp2Model_Model2Semigrp_equiv :
- Semigrp2Model ⋙Model2Semigrp  ≅ 𝟭 Semigrp :=
- NatIso.ofNatTrans_pt_inv Semigrp2Model_to_Model2Semigrp Semigrp2Model2Semigrp_itself
+  Semigrp2Model ⋙Model2Semigrp ≅ 𝟭 Semigrp :=
+  NatIso.ofNatTrans_pt_inv Semigrp2Model_to_Model2Semigrp Semigrp2Model2Semigrp_itself
 
-noncomputable
+-- Finally we obtain the equivalence
+
 def Semigrp_equiv_model : semigroup_set_models ≌ Semigrp   :=
- CategoryTheory.Equivalence.mk Model2Semigrp Semigrp2Model Model2Semigrp_Semigrp2Model_equiv.symm Semigrp2Model_Model2Semigrp_equiv
-
-
+  .mk Model2Semigrp Semigrp2Model Model2Semigrp_Semigrp2Model_equiv.symm Semigrp2Model_Model2Semigrp_equiv
 
 end SemigroupExample
+
+
+-- TODO: Do we need to keep what's below ?
 
 section MonoidExample
 variable [SmallUniverse]
