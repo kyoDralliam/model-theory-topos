@@ -25,6 +25,14 @@ end R
 namespace Joshua
   variable [SmallUniverse]
 
+  /-the category of formulas of context consists of:
+    obj: a context, i.e. a natural number, and a formula in this context
+
+    map: a map from xφ to yψ is a map σ from y to x, such that φ ⊢ ψ[σ y_i/y_i]
+    e.g. φ1 ∧ φ2 ⊢ φ1, the inclusion from variables in φ1 into the one in φ1 and φ2 gives a map φ1 ∧ φ2 to φ1
+
+  -/
+
   structure fmlInCtx (m : theory) where
     ctx : RenCtx
     formula : fml m.sig ctx
@@ -51,6 +59,22 @@ namespace Joshua
     id := idMap
     comp := compMap
 
+
+  /-Given a theory m, formula-in-context xφ and a map σ over xφ,
+    turn it into a formula
+    in the signature of m, under the context of x.
+    if the map is yψ ---σ---> xφ
+    it contains the information how to map {y | ψ} to {x | φ}, this is a map of finite sets
+    regard ψ as a formula in the context x,y
+    with x mapped to the first half, captured by R10, and y mapped to the second half
+
+    construct a list of k equations, using the constructor eqs, rather than constructing a conjunction of equations
+    here k is the number of items in x, because we want to specify which item in the domain
+    does x_i correspond to.
+
+    formula is effectively ∃y. ψ ∧ x_i = σ (x_i)
+    saying each of such tuple x has some tuple y satisfying property ψ that is mapped to it.
+  -/
   def cover_from_over (xφ : fmlInCtx m) (σ : Over xφ) : fml m.sig xφ.ctx :=
     let yψ := σ.left
     let r : Fin xφ.ctx → Fin yψ.ctx := σ.hom.map
@@ -63,6 +87,17 @@ namespace Joshua
 
   -- given a map f : {x | φ} → {y | ψ}, "pulls back" a map over {y | ψ} to a map over {x | φ}
   -- Beware, it does not correspond to the pullback in the underlying category fmlInCtx; need to uncomment the var_eqs to get the pullback
+
+  /- Given a map zξ ---σ---> yφ, so have ξ ⊢ φ[σ y_i/y_i]
+           a map xφ ---ρ---> yψ so have φ ⊢ ψ[ρ y_i/y_i]
+    want a map to xφ
+     {x,z | φ ∧ ξ}---p2--->{z | ξ}
+       |                      |
+       p1                     σ
+       |                      |
+       v                      v
+      {x | φ} -----ρ-----> {y | ψ}
+  -/
   def pb_over (xφ yψ : fmlInCtx m) (f : xφ ⟶ yψ) (σ : Over yψ) : Over xφ :=
     let zξ := σ.left
     let φ' := xφ.formula.ren R.in10
@@ -83,10 +118,74 @@ namespace Joshua
 
   open SmallUniverse
 
+  /-A covering family on a formula-in-context xφ consists of
+    -Something in a small universe that indexing the family, acting the role of the indexing set
+    -for each element i of the "indexing set", a map to xφ
+     i.e. a bunch of maps y_i's ψ_i ---σ_i---> xφ
+    -A geometric proof that φ ⊢ ∨ ∃ y_i's. ψ_i ∧ σ_i (x_j) = x_j
+    -/
   structure CoveringFamily (xφ : fmlInCtx m) where
     index : U
     maps : El index -> Over xφ
     covering : xφ.formula ⊢ fml.infdisj index (fun i => cover_from_over xφ (maps i))
+
+
+  /-
+  def presieve_to_covering_family  {xφ : fmlInCtx m} (S : Presieve xφ) : CoveringFamily xφ where
+    index := sorry
+    maps := sorry
+    covering := sorry
+    not eligible because of size
+  -/
+
+  /-pullback of a covering family is a covering family
+   given a covering family cf over yφ,
+   i.e. a indexing set in the smallUniverse U, called I := cf.index
+   a family of maps indexing by I
+
+   The family over xφ is indexed also by I
+   i ↦ x,z_i. φ ∧ ξ_i
+   Recall
+     {x,z_i | φ ∧ ξ_i}---p2--->{z_i | ξ_i}
+       |                            |
+       p1                           σ
+       |                            |
+       v                            v
+      {x | φ} --------f--------> {y | ψ}
+
+      want xφ ⊢ ∨ i, ∃ x, z_i. φ ∧ ξ_i
+      (here the z_i is a tuple! NOT a single var name)
+      have xφ ⊢ yψ[f y_j/y_j]
+      yψ ⊢ ∨ i. ∃z_i. ξ_i ∧ y_j = σ y_j
+      by conjI and trans
+  -/
+
+  def pb_ConveringFamily  {xφ yψ : fmlInCtx m}  (f: xφ ⟶ yψ) (cf: CoveringFamily yψ):
+   CoveringFamily xφ where
+     index := cf.index
+     maps i := pb_over _ _ f (cf.maps i)
+     covering := by
+     -- xφ ⊢ ∨ i. ∃ x, z_i. (φ ∧ ξ_i) ∧ x_i = p1 (x_i)  under xφ.ctx
+     -- xφ ⊢ yψ[f y_j/y_j]
+     -- yψ[f y_j/y_j] ⊢ (∨ i . ∃ z_i. ξ_i ∧ y_j = σ y_j)[f y_j/y_j]
+     -- (∨ i . ∃ z_i. ξ_i ∧ y_j = σ y_j)[f y_j/y_j]
+     -- ? ⊢ ?
+     --  ∨ i. ∃ x, z_i. (φ ∧ ξ_i) ∧ x_i = p1 (x_i)
+
+      simp[cover_from_over]
+      let p:= cf.covering
+      let fp:= f.preserves_formula
+      --let p' := Hilbert.proof.infdisj_elim p
+      apply (Hilbert.proof.cut fp)
+
+      --apply Hilbert.proof.conj_intro
+      sorry
+
+
+  /-The information contained in a CoveringFamily structure on xφ
+    is a family of maps to xφ, such that xφ is covered by this family.
+    This information can turned into a presieve, containing precisely arrows of this
+    family. i.e. forget the information that there is a proof from xφ to some of the family.-/
 
   def covering_family_to_presieve {xφ : fmlInCtx m} (σs : CoveringFamily xφ)
     : Presieve xφ :=
@@ -97,6 +196,9 @@ namespace Joshua
 
   variable [UniverseClosureProps]
   open UniverseClosureProps
+
+  /-UniverseClosureProps is a small universe that contains a nonempty set uUnit,
+    the term utt witnesses nonemptiness of uUnit. -/
 
   def id_covers (xφ : fmlInCtx m) : CoveringFamily xφ where
     index := uUnit
@@ -117,12 +219,19 @@ namespace Joshua
 
   instance : GrothendieckTopology (fmlInCtx m) where
     sieves xφ S := ∃ σ : CoveringFamily xφ, covering_family_to_presieve σ ≤ S
+    --A sieve S on xφ is a covering sieve ↔
+    --exists a covering family of xφ such that the presieve generated by the covering family is contained in S
+      --pass through the construction of presieves so we can write the order ≤
     top_mem' := by
       intro xφ
       exists (id_covers xφ)
       intros yψ f h
-      constructor
-    pullback_stable' := sorry
+      constructor --Q: Why does it work?
+    pullback_stable' := by
+      intro xφ yψ S_xφ f h
+      cases' h with cf h
+      exists (pb_ConveringFamily f cf)
+      sorry
     transitive' := sorry
 
 end Joshua
@@ -375,6 +484,7 @@ theorem id_rep_functional [SmallUniverse] {T: theory} {n : RenCtx} (φ: fml T.si
         intro i
         simp [R.in10,R.in01,tm.subst,substn_left,substn_right]--some simp lemmas maybe
         apply Hilbert.any_eq_intro
+        rfl
     range := by
       simp[id_rep]
       apply Hilbert.proof.conj_intro
