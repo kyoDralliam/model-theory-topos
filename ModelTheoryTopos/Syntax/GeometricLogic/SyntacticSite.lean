@@ -248,7 +248,8 @@ namespace Joshua
   elSigmaBeta1 (x : El a) (y : El (b x)) : elSigmaPi1 (elSigmaPair (b:=b) x y) = x
   -- elSigmaBeta2 (x : El a) (y : El (b x)) : elSigmaPi2 (elSigmaPair (b:=b) x y) = elSigmaBeta1 x y ▸ iy
   elSigmaEta (p : El (uSigma a b)) : elSigmaPair (elSigmaPi1 p) (elSigmaPi2 p) = p
-
+  uchoice (A : U)  (X: El A → Type) (P: Π (a: El A), X a → Prop):
+     (∀ a : El A, ∃ (xa: X a), P a xa ) → ∃f: (Π a: El A, X a), (∀ a: El A, P a (f a))
   --def cuds (U: SmallUniverse) := ∀s: U. (Σ i : s, s ) ∈ U
 
   instance [SmallUniverse.UniverseClosureProps'] : GrothendieckTopology (fmlInCtx m) where
