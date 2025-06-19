@@ -22,8 +22,142 @@ abbrev in010 : Fin k -> Fin (n + k + k) := in10 ∘ in01
 abbrev in100 : Fin n -> Fin (n + k + k) := in10 ∘ in10
 end R
 
+
+
+lemma lift₁_zero {n n' : RenCtx} (f : n ⟶ n'):
+ lift₁ f 0 = 0 := by
+  simp[lift₁]
+
+lemma lift₁_succ {n n' : RenCtx} (f : n ⟶ n') (i: Fin n):
+ lift₁ f (Fin.succ i) = Fin.succ (f i) := by
+  simp[lift₁]
+
+
+
+def liftn {n1 n2 n : RenCtx} (f : n1 ⟶ n2) : (n1+n) ⟶ (n2+n) :=
+  Fin.casesAdd (R.in10 ∘ f) R.in01
+
+
+lemma liftn_left {n1 n2 n : RenCtx} (f : n1 ⟶ n2) (i: Fin n1):
+ liftn (n:=n) f (@R.in10 n1 n i) = @R.in10 n2 n (f i) := by
+  simp[liftn]
+
+lemma liftn_right {n1 n2 n : RenCtx} (f : n1 ⟶ n2) (i: Fin n) :
+ liftn (n:=n) f (@R.in01 n n1 i) = @R.in01 n n2 i := by
+  simp[liftn]
+
+theorem liftn_zero {n1 n2 : RenCtx} (f : n1 ⟶ n2) : liftn (n :=0) f = f := by
+  have p : ∀ x, liftn (n :=0) f x = f x := by
+    fapply Fin.casesAdd
+    · intro i
+      apply liftn_left
+    intro i; exact Fin.elim0 i
+  funext
+  apply p
+
+
+
+lemma addNat_succ :
+  (@R.in10 n1 (n2 + 1) i) =  Fin.succ (@R.in10 n1 n2 i) := by
+  simp[Fin.addNat]
+  rfl
+
+#check Fin.succ
+lemma castAdd'_succ {n m} (i: Fin m):
+ Fin.castAdd' n i.succ = (Fin.castAdd' n i).succ := by
+ simp[Fin.castAdd']
+
+
+lemma lift₁_liftn {n n' : RenCtx} (f : n ⟶ n') :
+  lift₁ f = @liftn n n' 1 f := by
+  have p: ∀ i : Fin (n+1), lift₁ f i = @liftn _ _ 1 f i := by
+   apply @Fin.casesAdd
+   · intro i
+     have e: (i.addNat 1) = @R.in10 n 1 i := rfl
+     simp only[e,liftn_left]
+     simp[addNat_succ,lift₁]
+   · intro i
+     simp[liftn_right,lift₁]
+     have e: i = 0 := by
+      ext : 1
+      simp_all only [Fin.val_eq_zero, Fin.isValue]
+     have e' : (Fin.castAdd' n 0) = (0: Fin (n + 1)) := rfl
+     simp[e,e']
+     rfl
+  funext i
+  apply p
+
+lemma liftn_add {n1 n2 m1 m2 : RenCtx} (f : n1 ⟶ n2) (i: Fin n1):
+ liftn (liftn f (n:=m1)) (n:=m2) (R.in10 (R.in10 i))=
+ Fin.cast ((Nat.add_assoc n2 m1 m2).symm)
+  (liftn f (n:= m1 + m2) (R.in10 i)):= by
+  simp[liftn_left]
+  simp[Fin.cast]
+  ext
+  simp[Fin.addNat]
+  simp[Nat.add_assoc]
+
+lemma lift1_liftn_left {n1 n2 n : RenCtx} (f : n1 ⟶ n2) (i: Fin n1) :
+  lift₁ (liftn f) (R.in10 (R.in10 i)) = @liftn _ _ (n+ 1) f (R.in10 i) := by
+  simp only[lift₁_liftn,liftn_add,Fin.cast,liftn_left]
+  simp[Fin.addNat,Nat.add_assoc]
+
+  --(n2 + n) + 1
+lemma liftn_liftn_right {n1 n2 n : RenCtx} (f : n1 ⟶ n2) (i: Fin n) :
+  lift₁ (liftn f) (R.in10 (R.in01 i)) = @liftn _ _ (n+ 1) f (R.in01 (R.in10 i)) := by
+  simp only[lift₁_liftn,liftn_add,Fin.cast,liftn_left,liftn_right]
+  simp[Fin.addNat,Fin.castAdd']
+  simp[castAdd'_succ]
+
+lemma liftn_liftn_zero {n1 n2 n : RenCtx} (f : n1 ⟶ n2) (i: Fin 1) :
+  lift₁ (liftn f) (R.in01 (R.in01 i)) = @liftn _ _ (n+ 1) f (R.in01 (R.in01 i)) := by
+  simp only[lift₁_liftn,liftn_add,Fin.cast,liftn_left,liftn_right]
+  rfl
+
+
+
+
+lemma liftn_alt0 {n1 n2 n : RenCtx} (f : n1 ⟶ n2) :
+  ∀ x, lift₁ (liftn f) x = @liftn _ _ (n+ 1) f x:= by
+  apply @Fin.casesAdd n1 (n+ 1)
+  · intro i
+    apply lift1_liftn_left
+  · apply Fin.casesAdd
+    · apply liftn_liftn_right
+    · apply liftn_liftn_zero
+
+lemma liftn_alt {n1 n2 n : RenCtx} (f : n1 ⟶ n2) :
+   lift₁ (liftn f) = @liftn _ _ (n+ 1) f :=
+   by
+   funext x
+   apply liftn_alt0
+
+
+
+
+
 namespace Joshua
   variable [SmallUniverse]
+
+/-
+theorem R.in01_natAdd : R.in01 i = Fin.natAdd m i := by
+  simp[Fin.natAdd]
+
+  sorry
+  -/
+
+
+
+theorem ren_existsn {n1 n2 n m} (f: n1 ⟶ n2) (φ : fml m (n1 + n)):
+ fml.ren f (fml.existsn φ) = fml.existsn (fml.ren (liftn f) φ) := by
+ induction n with
+ | zero =>
+   simp[fml.existsn,liftn]
+   congr
+ | succ n ih =>
+   simp[fml.existsn,liftn,fml.ren,ih,liftn_alt]
+
+
 
   /-the category of formulas of context consists of:
     obj: a context, i.e. a natural number, and a formula in this context
@@ -102,16 +236,19 @@ namespace Joshua
     let zξ := σ.left
     let φ' := xφ.formula.ren R.in10
     let ξ' := zξ.formula.ren R.in01
-    -- let r : Fin yψ.ctx → Fin zξ.ctx := σ.hom.map
-    -- let var_eqs := fml.eqs (k:=yψ.ctx) (fun i => .var (R.in10 (f.map i))) (fun i => .var (R.in01 (r i)))
+    let r : Fin yψ.ctx → Fin zξ.ctx := σ.hom.map
+    let var_eqs : fml m.sig (xφ.ctx + zξ.ctx) :=
+      fml.eqs (k:=yψ.ctx) (fun i => .var (R.in10 (f.map i))) (fun i => .var (R.in01 (r i)))
     let xzφξ : fmlInCtx m := {
         ctx := xφ.ctx + zξ.ctx
-        formula := (φ'.conj ξ') --.conj var_eqs
+        formula := .conj (φ'.conj ξ') var_eqs
       }
     let f : xzφξ ⟶ xφ := {
       map := R.in10
       preserves_formula := by
         simp [xzφξ]
+        apply Hilbert.proof.cut
+        apply Hilbert.proof.conj_elim_l
         apply Hilbert.proof.conj_elim_l
     }
     Over.mk f
@@ -160,10 +297,14 @@ namespace Joshua
       by conjI and trans
   -/
 
+ theorem Hilbert.conj_copy [SmallUniverse] {T: theory} (φ ψ : fml T.sig n) :
+ Hilbert.proof φ ψ → Hilbert.proof φ (fml.conj φ ψ) := by
+   sorry
+
   def pb_ConveringFamily  {xφ yψ : fmlInCtx m}  (f: xφ ⟶ yψ) (cf: CoveringFamily yψ):
    CoveringFamily xφ where
      index := cf.index
-     maps i := pb_over _ _ f (cf.maps i)
+     maps i := pb_over xφ yψ f (cf.maps i)
      covering := by
      -- xφ ⊢ ∨ i. ∃ x, z_i. (φ ∧ ξ_i) ∧ x_i = p1 (x_i)  under xφ.ctx
      -- xφ ⊢ yψ[f y_j/y_j]
@@ -173,10 +314,20 @@ namespace Joshua
      --  ∨ i. ∃ x, z_i. (φ ∧ ξ_i) ∧ x_i = p1 (x_i)
 
       simp[cover_from_over]
-      let p:= cf.covering
-      let fp:= f.preserves_formula
+      have p:= Hilbert.proof.ren (ρ :=f.map) cf.covering
+      have xφyψ := f.preserves_formula
+      have xφ_to_ren := Hilbert.proof.cut xφyψ p
+      simp[fml.ren] at xφ_to_ren p
+      have xφ_to_xφ_ren := Hilbert.conj_copy _ _ xφ_to_ren
+      apply Hilbert.proof.cut xφ_to_xφ_ren
+
+
+
+
+
+      have fp:= f.preserves_formula
       --let p' := Hilbert.proof.infdisj_elim p
-      apply (Hilbert.proof.cut fp)
+      --apply (Hilbert.proof.cut fp)
 
       --apply Hilbert.proof.conj_intro
       sorry
@@ -254,6 +405,44 @@ namespace Joshua
   (∀ a : El A, Inhabited (X a) ) → Inhabited (Π a: El A, X a)
   --Nonempty vs Inhabited?
 
+  def isCov {xφ : fmlInCtx m} (S: Sieve xφ ) :=
+     ∃ σ : CoveringFamily xφ, covering_family_to_presieve σ ≤ S
+
+  lemma pullback_isCov {xφ yψ: fmlInCtx m} (f:yψ ⟶  xφ ) (S: Sieve xφ )
+   (h: isCov S) : isCov (Sieve.pullback f S) := by
+    simp[isCov]
+    sorry
+
+  open Joshua.SmallUniverse.UniverseClosureProps' in
+  def CoveringFamily_Union [SmallUniverse.UniverseClosureProps']
+   {xφ: fmlInCtx m} (C: CoveringFamily xφ)
+   (Cs: Π i: El C.index, CoveringFamily (C.maps i).left) :
+   CoveringFamily xφ where
+     index :=
+      let sel := fun i => (Cs i).index
+      uSigma C.index sel
+     maps i:=
+      let i1 := elSigmaPi1 i
+      let i2 := elSigmaPi2 i
+      let Onxφ := C.maps i1
+      let Γc := Onxφ.left
+      let onΓc := (Cs i1).maps i2
+      (Over.map Onxφ.hom).obj onΓc
+
+    --  CategoryTheory.Over.map
+    --           (C.maps (SmallUniverse.UniverseClosureProps'.elSigmaPi1 i )).hom
+    --           sorry
+     covering := by
+      simp
+      have h := C.covering
+      apply Hilbert.proof.cut h
+      --have h' :=
+
+      sorry
+
+  --lemma transitive_isCov
+
+  --#check Nonempty
   instance [SmallUniverse.UniverseClosureProps'] : GrothendieckTopology (fmlInCtx m) where
     sieves xφ  :=   {S : Sieve xφ |∃ σ : CoveringFamily xφ, covering_family_to_presieve σ ≤ S}
     --A sieve S on xφ is a covering sieve ↔
@@ -270,6 +459,7 @@ namespace Joshua
       exists (pb_ConveringFamily f cf)
       intros zξ g h
       simp[Sieve.pullback]
+      convert_to S_xφ.arrows (g ≫ f)
 
       --simp [covering_family_to_presieve_eval] at h
       sorry
@@ -445,6 +635,9 @@ theorem Hilbert.conj_add_true [SmallUniverse] {T: theory} (φ ψ : fml T.sig n) 
     apply Hilbert.proof.conj_intro
     · exact Hilbert.proof.var
     · exact Hilbert.proof.true_intro
+
+
+
 
 -- namespace Example
 
