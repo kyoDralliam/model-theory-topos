@@ -62,7 +62,6 @@ lemma addNat_succ :
   simp[Fin.addNat]
   rfl
 
-#check Fin.succ
 lemma castAdd'_succ {n m} (i: Fin m):
  Fin.castAdd' n i.succ = (Fin.castAdd' n i).succ := by
  simp[Fin.castAdd']
@@ -299,7 +298,59 @@ theorem ren_existsn {n1 n2 n m} (f: n1 ⟶ n2) (φ : fml m (n1 + n)):
 
  theorem Hilbert.conj_copy [SmallUniverse] {T: theory} (φ ψ : fml T.sig n) :
  Hilbert.proof φ ψ → Hilbert.proof φ (fml.conj φ ψ) := by
-   sorry
+   intro p
+   apply Hilbert.proof.conj_intro
+   · apply Hilbert.proof.var
+   · assumption
+
+  theorem conj_infdisj_distr_d1 :
+   Hilbert.proof (fml.conj φ (fml.infdisj a f))
+    (fml.infdisj a (fun i => fml.conj φ (f i))) := by
+     apply Hilbert.proof.infdisj_elim (Hilbert.proof.conj_elim_r)
+     intro k
+     have p : (f k).conj (φ.conj (fml.infdisj a f)) ⊢ fml.conj φ (f k) := by
+      apply Hilbert.proof.conj_intro
+      · have p1 :
+         (f k).conj (φ.conj (fml.infdisj a f)) ⊢ (φ.conj (fml.infdisj a f)) := by
+         apply Hilbert.proof.conj_elim_r
+        apply Hilbert.proof.cut p1
+        apply Hilbert.proof.conj_elim_l
+      · apply Hilbert.proof.conj_elim_l
+     apply Hilbert.proof.cut p
+     apply Hilbert.proof.infdisj_intro k
+
+
+
+  theorem infdisj_elim' (a : SmallUniverse.U)
+   (φ : SmallUniverse.El a → fml _ m) :
+   (∀ k, φ k ⊢ ψ) → fml.infdisj a φ ⊢ ψ := by
+    intro h
+    have p: (fml.infdisj a φ) ⊢ (fml.infdisj a φ) := by
+     apply Hilbert.proof.var
+    apply Hilbert.proof.infdisj_elim p
+    intro k
+    have p' : (φ k).conj (fml.infdisj a φ) ⊢ φ k := by apply Hilbert.proof.conj_elim_l
+    apply Hilbert.proof.cut p'
+    apply h
+
+
+
+  theorem conj_infdisj_distr_d2 :
+   Hilbert.proof
+    (fml.infdisj a (fun i => fml.conj φ (f i)))
+    (fml.conj φ (fml.infdisj a f)) := by
+    apply Hilbert.proof.conj_intro
+    · apply infdisj_elim'
+      intro k
+      apply Hilbert.proof.conj_elim_l
+    · apply infdisj_elim'
+      intro k
+      have p: φ.conj (f k) ⊢ f k := by
+        apply Hilbert.proof.conj_elim_r
+      apply Hilbert.proof.cut p
+      apply Hilbert.proof.infdisj_intro k
+
+
 
   def pb_ConveringFamily  {xφ yψ : fmlInCtx m}  (f: xφ ⟶ yψ) (cf: CoveringFamily yψ):
    CoveringFamily xφ where
