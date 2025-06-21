@@ -208,6 +208,18 @@ theorem ren_existsn {n1 n2 n m} (f: n1 ⟶ n2) (φ : fml m (n1 + n)):
     formula is effectively ∃y. ψ ∧ x_i = σ (x_i)
     saying each of such tuple x has some tuple y satisfying property ψ that is mapped to it.
   -/
+
+  def cover_from_over.represent_renaming (xφ : fmlInCtx m) (σ : Over xφ)
+   :fml m.sig (xφ.ctx + σ.left.ctx) :=
+      .eqs (k:=xφ.ctx)
+        (fun i => .var (R.in10 i)) -- x_i
+        (fun i => .var (R.in01 (σ.hom.map i))) -- σ(x_i)
+
+  def cover_from_over_body  (xφ : fmlInCtx m) (σ : Over xφ):=
+    let yψ := σ.left
+    let yψr : fml m.sig (xφ.ctx + yψ.ctx) := yψ.formula.ren R.in01
+    fml.conj yψr (cover_from_over.represent_renaming xφ σ)
+
   def cover_from_over (xφ : fmlInCtx m) (σ : Over xφ) : fml m.sig xφ.ctx :=
     let yψ := σ.left
     let r : Fin xφ.ctx → Fin yψ.ctx := σ.hom.map
@@ -217,6 +229,9 @@ theorem ren_existsn {n1 n2 n m} (f: n1 ⟶ n2) (φ : fml m (n1 + n)):
         (fun i => .var (R.in10 i)) -- x_i
         (fun i => .var (R.in01 (r i))) -- σ(x_i)
     .existsn (n':=yψ.ctx) (.conj yψr represent_renaming)
+
+  lemma cover_from_over'  (xφ : fmlInCtx m) (σ : Over xφ)  :
+    cover_from_over xφ σ = fml.existsn (cover_from_over_body  xφ σ ) := rfl
 
   -- given a map f : {x | φ} → {y | ψ}, "pulls back" a map over {y | ψ} to a map over {x | φ}
   -- Beware, it does not correspond to the pullback in the underlying category fmlInCtx; need to uncomment the var_eqs to get the pullback
@@ -352,36 +367,116 @@ theorem ren_existsn {n1 n2 n m} (f: n1 ⟶ n2) (φ : fml m (n1 + n)):
 
 
 
+  theorem push_conj_into_existsn  :
+   Hilbert.proof (fml.conj φ (fml.existsn ψ))
+    (fml.existsn (fml.conj (fml.ren R.in10 φ) ψ) ):= by
+
+    sorry
+
+  -- theorem push_conj_into_existsn (m n : RenCtx ) (φ : fml _ m) (ψ: fml _ (m+n)) :
+  --  Hilbert.proof (fml.conj φ (fml.existsn ψ))
+  --   (fml.existsn (fml.conj (fml.ren ((@R.in01 m n):  m ⟶ m + n) φ) ψ)) := by
+
+  --   sorry
+  theorem proof.existn_elim' {m: theory}{n k }  (ψ : fml m.sig k) (φ : fml _ (k + n)) :
+  Hilbert.proof φ (fml.ren R.in10 ψ) -> Hilbert.proof (fml.existsn φ) ψ := by
+    apply Hilbert.proof.existn_elim
+
+
+  theorem proof.var' {m: theory}{k }  (φ ψ: fml m.sig k) (e: φ = ψ):
+  Hilbert.proof φ ψ := sorry
+
+  theorem fml.subst_cong : σ1 = σ2 → fml.subst σ1 f = fml.subst σ2 f := sorry
+
+
+  theorem Hilbert.proof.eqs_elim (i) :
+  Hilbert.proof (fml.eq (lhs i) (rhs i)) φ → Hilbert.proof (fml.eqs lhs rhs) φ := sorry
+
   def pb_ConveringFamily  {xφ yψ : fmlInCtx m}  (f: xφ ⟶ yψ) (cf: CoveringFamily yψ):
    CoveringFamily xφ where
      index := cf.index
      maps i := pb_over xφ yψ f (cf.maps i)
      covering := by
-     -- xφ ⊢ ∨ i. ∃ x, z_i. (φ ∧ ξ_i) ∧ x_i = p1 (x_i)  under xφ.ctx
-     -- xφ ⊢ yψ[f y_j/y_j]
-     -- yψ[f y_j/y_j] ⊢ (∨ i . ∃ z_i. ξ_i ∧ y_j = σ y_j)[f y_j/y_j]
-     -- (∨ i . ∃ z_i. ξ_i ∧ y_j = σ y_j)[f y_j/y_j]
-     -- ? ⊢ ?
-     --  ∨ i. ∃ x, z_i. (φ ∧ ξ_i) ∧ x_i = p1 (x_i)
-
-      simp[cover_from_over]
       have p:= Hilbert.proof.ren (ρ :=f.map) cf.covering
       have xφyψ := f.preserves_formula
       have xφ_to_ren := Hilbert.proof.cut xφyψ p
       simp[fml.ren] at xφ_to_ren p
       have xφ_to_xφ_ren := Hilbert.conj_copy _ _ xφ_to_ren
       apply Hilbert.proof.cut xφ_to_xφ_ren
+      let fm := fun i ↦ fml.ren f.map (cover_from_over yψ (cf.maps i))
+      let fm' := fun i ↦ xφ.formula.conj (fml.ren f.map (cover_from_over yψ (cf.maps i)))
+      have d: xφ.formula.conj (fml.infdisj cf.index fm) ⊢ (fml.infdisj cf.index fm') :=
+       @conj_infdisj_distr_d1 _ _ _ xφ.formula cf.index fm
+      apply Hilbert.proof.cut d
+      apply infdisj_elim'
+      intro k
+      let fmlk := cover_from_over xφ (pb_over xφ yψ f (cf.maps k))
+      have p1 :  fm' k ⊢ fmlk := by
+         simp[fm',fmlk,cover_from_over',ren_existsn]
+         let ff := (fml.ren (liftn f.map) (cover_from_over_body yψ (cf.maps k)))
+         have p2 : xφ.formula.conj ff.existsn
+           ⊢ (fml.conj (fml.ren R.in10  xφ.formula) ff).existsn
+            := by
+            apply push_conj_into_existsn
+         apply Hilbert.proof.cut p2
+         apply proof.existn_elim'
+         simp[ren_existsn]
+         let varin10: Fin xφ.ctx -> tm m.sig (xφ.ctx + (cf.maps k).left.ctx):= fun i => tm.var (R.in10 i)
+         let varin01: Fin (cf.maps k).left.ctx -> tm m.sig (xφ.ctx + (cf.maps k).left.ctx):= fun i => tm.var (R.in01 i)
+         apply Hilbert.proof.existn_intro (Fin.casesAdd varin10 varin01)
+         simp[fml.ren_to_subst,← fml.subst_comp]
+         simp[cover_from_over_body,fml.subst]
+         apply Hilbert.proof.conj_intro
+         · simp[pb_over,fml.ren,fml.ren_to_subst,fml.subst]
+           apply Hilbert.proof.conj_intro
+           · apply Hilbert.proof.conj_intro
+             · simp[← fml.subst_comp]
+               apply Hilbert.proof.cut (Hilbert.proof.conj_elim_l)
+               convert Hilbert.proof.var
+               rename_i v
+               simp[CategoryStruct.comp,RelativeMonad.bind,tm.subst,
+                    liftn_right,substn_right,varin10]
+             · simp[← fml.subst_comp]
+               apply Hilbert.proof.cut (Hilbert.proof.conj_elim_r)
+               simp[ff,fml.ren_to_subst,cover_from_over_body,← fml.subst_comp,
+                    fml.subst]
+               apply Hilbert.proof.cut (Hilbert.proof.conj_elim_l)
+               apply proof.var'
+               apply fml.subst_cong
+               funext v
+               simp[CategoryStruct.comp,RelativeMonad.bind,tm.subst,liftn_right,
+               substn_right,varin01]
+           · apply Hilbert.proof.cut (Hilbert.proof.conj_elim_r)
+             simp[ff]
+             simp[← fml.subst_comp,fml.subst_eqs, Hilbert.proof.eqs_iff]
+             intro i
+             simp[tm.subst]
+             simp[CategoryStruct.comp,RelativeMonad.bind,tm.subst,
+                    liftn_right,substn_right,varin10,varin01]
+             simp[cover_from_over_body,fml.ren_to_subst,← fml.subst_comp,fml.subst]
+             apply Hilbert.proof.cut (Hilbert.proof.conj_elim_r)
+             simp[cover_from_over.represent_renaming,fml.subst_eqs]
+             apply Hilbert.proof.eqs_elim i
+             simp[tm.subst,liftn_left,liftn_right]
+             apply Hilbert.proof.var
+         · simp[← fml.subst_comp,fml.subst_eqs, Hilbert.proof.eqs_iff,cover_from_over.represent_renaming]
+           intro i
+           apply Hilbert.any_eq_intro
+           simp[tm.subst]
+           simp[CategoryStruct.comp,RelativeMonad.bind,tm.subst,
+                    liftn_right,substn_right,varin10,varin01,liftn_left,substn_left]
+           simp[pb_over]
+           apply substn_left --this one does not need the LHS assumptions
+      apply Hilbert.proof.cut p1
+      simp[fmlk]
+      apply Hilbert.proof.infdisj_intro k
 
 
 
 
 
-      have fp:= f.preserves_formula
-      --let p' := Hilbert.proof.infdisj_elim p
-      --apply (Hilbert.proof.cut fp)
 
-      --apply Hilbert.proof.conj_intro
-      sorry
+
 
 
   /-The information contained in a CoveringFamily structure on xφ

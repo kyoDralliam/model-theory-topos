@@ -44,7 +44,7 @@ def proof.existn_intro {n k : Subst T.sig} (σ : n ⟶ k) (ψ : fml T.sig k) (φ
     apply cut h
     apply existsQ_intro
 
-def proof.existn_elim {n k : Subst T.sig} (σ : n ⟶ k) (ψ : fml T.sig k) (φ : fml T.sig (k + n)) :
+def proof.existn_elim {n k : Subst T.sig}  (ψ : fml T.sig k) (φ : fml T.sig (k + n)) :
   proof φ (ψ.ren (fun i ↦ i.addNat n)) -> proof φ.existsn ψ  := by
   induction n generalizing ψ with
   | zero =>
@@ -55,7 +55,7 @@ def proof.existn_elim {n k : Subst T.sig} (σ : n ⟶ k) (ψ : fml T.sig k) (φ 
   | succ i ih =>
     simp only [fml.existsn]
     intros
-    apply ih (σ ∘ Fin.succ)
+    apply ih
     apply existsQ_elim
     rw [<-fml.ren_comp]
     assumption
@@ -155,4 +155,3 @@ theorem any_eq_intro {T: theory} {n : RenCtx} (φ: fml T.sig n) (t u: tm T.sig n
 
 
 end Hilbert
-
