@@ -384,13 +384,28 @@ theorem ren_existsn {n1 n2 n m} (f: n1 ⟶ n2) (φ : fml m (n1 + n)):
 
 
   theorem proof.var' {m: theory}{k }  (φ ψ: fml m.sig k) (e: φ = ψ):
-  Hilbert.proof φ ψ := sorry
+  Hilbert.proof φ ψ := by
+   convert Hilbert.proof.var
 
-  theorem fml.subst_cong : σ1 = σ2 → fml.subst σ1 f = fml.subst σ2 f := sorry
+
+  theorem fml.subst_cong : σ1 = σ2 → fml.subst σ1 f = fml.subst σ2 f := by
+    intro h
+    congr
+
+
+  theorem Hilbert.proof.eqs_eq (i) :
+  Hilbert.proof (fml.eqs ts1 ts2)  (fml.eq  (ts1 i) (ts2 i)) := by
+   apply Hilbert.proof.eqs'
+   apply Hilbert.proof.var
+
 
 
   theorem Hilbert.proof.eqs_elim (i) :
-  Hilbert.proof (fml.eq (lhs i) (rhs i)) φ → Hilbert.proof (fml.eqs lhs rhs) φ := sorry
+  Hilbert.proof (fml.eq (lhs i) (rhs i)) φ → Hilbert.proof (fml.eqs lhs rhs) φ := by
+   intro h
+   apply Hilbert.proof.cut (Hilbert.proof.eqs_eq i)
+   assumption
+
 
   def pb_ConveringFamily  {xφ yψ : fmlInCtx m}  (f: xφ ⟶ yψ) (cf: CoveringFamily yψ):
    CoveringFamily xφ where
