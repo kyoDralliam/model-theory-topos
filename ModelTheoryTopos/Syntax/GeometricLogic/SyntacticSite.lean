@@ -686,7 +686,7 @@ theorem ren_existsn {n1 n2 n m} (f: n1 ⟶ n2) (φ : fml m (n1 + n)):
     convert_to
        covering_family_to_presieve w (h1 ≫ f)
     simp[covering_family_to_presieve]
-    dsimp[covering_family_to_presieve,pb_ConveringFamily]
+    --dsimp[covering_family_to_presieve,pb_ConveringFamily]
 
     have hh := (pb_ConveringFamily f w).covering
     sorry
