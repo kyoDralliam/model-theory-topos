@@ -151,6 +151,9 @@ theorem ren_comp (f : n1 ⟶ n2) (g : n2 ⟶ n3) (t : fml m n1):
   | eq t u => simp only [ren, tm.ren_comp]
   | existsQ φ ih => simp only [ren, lift₁_comp, ih]
 
+
+
+
 theorem subst_id {n : Subst m} (f : fml m n)
   : subst (𝟙 n) f = f := by
   induction f with

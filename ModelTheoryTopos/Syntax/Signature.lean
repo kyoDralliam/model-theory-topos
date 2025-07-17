@@ -37,6 +37,7 @@ theorem lift₁_comp : lift₁ (f ≫ g) = lift₁ f ≫ lift₁ g := by
   funext i ; simp [lift₁, CategoryStruct.comp]
   induction i using Fin.cases <;> simp?
 
+
 def tm.ren {n n' : RenCtx} (f : n ⟶ n') : tm m n -> tm m n'
 | .var i => .var (f i)
 | .op o k => .op o (fun i => (k i).ren f)

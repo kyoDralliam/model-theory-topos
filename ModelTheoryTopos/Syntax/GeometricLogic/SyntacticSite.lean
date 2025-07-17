@@ -174,6 +174,7 @@ theorem ren_existsn {n1 n2 n m} (f: n1 ⟶ n2) (φ : fml m (n1 + n)):
     map : yψ.ctx ⟶ xφ.ctx
     preserves_formula : xφ.formula ⊢ yψ.formula.ren map
 
+
   def idMap (xφ : fmlInCtx m) : fmlMap xφ xφ where
     map := 𝟙 xφ.ctx
     preserves_formula := by
@@ -191,6 +192,12 @@ theorem ren_existsn {n1 n2 n m} (f: n1 ⟶ n2) (φ : fml m (n1 + n)):
     Hom := fmlMap
     id := idMap
     comp := compMap
+
+  @[ext (iff := false)]
+  lemma fmlMap_eq  (xφ yψ : fmlInCtx m) (f g: xφ ⟶ yψ):
+   f.map = g.map → f = g := by
+   intro a
+   sorry
 
 
   /-Given a theory m, formula-in-context xφ and a map σ over xφ,
@@ -246,6 +253,45 @@ theorem ren_existsn {n1 n2 n m} (f: n1 ⟶ n2) (φ : fml m (n1 + n)):
        v                      v
       {x | φ} -----ρ-----> {y | ψ}
   -/
+  def pb_over_obj  {xφ yψ : fmlInCtx m} (f : xφ ⟶ yψ) (σ : Over yψ) : fmlInCtx m :=
+    let zξ := σ.left
+    let φ' := xφ.formula.ren R.in10
+    let ξ' := zξ.formula.ren R.in01
+    let r : Fin yψ.ctx → Fin zξ.ctx := σ.hom.map
+    let var_eqs : fml m.sig (xφ.ctx + zξ.ctx) :=
+      fml.eqs (k:=yψ.ctx) (fun i => .var (R.in10 (f.map i))) (fun i => .var (R.in01 (r i)))
+    let xzφξ : fmlInCtx m := {
+        ctx := xφ.ctx + zξ.ctx
+        formula := .conj (φ'.conj ξ') var_eqs
+      }
+    xzφξ
+
+  --def pb_over_hom  (xφ yψ : fmlInCtx m) (f : xφ ⟶ yψ) (σ : Over yψ)
+
+
+
+
+  def pb_over1 (xφ yψ : fmlInCtx m) (f : xφ ⟶ yψ) (σ : Over yψ) : Over xφ :=
+    let zξ := σ.left
+    let φ' := xφ.formula.ren R.in10
+    let ξ' := zξ.formula.ren R.in01
+    let r : Fin yψ.ctx → Fin zξ.ctx := σ.hom.map
+    let var_eqs : fml m.sig (xφ.ctx + zξ.ctx) :=
+      fml.eqs (k:=yψ.ctx) (fun i => .var (R.in10 (f.map i))) (fun i => .var (R.in01 (r i)))
+    let xzφξ : fmlInCtx m := {
+        ctx := xφ.ctx + zξ.ctx
+        formula := .conj (φ'.conj ξ') var_eqs
+      }
+    let f : xzφξ ⟶ xφ := {
+      map := R.in10
+      preserves_formula := by
+        simp [xzφξ]
+        apply Hilbert.proof.cut
+        apply Hilbert.proof.conj_elim_l
+        apply Hilbert.proof.conj_elim_l
+    }
+    Over.mk f
+
   def pb_over (xφ yψ : fmlInCtx m) (f : xφ ⟶ yψ) (σ : Over yψ) : Over xφ :=
     let zξ := σ.left
     let φ' := xφ.formula.ren R.in10
@@ -267,6 +313,44 @@ theorem ren_existsn {n1 n2 n m} (f: n1 ⟶ n2) (φ : fml m (n1 + n)):
     }
     Over.mk f
 
+
+  def pb_over' (xφ yψ : fmlInCtx m) (f : xφ ⟶ yψ) (σ : Over yψ)  :=
+    let zξ := σ.left
+    let φ' := xφ.formula.ren R.in10
+    let ξ' := zξ.formula.ren R.in01
+    let r : Fin yψ.ctx → Fin zξ.ctx := σ.hom.map
+    let var_eqs : fml m.sig (xφ.ctx + zξ.ctx) :=
+      fml.eqs (k:=yψ.ctx) (fun i => .var (R.in10 (f.map i))) (fun i => .var (R.in01 (r i)))
+    let xzφξ : fmlInCtx m := {
+        ctx := xφ.ctx + zξ.ctx
+        formula := .conj (φ'.conj ξ') var_eqs
+      }
+    let f : xzφξ ⟶ zξ:= {
+      map := R.in01
+      preserves_formula := by
+        simp [xzφξ]
+        apply Hilbert.proof.cut
+        apply Hilbert.proof.conj_elim_l
+        apply Hilbert.proof.conj_elim_r
+    }
+    Over.mk f
+
+
+
+  lemma fmlMap_comp_map {xφ yψ zξ: fmlInCtx m}
+    (f : xφ ⟶ yψ) (g: yψ⟶ zξ) :
+    (f ≫ g).map = g.map ≫ f.map := by
+     simp[CategoryStruct.comp,compMap]
+
+
+  lemma pb_over_comm (xφ yψ : fmlInCtx m) (f : xφ ⟶ yψ) (σ : Over yψ):
+    (pb_over xφ yψ f σ).hom ≫ f = (pb_over' xφ yψ f σ).hom ≫ σ.hom := by
+    ext
+    simp[fmlMap_comp_map]
+    simp[pb_over,pb_over']
+    sorry
+
+
   open SmallUniverse
 
   /-A covering family on a formula-in-context xφ consists of
@@ -281,6 +365,7 @@ theorem ren_existsn {n1 n2 n m} (f: n1 ⟶ n2) (φ : fml m (n1 + n)):
     covering : xφ.formula ⊢ fml.infdisj index (fun i => cover_from_over xφ (maps i))
 
 
+  --def CoveringFamily_mk {index: U} (maps: El index -> Over xφ) maps covering
   /-
   def presieve_to_covering_family  {xφ : fmlInCtx m} (S : Presieve xφ) : CoveringFamily xφ where
     index := sorry
@@ -406,12 +491,22 @@ theorem ren_existsn {n1 n2 n m} (f: n1 ⟶ n2) (φ : fml m (n1 + n)):
    apply Hilbert.proof.cut (Hilbert.proof.eqs_eq i)
    assumption
 
+  example (a b c : Nat) : a + b = c := by
+   generalize h : a + b = d
+
+   sorry
+  /-
+  a b c d : Nat
+  h : a + b = d
+  ⊢ d = c
+  -/
 
   def pb_ConveringFamily  {xφ yψ : fmlInCtx m}  (f: xφ ⟶ yψ) (cf: CoveringFamily yψ):
    CoveringFamily xφ where
      index := cf.index
      maps i := pb_over xφ yψ f (cf.maps i)
      covering := by
+      --generalize h : xφ.formula = φ
       have p:= Hilbert.proof.ren (ρ :=f.map) cf.covering
       have xφyψ := f.preserves_formula
       have xφ_to_ren := Hilbert.proof.cut xφyψ p
@@ -424,6 +519,8 @@ theorem ren_existsn {n1 n2 n m} (f: n1 ⟶ n2) (φ : fml m (n1 + n)):
        @conj_infdisj_distr_d1 _ _ _ xφ.formula cf.index fm
       apply Hilbert.proof.cut d
       apply infdisj_elim'
+      generalize h : fml.infdisj cf.index (fun i ↦ fml.ren f.map (cover_from_over yψ (cf.maps i))) = a
+
       intro k
       let fmlk := cover_from_over xφ (pb_over xφ yψ f (cf.maps k))
       have p1 :  fm' k ⊢ fmlk := by
@@ -516,7 +613,11 @@ theorem ren_existsn {n1 n2 n m} (f: n1 ⟶ n2) (φ : fml m (n1 + n)):
   lemma presieve_of_pb_ConveringFamily
   {xφ yψ : fmlInCtx m}  (f: xφ ⟶ yψ) (cf: CoveringFamily yψ)
   {zξ: fmlInCtx m} (g: zξ ⟶ xφ):
-  covering_family_to_presieve (pb_ConveringFamily f cf) g = sorry := sorry
+  covering_family_to_presieve (pb_ConveringFamily f cf) g =
+   (∃ (i : El cf.index), pb_over xφ yψ f (cf.maps i) = Over.mk g)
+   := by
+   simp[pb_ConveringFamily,covering_family_to_presieve]
+
 
   --∃ (i : El cf.index), g = (pb_over _ _ f sorry).hom := sorry
 
@@ -572,6 +673,22 @@ theorem ren_existsn {n1 n2 n m} (f: n1 ⟶ n2) (φ : fml m (n1 + n)):
   lemma pullback_isCov {xφ yψ: fmlInCtx m} (f:yψ ⟶  xφ ) (S: Sieve xφ )
    (h: isCov S) : isCov (Sieve.pullback f S) := by
     simp[isCov]
+    cases' h with w h
+    use pb_ConveringFamily f w
+    intro zξ h1
+    convert_to
+     covering_family_to_presieve (pb_ConveringFamily f w) h1 →  (Sieve.pullback f S).arrows h1
+    rw[presieve_of_pb_ConveringFamily,Sieve.pullback]
+    intro e
+    simp
+    apply h
+    have ⟨e1,p1⟩ := e
+    convert_to
+       covering_family_to_presieve w (h1 ≫ f)
+    simp[covering_family_to_presieve]
+    dsimp[covering_family_to_presieve,pb_ConveringFamily]
+
+    have hh := (pb_ConveringFamily f w).covering
     sorry
 
   open Joshua.SmallUniverse.UniverseClosureProps' in

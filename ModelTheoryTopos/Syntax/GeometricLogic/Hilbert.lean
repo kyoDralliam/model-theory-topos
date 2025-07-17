@@ -61,6 +61,7 @@ def proof.existn_elim {n k : Subst T.sig}  (ψ : fml T.sig k) (φ : fml T.sig (k
     assumption
 
 
+
 theorem eq_elim_subst0 {φ γ : fml T.sig (n+1)} (eq : δ ⊢ .eq t u)
   (pf : δ.conj (γ.subst (subst0 t)) ⊢ φ.subst (subst0 t)) :
   δ.conj (.subst (subst0 u) γ) ⊢ φ.subst (subst0 u) :=  by
