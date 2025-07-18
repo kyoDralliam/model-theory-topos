@@ -1,4 +1,3 @@
-
 import ModelTheoryTopos.Syntax.GeometricLogic.Defs
 import ModelTheoryTopos.Syntax.GeometricLogic.Hilbert
 import Mathlib.CategoryTheory.Sites.Sieves

@@ -3,7 +3,7 @@ import ModelTheoryTopos.Syntax.Signature
 import ModelTheoryTopos.Syntax.GeometricLogic
 import ModelTheoryTopos.Syntax.HeytingTheory
 import ModelTheoryTopos.Basic
-import ModelTheoryTopos.Category.ChosenFiniteProducts
+import ModelTheoryTopos.Category.CartesianMonoidalCategory
 import ModelTheoryTopos.Category.NatIso
 import ModelTheoryTopos.Category.Presheaf
 import ModelTheoryTopos.Category.InterpretGeometricPresheaf

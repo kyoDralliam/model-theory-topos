@@ -267,7 +267,6 @@ namespace SubobjectClassifier
   end
 
 
-  --sup φ ψ := ChosenFiniteProducts.lift φ ψ ≫ disj
   theorem psh_top {X: Psh C} :  ⊤ = toUnit X ≫ top₀ := rfl
 
   theorem top_app {X : Psh C} (c: Cᵒᵖ) (x: X.obj c) (c' : C) (f : c' ⟶ c.unop)

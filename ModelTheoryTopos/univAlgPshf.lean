@@ -8,6 +8,7 @@ import Mathlib.CategoryTheory.ComposableArrows
 import Mathlib.CategoryTheory.Functor.Category
 import Mathlib.Algebra.Group.Hom.Defs
 import Mathlib.CategoryTheory.Opposites
+import ModelTheoryTopos.Syntax.GeometricLogic.SyntacticSite
 
 
 import Mathlib.Algebra.Category.Semigrp.Basic
@@ -198,10 +199,10 @@ instance model_to_semigroup (m : semigroup_set_models)
   mul_assoc a b c := by
     have := m.valid assoc (by simp only [semigroup_thy, List.mem_singleton]) ⟨()⟩ ⟨ a, b, c , () ⟩ (𝟙 _) ⟨⟩
     simp only [assoc, InterpPsh.Str.interp_fml, InterpPsh.Str.interp_tm, SubobjectClassifier.eq, FunctorToTypes.comp,
-      ChosenFiniteProducts.lift_app_pt, op_id, FunctorToTypes.map_id_apply ] at this
+      CartesianMonoidalCategory.lift_app_pt, op_id, FunctorToTypes.map_id_apply ] at this
     exact this
 
-open ChosenFiniteProducts in
+open CartesianMonoidalCategory in
 def Model2Semigrp: semigroup_set_models ⥤ Semigrp where
   obj := fun m => Semigrp.of (m.str.carrier.obj ⟨⟨⟩⟩)
   map {X Y} f := Semigrp.ofHom {
@@ -316,7 +317,7 @@ def is_id (m: tm monoid_sig n) := fml.eq m (Monoid.unit n)
 
 def test (m: tm monoid_sig n) : sequent monoid_sig where
   ctx := n
-  premise := fml.conj (invertible (tm.ren SyntacticSite.R.in10 m)) (idempotent m)
+  premise := fml.conj (invertible (tm.ren R.in10 m)) (idempotent m)
   concl := is_id m
 
 def Monoid_hom_as_Psh {M1 M2:Type} (h: M1 →  M2) : CategoryTheory.Psh (Fin 2) :=
@@ -329,6 +330,9 @@ def Monoid_hom_as_Psh {M1 M2:Type} (h: M1 →  M2) : CategoryTheory.Psh (Fin 2) 
 --   map f := sorry
 --   map_id := sorry
 --   map_comp := sorry
+
+-- KM: Commenting out because I don't understand what it means and how to fix it
+/-
 open CategoryTheory MonoidalCategory
 #check 𝟙_ (Psh (Fin 2))
 
@@ -377,7 +381,7 @@ def Monoid_2_models_to_Monoid_hom (M : Monoid_2_models):
    M.str.carrier.obj (Opposite.op (1:Fin 2)) ⟶
    M.str.carrier.obj (Opposite.op (0:Fin 2)) := sorry
 
-
+-/
 
 
 
