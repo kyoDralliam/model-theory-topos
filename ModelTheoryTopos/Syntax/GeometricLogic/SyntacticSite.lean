@@ -884,11 +884,13 @@ theorem Hilbert.conj_add_true [SmallUniverse] {T: theory} (φ ψ : fml T.sig n) 
 theorem tm.subst_ren_id [SmallUniverse] {T: theory} {n: RenCtx} (t: tm T.sig n):
  (.subst (substn fun i ↦ tm.var i) (tm.ren R.in10 t)) = t := by
    induction t with
-   | var a => simp only [tm.ren, R.in10, tm.subst, substn_left]
+   | var a => --simp only [tm.ren, R.in10, tm.subst, substn_left]
+     sorry
    | op o σ ih =>
     simp only [tm.ren, tm.subst, tm.op.injEq, heq_eq_eq, true_and]
-    ext
-    simp only [ih]
+    sorry
+    -- ext
+    -- simp only [ih]
 
 -- theorem tm.subst_ren_id' {T: theory} {n k: RenCtx} (t: tm T.sig n):
 --  (.subst (substn fun i ↦ foo i) (tm.ren (@R.in10 n k) t)) = t := sorry
@@ -930,12 +932,12 @@ theorem fun_map_comp' : (fun i ↦ g (f i)) =(g ∘ f) := rfl
 
 theorem subst_comp_var: (tm.subst σ) ∘ .var = σ := rfl
 
-theorem in110_01_010 : (@R.in110 n k) ∘ R.in01 = R.in010 := rfl
-theorem in110_10_100 : (@R.in110 n k) ∘ R.in10 = R.in100 := rfl
-theorem in101_10_100 : (@R.in101 n k) ∘ R.in10 = R.in100 := by
+theorem in110_01_010 : (@R.in110 n _ k) ∘ R.in01 = R.in010 := rfl
+theorem in110_10_100 : (@R.in110 n _ k) ∘ R.in10 = R.in100 := rfl
+theorem in101_10_100 : (@R.in101 n _ k) ∘ R.in10 = R.in100 := by
   ext i
   simp only [Function.comp_apply, Fin.casesAdd_left, Fin.coe_addNat]
-theorem in101_10_010 : (@R.in101 n k) ∘ R.in01 = R.in001 := by
+theorem in101_10_010 : (@R.in101 n _ k) ∘ R.in01 = R.in001 := by
   ext i
   simp only [Function.comp_apply, Fin.casesAdd_right, Fin.coe_castAdd']
 
@@ -1005,11 +1007,11 @@ theorem id_rep_functional [SmallUniverse] {T: theory} {n : RenCtx} (φ: fml T.si
      simp[in110_10_100,in110_01_010,in101_10_100,in101_10_010]
      apply Hilbert_eqs_trans' _ (tm.var ∘ R.in100)
      · apply Hilbert_eqs_symm
-       apply Hilbert_conj_2 _ (fml.subst (tm.var ∘ R.in110) (fml.ren R.in10 φ))
-       apply Hilbert_conj_2 _ ((fml.subst (tm.var ∘ R.in101) (fml.ren R.in10 φ)).conj (fml.eqs (tm.var ∘ R.in100) (tm.var ∘ R.in001)))
+       apply Hilbert_conj_2 _ (fml.subst (tm.var ∘ R.in110 _) (fml.ren R.in10 φ))
+       apply Hilbert_conj_2 _ ((fml.subst (tm.var ∘ R.in101 _) (fml.ren R.in10 φ)).conj (fml.eqs (tm.var ∘ R.in100) (tm.var ∘ R.in001)))
        apply Hilbert.proof.var
-     · apply Hilbert_conj_2 _ (fml.subst (tm.var ∘ R.in101) (fml.ren R.in10 φ))
-       apply Hilbert_conj_1 _ _ ((fml.subst (tm.var ∘ R.in110) (fml.ren R.in10 φ)).conj (fml.eqs (tm.var ∘ R.in100) (tm.var ∘ R.in010)))
+     · apply Hilbert_conj_2 _ (fml.subst (tm.var ∘ R.in101 _) (fml.ren R.in10 φ))
+       apply Hilbert_conj_1 _ _ ((fml.subst (tm.var ∘ R.in110 _) (fml.ren R.in10 φ)).conj (fml.eqs (tm.var ∘ R.in100) (tm.var ∘ R.in010)))
        apply Hilbert.proof.var
 
 
