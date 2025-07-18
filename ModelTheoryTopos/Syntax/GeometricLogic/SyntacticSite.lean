@@ -2,8 +2,18 @@ import ModelTheoryTopos.Syntax.GeometricLogic.Defs
 import ModelTheoryTopos.Syntax.GeometricLogic.Hilbert
 import Mathlib.CategoryTheory.Sites.Sieves
 import Mathlib.CategoryTheory.Sites.Grothendieck
-
+import Mathlib.CategoryTheory.Limits.Shapes.Pullback.HasPullback
+import Mathlib.CategoryTheory.Limits.Shapes.Pullback.CommSq
 open CategoryTheory
+
+
+instance : Limits.HasPushouts RenCtx := sorry
+
+open Limits pushout
+--variable (x y z : RenCtx) (f: x⟶ y) (g: x⟶ z)
+--#check pushout f g
+
+
 
 -- TODO : move to the appropriate place once fully finished
 class SmallUniverse.UniverseClosureProps [SmallUniverse] where
@@ -106,11 +116,12 @@ theorem R.in01_natAdd : R.in01 i = Fin.natAdd m i := by
     e.g. φ1 ∧ φ2 ⊢ φ1, the inclusion from variables in φ1 into the one in φ1 and φ2 gives a map φ1 ∧ φ2 to φ1
 
   -/
-
+  @[ext]
   structure fmlInCtx (m : theory) where
     ctx : RenCtx
     formula : fml m.sig ctx
 
+  @[ext]
   structure fmlMap (xφ yψ : fmlInCtx m) where
     map : yψ.ctx ⟶ xφ.ctx
     preserves_formula : xφ.formula ⊢ yψ.formula.ren map
@@ -135,9 +146,11 @@ theorem R.in01_natAdd : R.in01 i = Fin.natAdd m i := by
     comp := compMap
 
   @[ext (iff := false)]
-  lemma fmlMap_eq  (xφ yψ : fmlInCtx m) (f g: xφ ⟶ yψ):
+  lemma fmlMap_eq  (xφ yψ : fmlInCtx m) (f g: fmlMap xφ yψ):
    f.map = g.map → f = g := by
    intro a
+   ext
+   --ext
    sorry
 
 
@@ -194,6 +207,60 @@ theorem R.in01_natAdd : R.in01 i = Fin.natAdd m i := by
        v                      v
       {x | φ} -----ρ-----> {y | ψ}
   -/
+
+  @[simps!]
+  noncomputable
+  def pullback_obj   {xφ yψ zξ : fmlInCtx m}  (f : xφ ⟶ yψ) (g: zξ ⟶ yψ) : fmlInCtx m where
+    ctx := pushout f.map g.map
+    formula := .conj (xφ.formula.ren (inl f.map g.map)) (zξ.formula.ren (inr f.map g.map))
+
+
+  @[simp]
+  noncomputable
+  def pullback_fst  {xφ yψ zξ : fmlInCtx m}  (f : fmlMap xφ yψ) (g: fmlMap zξ yψ) :
+    fmlMap (pullback_obj f g) xφ where
+       map := inl f.map g.map
+       preserves_formula := by
+        simp[pullback_obj]
+        apply Hilbert.proof.conj_elim_l
+
+  @[simp]
+  noncomputable
+  def pullback_snd  {xφ yψ zξ : fmlInCtx m}  (f : xφ ⟶ yψ) (g: zξ ⟶ yψ) :
+     pullback_obj f g ⟶ zξ where
+       map := inr f.map g.map
+       preserves_formula := by
+        simp[pullback_obj]
+        apply Hilbert.proof.conj_elim_r
+
+
+
+
+  lemma fmlInCtx.map_comp (f : fmlMap xφ yψ) (g: yψ ⟶ zξ):
+  (f ≫ g).map = g.map ≫ f.map := by
+
+   sorry
+
+  lemma pushout_comm_sq (f : fmlMap xφ yψ)  (g: zξ ⟶ yψ) :
+     f.map ≫ inl f.map g.map = g.map ≫ inr f.map g.map := by
+     apply CategoryTheory.Limits.pushout.condition
+
+  lemma pullback_comm_sq (f : fmlMap xφ yψ) (g: fmlMap zξ yψ):
+     (pullback_fst f g) ≫ f = (pullback_snd f g) ≫ g := by
+     apply fmlMap_eq
+     simp[fmlInCtx.map_comp,pushout_comm_sq]
+
+
+     --apply fmlMap_eq
+     --simp[pullback_fst]
+
+
+  lemma pullback_isPullback :
+   CategoryTheory.IsPullback (pullback_fst f g) (pullback_snd f g) f g := by
+    --dsimp[IsPullback]
+    sorry
+
+
   def pb_over_obj  {xφ yψ : fmlInCtx m} (f : xφ ⟶ yψ) (σ : Over yψ) : fmlInCtx m :=
     let zξ := σ.left
     let φ' := xφ.formula.ren R.in10
