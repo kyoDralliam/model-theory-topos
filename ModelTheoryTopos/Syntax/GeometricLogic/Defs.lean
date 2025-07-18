@@ -47,7 +47,7 @@ def ren {n n' : RenCtx} (f : n ⟶ n') : fml m n -> fml m n'
 | .disj φ ψ => .disj (φ.ren f) (ψ.ren f)
 | .infdisj a φ => .infdisj a (fun i => (φ i).ren f)
 | .eq t u => .eq (t.ren f) (u.ren f)
-| .existsQ φ => .existsQ (φ.ren (lift₁ f))
+| .existsQ φ => .existsQ (φ.ren (lift_ren f))
 
 def subst {n n' : Subst m} (f : n ⟶ n') : fml m n → fml m n'
 | .pred p k => .pred p (fun i => (k i).subst f)
@@ -79,11 +79,11 @@ theorem ren_to_subst  (f : n ⟶ n') (φ: fml S n):
     simp only [ren, fml.subst, ih]
     congr
     funext i
-    simp [lift_subst, lift₁]
+    simp [lift_subst, lift_ren]
     induction i using Fin.cases with
     | zero => simp []
     | succ i =>
-      simp only [Fin.cases_succ, Function.comp_apply, tm.ren]
+      simp only [Fin.cases_succ, Function.comp_apply, tm.ren_var]
 
 end fml
 
@@ -137,7 +137,7 @@ theorem ren_id {n : RenCtx} (f : fml m n)
     simp only [ren, conj.injEq,disj.injEq] ; constructor <;> simp only[ihφ, ihψ]
   | infdisj a φ ih => rw [ren] ; congr ; funext i ; exact ih _
   | eq t u => simp only [ren, tm.ren_id]
-  | existsQ φ ih => rw [ren, lift₁_id, ih]
+  | existsQ φ ih => rw [ren, lift_ren_id, ih]
 
 theorem ren_comp (f : n1 ⟶ n2) (g : n2 ⟶ n3) (t : fml m n1):
   ren (f ≫ g) t = ren g (ren f t) := by
@@ -148,7 +148,7 @@ theorem ren_comp (f : n1 ⟶ n2) (g : n2 ⟶ n3) (t : fml m n1):
     simp only [ren, conj.injEq,disj.injEq] ; constructor <;> simp only [ihφ, ihψ]
   | infdisj a φ ih => simp only [ren]; congr ; funext i ; exact ih _ _ _
   | eq t u => simp only [ren, tm.ren_comp]
-  | existsQ φ ih => simp only [ren, lift₁_comp, ih]
+  | existsQ φ ih => simp only [ren, lift_ren_comp, ih]
 
 
 
@@ -174,6 +174,15 @@ theorem subst_comp {n1 n2 n3 : Subst m} (f : n1 ⟶ n2) (g : n2 ⟶ n3) (t : fml
   | infdisj a φ ih => simp only [subst]; congr ; funext i ; exact ih _ _ _
   | eq t u => simp only [subst, tm.subst_comp]
   | existsQ φ ih => simp only [subst, lift_subst_comp, ih]
+
+theorem ren_existsn {n1 n2 n m} (f: n1 ⟶ n2) (φ : fml m (n1 + n)):
+ φ.existsn.ren f = (φ.ren (liftn_ren f)).existsn := by
+ induction n with
+ | zero =>
+   simp[fml.existsn]
+   congr
+ | succ n ih =>
+   simp[fml.existsn,fml.ren,ih,lift_liftn_ren]
 end fml
 
 open CategoryTheory

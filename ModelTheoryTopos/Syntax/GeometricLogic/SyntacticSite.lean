@@ -10,51 +10,21 @@ class SmallUniverse.UniverseClosureProps [SmallUniverse] where
   uUnit : U
   utt : El uUnit
 
-namespace R
-abbrev in10 (i : Fin n) : Fin (n + k) := i.addNat k
-abbrev in01 (i : Fin n) : Fin (k + n) := i.castAdd' k
-abbrev in101 : Fin (n + k) -> Fin (n + k + k) :=
-  Fin.casesAdd (in10 ∘ in10) in01
-abbrev in110 : Fin (n + k) -> Fin (n + k + k) := in10
-abbrev in001 : Fin k -> Fin (n + k + k) := in01
-abbrev in010 : Fin k -> Fin (n + k + k) := in10 ∘ in01
-abbrev in100 : Fin n -> Fin (n + k + k) := in10 ∘ in10
-end R
 
 
 
-lemma lift₁_zero {n n' : RenCtx} (f : n ⟶ n'):
- lift₁ f 0 = 0 := by
-  simp[lift₁]
 
-lemma lift₁_succ {n n' : RenCtx} (f : n ⟶ n') (i: Fin n):
- lift₁ f (Fin.succ i) = Fin.succ (f i) := by
-  simp[lift₁]
+-- KM: moved the lemmas that looked relevant to Signature.lean
+-- are the leftovers still needed ?
 
-
-
-def liftn {n1 n2 n : RenCtx} (f : n1 ⟶ n2) : (n1+n) ⟶ (n2+n) :=
-  Fin.casesAdd (R.in10 ∘ f) R.in01
-
-
-lemma liftn_left {n1 n2 n : RenCtx} (f : n1 ⟶ n2) (i: Fin n1):
- liftn (n:=n) f (@R.in10 n1 n i) = @R.in10 n2 n (f i) := by
-  simp[liftn]
-
-lemma liftn_right {n1 n2 n : RenCtx} (f : n1 ⟶ n2) (i: Fin n) :
- liftn (n:=n) f (@R.in01 n n1 i) = @R.in01 n n2 i := by
-  simp[liftn]
-
-theorem liftn_zero {n1 n2 : RenCtx} (f : n1 ⟶ n2) : liftn (n :=0) f = f := by
-  have p : ∀ x, liftn (n :=0) f x = f x := by
+theorem liftn_ren_zero {n1 n2 : RenCtx} (f : n1 ⟶ n2) : liftn_ren (n :=0) f = f := by
+  have p : ∀ x, liftn_ren (n :=0) f x = f x := by
     fapply Fin.casesAdd
     · intro i
-      apply liftn_left
+      apply liftn_ren_left
     intro i; exact Fin.elim0 i
   funext
   apply p
-
-
 
 lemma addNat_succ :
   (@R.in10 n1 (n2 + 1) i) =  Fin.succ (@R.in10 n1 n2 i) := by
@@ -66,16 +36,16 @@ lemma castAdd'_succ {n m} (i: Fin m):
  simp[Fin.castAdd']
 
 
-lemma lift₁_liftn {n n' : RenCtx} (f : n ⟶ n') :
-  lift₁ f = @liftn n n' 1 f := by
-  have p: ∀ i : Fin (n+1), lift₁ f i = @liftn _ _ 1 f i := by
+lemma lift_ren_liftn_ren {n n' : RenCtx} (f : n ⟶ n') :
+  lift_ren f = @liftn_ren n n' 1 f := by
+  have p: ∀ i : Fin (n+1), lift_ren f i = @liftn_ren _ _ 1 f i := by
    apply @Fin.casesAdd
    · intro i
      have e: (i.addNat 1) = @R.in10 n 1 i := rfl
-     simp only[e,liftn_left]
-     simp[addNat_succ,lift₁]
+     simp only[e,liftn_ren_left]
+     simp[addNat_succ,lift_ren]
    · intro i
-     simp[liftn_right,lift₁]
+     simp[liftn_ren_right,lift_ren]
      have e: i = 0 := by
       ext : 1
       simp_all only [Fin.val_eq_zero, Fin.isValue]
@@ -85,50 +55,33 @@ lemma lift₁_liftn {n n' : RenCtx} (f : n ⟶ n') :
   funext i
   apply p
 
-lemma liftn_add {n1 n2 m1 m2 : RenCtx} (f : n1 ⟶ n2) (i: Fin n1):
- liftn (liftn f (n:=m1)) (n:=m2) (R.in10 (R.in10 i))=
+lemma liftn_ren_add {n1 n2 m1 m2 : RenCtx} (f : n1 ⟶ n2) (i: Fin n1):
+ liftn_ren (liftn_ren f (n:=m1)) (n:=m2) (R.in10 (R.in10 i))=
  Fin.cast ((Nat.add_assoc n2 m1 m2).symm)
-  (liftn f (n:= m1 + m2) (R.in10 i)):= by
-  simp[liftn_left]
+  (liftn_ren f (n:= m1 + m2) (R.in10 i)):= by
+  simp[liftn_ren_left]
   simp[Fin.cast]
   ext
   simp[Fin.addNat]
   simp[Nat.add_assoc]
 
-lemma lift1_liftn_left {n1 n2 n : RenCtx} (f : n1 ⟶ n2) (i: Fin n1) :
-  lift₁ (liftn f) (R.in10 (R.in10 i)) = @liftn _ _ (n+ 1) f (R.in10 i) := by
-  simp only[lift₁_liftn,liftn_add,Fin.cast,liftn_left]
+lemma lift1_liftn_ren_left {n1 n2 n : RenCtx} (f : n1 ⟶ n2) (i: Fin n1) :
+  lift_ren (liftn_ren f) (R.in10 (R.in10 i)) = @liftn_ren _ _ (n+ 1) f (R.in10 i) := by
+  simp only[lift_ren_liftn_ren,liftn_ren_add,Fin.cast,liftn_ren_left]
   simp[Fin.addNat,Nat.add_assoc]
 
   --(n2 + n) + 1
-lemma liftn_liftn_right {n1 n2 n : RenCtx} (f : n1 ⟶ n2) (i: Fin n) :
-  lift₁ (liftn f) (R.in10 (R.in01 i)) = @liftn _ _ (n+ 1) f (R.in01 (R.in10 i)) := by
-  simp only[lift₁_liftn,liftn_add,Fin.cast,liftn_left,liftn_right]
+lemma liftn_ren_liftn_ren_right {n1 n2 n : RenCtx} (f : n1 ⟶ n2) (i: Fin n) :
+  lift_ren (liftn_ren f) (R.in10 (R.in01 i)) = @liftn_ren _ _ (n+ 1) f (R.in01 (R.in10 i)) := by
+  simp only[lift_ren_liftn_ren,liftn_ren_add,Fin.cast,liftn_ren_left,liftn_ren_right]
   simp[Fin.addNat,Fin.castAdd']
   simp[castAdd'_succ]
 
-lemma liftn_liftn_zero {n1 n2 n : RenCtx} (f : n1 ⟶ n2) (i: Fin 1) :
-  lift₁ (liftn f) (R.in01 (R.in01 i)) = @liftn _ _ (n+ 1) f (R.in01 (R.in01 i)) := by
-  simp only[lift₁_liftn,liftn_add,Fin.cast,liftn_left,liftn_right]
+lemma liftn_ren_liftn_ren_zero {n1 n2 n : RenCtx} (f : n1 ⟶ n2) (i: Fin 1) :
+  lift_ren (liftn_ren f) (R.in01 (R.in01 i)) = @liftn_ren _ _ (n+ 1) f (R.in01 (R.in01 i)) := by
+  simp only[lift_ren_liftn_ren,liftn_ren_add,Fin.cast,liftn_ren_left,liftn_ren_right]
   rfl
 
-
-
-
-lemma liftn_alt0 {n1 n2 n : RenCtx} (f : n1 ⟶ n2) :
-  ∀ x, lift₁ (liftn f) x = @liftn _ _ (n+ 1) f x:= by
-  apply @Fin.casesAdd n1 (n+ 1)
-  · intro i
-    apply lift1_liftn_left
-  · apply Fin.casesAdd
-    · apply liftn_liftn_right
-    · apply liftn_liftn_zero
-
-lemma liftn_alt {n1 n2 n : RenCtx} (f : n1 ⟶ n2) :
-   lift₁ (liftn f) = @liftn _ _ (n+ 1) f :=
-   by
-   funext x
-   apply liftn_alt0
 
 
 
@@ -143,17 +96,6 @@ theorem R.in01_natAdd : R.in01 i = Fin.natAdd m i := by
 
   sorry
   -/
-
-
-
-theorem ren_existsn {n1 n2 n m} (f: n1 ⟶ n2) (φ : fml m (n1 + n)):
- fml.ren f (fml.existsn φ) = fml.existsn (fml.ren (liftn f) φ) := by
- induction n with
- | zero =>
-   simp[fml.existsn,liftn]
-   congr
- | succ n ih =>
-   simp[fml.existsn,liftn,fml.ren,ih,liftn_alt]
 
 
 
@@ -523,15 +465,15 @@ theorem ren_existsn {n1 n2 n m} (f: n1 ⟶ n2) (φ : fml m (n1 + n)):
       intro k
       let fmlk := cover_from_over xφ (pb_over xφ yψ f (cf.maps k))
       have p1 :  fm' k ⊢ fmlk := by
-         simp[fm',fmlk,cover_from_over',ren_existsn]
-         let ff := (fml.ren (liftn f.map) (cover_from_over_body yψ (cf.maps k)))
+         simp[fm',fmlk,cover_from_over',fml.ren_existsn]
+         let ff := (fml.ren (liftn_ren f.map) (cover_from_over_body yψ (cf.maps k)))
          have p2 : xφ.formula.conj ff.existsn
            ⊢ (fml.conj (fml.ren R.in10  xφ.formula) ff).existsn
             := by
             apply push_conj_into_existsn
          apply Hilbert.proof.cut p2
          apply proof.existn_elim'
-         simp[ren_existsn]
+         simp[fml.ren_existsn]
          let varin10: Fin xφ.ctx -> tm m.sig (xφ.ctx + (cf.maps k).left.ctx):= fun i => tm.var (R.in10 i)
          let varin01: Fin (cf.maps k).left.ctx -> tm m.sig (xφ.ctx + (cf.maps k).left.ctx):= fun i => tm.var (R.in01 i)
          apply Hilbert.proof.existn_intro (Fin.casesAdd varin10 varin01)
@@ -546,7 +488,7 @@ theorem ren_existsn {n1 n2 n m} (f: n1 ⟶ n2) (φ : fml m (n1 + n)):
                convert Hilbert.proof.var
                rename_i v
                simp[CategoryStruct.comp,RelativeMonad.bind,tm.subst,
-                    liftn_right,substn_right,varin10]
+                    liftn_ren_right,substn_right,varin10]
              · simp[← fml.subst_comp]
                apply Hilbert.proof.cut (Hilbert.proof.conj_elim_r)
                simp[ff,fml.ren_to_subst,cover_from_over_body,← fml.subst_comp,
@@ -555,7 +497,7 @@ theorem ren_existsn {n1 n2 n m} (f: n1 ⟶ n2) (φ : fml m (n1 + n)):
                apply proof.var'
                apply fml.subst_cong
                funext v
-               simp[CategoryStruct.comp,RelativeMonad.bind,tm.subst,liftn_right,
+               simp[CategoryStruct.comp,RelativeMonad.bind,tm.subst,liftn_ren_right,
                substn_right,varin01]
            · apply Hilbert.proof.cut (Hilbert.proof.conj_elim_r)
              simp[ff]
@@ -563,19 +505,19 @@ theorem ren_existsn {n1 n2 n m} (f: n1 ⟶ n2) (φ : fml m (n1 + n)):
              intro i
              simp[tm.subst]
              simp[CategoryStruct.comp,RelativeMonad.bind,tm.subst,
-                    liftn_right,substn_right,varin10,varin01]
+                    liftn_ren_right,substn_right,varin10,varin01]
              simp[cover_from_over_body,fml.ren_to_subst,← fml.subst_comp,fml.subst]
              apply Hilbert.proof.cut (Hilbert.proof.conj_elim_r)
              simp[cover_from_over.represent_renaming,fml.subst_eqs]
              apply Hilbert.proof.eqs_elim i
-             simp[tm.subst,liftn_left,liftn_right]
+             simp[tm.subst,liftn_ren_left,liftn_ren_right]
              apply Hilbert.proof.var
          · simp[← fml.subst_comp,fml.subst_eqs, Hilbert.proof.eqs_iff,cover_from_over.represent_renaming]
            intro i
            apply Hilbert.any_eq_intro
            simp[tm.subst]
            simp[CategoryStruct.comp,RelativeMonad.bind,tm.subst,
-                    liftn_right,substn_right,varin10,varin01,liftn_left,substn_left]
+                    liftn_ren_right,substn_right,varin10,varin01,liftn_ren_left,substn_left]
            simp[pb_over]
            apply substn_left --this one does not need the LHS assumptions
       apply Hilbert.proof.cut p1
@@ -795,7 +737,7 @@ namespace SyntacticSite
 structure functional [SmallUniverse] {T: theory} {n1 n2 : RenCtx} (φ: fml T.sig n1) (ψ : fml T.sig n2) (θ  : fml T.sig (n1 + n2)) where
  total : Hilbert.proof φ θ.existsn
  range: Hilbert.proof θ ((φ.ren R.in10).conj (ψ.ren R.in01))
- unique : Hilbert.proof ((θ.ren R.in101).conj (θ.ren R.in110)) (fml.eqs (tm.var ∘ R.in010) (tm.var ∘ R.in001))
+ unique : Hilbert.proof ((θ.ren (R.in101 _)).conj (θ.ren (R.in110 _))) (fml.eqs (tm.var ∘ R.in010) (tm.var ∘ R.in001))
 
 
 /-namespace Example
