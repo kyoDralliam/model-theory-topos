@@ -3,6 +3,7 @@ import Mathlib.CategoryTheory.Category.Basic
 import Mathlib.CategoryTheory.Types
 import ModelTheoryTopos.Misc
 import ModelTheoryTopos.Category.RelativeMonad
+import ModelTheoryTopos.Tactics
 
 structure monosig where
   ops : Type
@@ -333,22 +334,20 @@ theorem substn0 (σ : 0 ⟶ k) : substn σ = 𝟙 k := by
   rw [substn, <-Fin.addNat_zero _ i, Fin.casesAdd_left, Fin.addNat_zero]
 
 theorem substn_at0 (σ : (n+1) ⟶ k) : substn σ (0 : Fin (k + n + 1)) = σ (0 : Fin (n+1)) := by
-  have : (0 : Fin (k + n + 1)) = Fin.castAdd' k (0 : Fin (n+1)) := rfl
-  rw [this, substn, Fin.casesAdd_right]
+  change 0 with Fin.castAdd' k (0 : Fin (n+1))
+  rw [substn, Fin.casesAdd_right]
 
 theorem substn_atsucc (σ : (n+1) ⟶ k) : substn (σ ∘ Fin.succ) = substn σ ∘ Fin.succ := by
   funext i
   induction i using Fin.casesAdd with
   | left i =>
     simp only [substn, Fin.casesAdd_left, Nat.add_eq, Function.comp_apply]
-    have : (i.addNat n).succ = i.addNat (n+1) := by ext ; simp only [Fin.val_succ, Fin.coe_addNat,
-      Nat.add_assoc]
-    rw [this, Fin.casesAdd_left]
+    change (i.addNat n).succ with i.addNat (n+1)
+    rw [Fin.casesAdd_left]
   | right i =>
     simp only [substn, Fin.casesAdd_right, Function.comp_apply, Nat.add_eq]
-    have : (Fin.castAdd' k i).succ = Fin.castAdd' k i.succ := by ext ; simp only [Fin.val_succ,
-      Fin.coe_castAdd']
-    rw [this, Fin.casesAdd_right]
+    change (Fin.castAdd' k i).succ with Fin.castAdd' k i.succ
+    rw [Fin.casesAdd_right]
 
 theorem substnsucc (σ : (n+1) ⟶ k) :
   substn σ = lift_subst (substn (σ ∘ Fin.succ)) ≫ subst0 (σ (0 : Fin (n+1))) := by
@@ -377,11 +376,9 @@ theorem substnsucc'' (σ : Fin n ⟶ tm m k) (t: tm m k):
     funext i; simp [substn]
   | succ i =>
     simp [tm.subst_comp_app,subst0,tm.subst]
-    have := substn_atsucc (scons t σ)
-    have h : substn (scons t σ) i.succ = (substn (scons t σ) ∘ Fin.succ) i := rfl
-    rw [h]
-    rw[← this]
-    congr
+    change substn (scons t σ) i.succ with (substn (scons t σ) ∘ Fin.succ) i
+    rw [← substn_atsucc (scons t σ)]
+    rfl
 
 lemma lift_liftn_ren {n1 n2 n : RenCtx} (f : n1 ⟶ n2) :
   lift_ren (liftn_ren f) = liftn_ren (n:=n+ 1) f := by
@@ -389,24 +386,20 @@ lemma lift_liftn_ren {n1 n2 n : RenCtx} (f : n1 ⟶ n2) :
     induction x using Fin.cases with
     | zero =>
       simp [lift_ren]
-      have : 0 = @R.in01 (n+1) n1 0 := rfl
-      simp [this, liftn_ren_right]
+      change 0 with @R.in01 (n+1) n1 0
+      simp [liftn_ren_right]
       rfl
     | succ i =>
       simp [lift_ren]
       induction i using Fin.casesAdd with
       | left i =>
-        have : (i.addNat n).succ = R.in10 (k:=n+1) i := rfl
-        rw [this] ; clear this
-        have : i.addNat n = R.in10 i := rfl
-        rw [this] ; clear this
+        change(i.addNat n).succ with R.in10 (k:=n+1) i
+        change i.addNat n with R.in10 i
         simp [liftn_ren_left]
         rfl
       | right i =>
-        have : (Fin.castAdd' n1 i).succ = R.in01 i.succ := rfl
-        rw [this] ; clear this
-        have : Fin.castAdd' n1 i = R.in01 i := rfl
-        rw [this] ; clear this
+        change (Fin.castAdd' n1 i).succ with R.in01 i.succ
+        change Fin.castAdd' n1 i with R.in01 i
         simp [liftn_ren]
         rfl
 
