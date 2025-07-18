@@ -10,10 +10,10 @@ import Mathlib.CategoryTheory.Sites.Sieves
 import Mathlib.CategoryTheory.Whiskering
 import Mathlib.Order.Hom.CompleteLattice
 import ModelTheoryTopos.Misc
-import ModelTheoryTopos.Category.ChosenFiniteProducts
+import ModelTheoryTopos.Category.CartesianMonoidalCategory
 import ModelTheoryTopos.Category.NatIso
 import ModelTheoryTopos.Category.Presheaf.Defs
-import ModelTheoryTopos.Category.Presheaf.ChosenFiniteProducts
+import ModelTheoryTopos.Category.Presheaf.CartesianMonoidalCategory
 
 
 open CategoryTheory MonoidalCategory CartesianMonoidalCategory

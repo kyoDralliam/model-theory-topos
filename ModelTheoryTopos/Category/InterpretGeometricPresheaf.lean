@@ -10,7 +10,7 @@ import Mathlib.CategoryTheory.Sites.Sieves
 import Mathlib.CategoryTheory.Whiskering
 import ModelTheoryTopos.Syntax.Signature
 import ModelTheoryTopos.Syntax.GeometricLogic
-import ModelTheoryTopos.Category.ChosenFiniteProducts
+import ModelTheoryTopos.Category.CartesianMonoidalCategory
 import ModelTheoryTopos.Category.NatIso
 import ModelTheoryTopos.Category.Presheaf
 import ModelTheoryTopos.Misc

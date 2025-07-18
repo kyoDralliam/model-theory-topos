@@ -10,7 +10,7 @@ import Mathlib.CategoryTheory.Sites.Sieves
 import Mathlib.CategoryTheory.Whiskering
 import Mathlib.Order.Hom.CompleteLattice
 import ModelTheoryTopos.Misc
-import ModelTheoryTopos.Category.ChosenFiniteProducts
+import ModelTheoryTopos.Category.CartesianMonoidalCategory
 import ModelTheoryTopos.Category.NatIso
 import ModelTheoryTopos.Category.Presheaf.Defs
 
