@@ -1,9 +1,9 @@
 import Mathlib.CategoryTheory.Category.Basic
 import Mathlib.CategoryTheory.Types
 import Mathlib.CategoryTheory.Opposites
-import Mathlib.CategoryTheory.ChosenFiniteProducts
-import Mathlib.CategoryTheory.ChosenFiniteProducts.Cat
-import Mathlib.CategoryTheory.ChosenFiniteProducts.FunctorCategory
+import Mathlib.CategoryTheory.Monoidal.Cartesian.Basic
+import Mathlib.CategoryTheory.Monoidal.Cartesian.Cat
+import Mathlib.CategoryTheory.Monoidal.Cartesian.FunctorCategory
 import Mathlib.CategoryTheory.Monoidal.Types.Basic
 import Mathlib.CategoryTheory.Functor.Category
 import Mathlib.CategoryTheory.Sites.Sieves
@@ -16,7 +16,7 @@ import ModelTheoryTopos.Category.Presheaf.Defs
 import ModelTheoryTopos.Category.Presheaf.ChosenFiniteProducts
 
 
-open CategoryTheory MonoidalCategory ChosenFiniteProducts
+open CategoryTheory MonoidalCategory CartesianMonoidalCategory
 
 namespace Sieve
 
@@ -189,10 +189,10 @@ namespace SubobjectClassifier
       lhs ≤ (g.app Γ x : Sieve Γ.unop)
 
   instance: Top (X ⟶ prop) where
-    top := ChosenFiniteProducts.toUnit _ ≫ top₀
+    top := toUnit _ ≫ top₀
 
   instance: Bot (X ⟶ prop) where
-    bot := ChosenFiniteProducts.toUnit _ ≫ bot₀
+    bot := toUnit _ ≫ bot₀
 
   instance: PartialOrder (X ⟶ prop) where
     le_refl := by intros f Γ x ; apply le_refl
@@ -206,17 +206,18 @@ namespace SubobjectClassifier
       intros f g fg gf ; ext Γ x ; simp only [prop] ; apply le_antisymm <;> simp_all [LE.le, prop]
 
   instance: SemilatticeSup (X ⟶ prop) where
-    sup φ ψ := ChosenFiniteProducts.lift φ ψ ≫ disj
+    sup φ ψ := lift φ ψ ≫ disj
     le_sup_left := by simp [LE.le]; intros ; simp [disj] ; left; assumption
     le_sup_right := by simp [LE.le]; intros ; simp [disj] ; right; assumption
     sup_le := by
       intros _ _ _ h1 h2 c x
-      simp only [prop, disj, FunctorToTypes.comp, ChosenFiniteProducts.lift_app_pt, sup_le_iff,
+      simp only [prop, disj, FunctorToTypes.comp, lift_app_pt, sup_le_iff,
         h1 c x, h2 c x, and_self]
 
-  set_option trace.profiler true in
+  -- set_option trace.profiler true in
+  noncomputable
   instance: SemilatticeInf (X ⟶ prop) where
-    inf φ ψ := ChosenFiniteProducts.lift φ ψ ≫ conj
+    inf φ ψ := lift φ ψ ≫ conj
     inf_le_left := by simp only [prop, LE.le, lift, conj, Functor.Monoidal.tensorObj_obj,
       FunctorToTypes.comp, Sieve.inter_apply, and_imp] ; intros ; assumption
     inf_le_right := by simp [LE.le, conj]
@@ -258,7 +259,7 @@ namespace SubobjectClassifier
       simp
       exists a
 
-    set_option trace.profiler true in
+    -- set_option trace.profiler true in
     noncomputable
     instance complete_lattice_to_prop {X : Psh C} : CompleteLattice (X ⟶ prop) where
       le_top := by simp only [prop, LE.le, Top.top, FunctorToTypes.comp]; intros; constructor
@@ -267,7 +268,7 @@ namespace SubobjectClassifier
 
 
   --sup φ ψ := ChosenFiniteProducts.lift φ ψ ≫ disj
-  theorem psh_top {X: Psh C} :  ⊤ = ChosenFiniteProducts.toUnit X ≫ top₀ := rfl
+  theorem psh_top {X: Psh C} :  ⊤ = toUnit X ≫ top₀ := rfl
 
   theorem top_app {X : Psh C} (c: Cᵒᵖ) (x: X.obj c) (c' : C) (f : c' ⟶ c.unop)
     : ((⊤ : X ⟶ prop).app c x).arrows f := by
@@ -275,12 +276,12 @@ namespace SubobjectClassifier
 
 
 
-  theorem psh_bot {X: Psh C} :  ⊥ = ChosenFiniteProducts.toUnit X ≫ bot₀  := rfl
+  theorem psh_bot {X: Psh C} :  ⊥ = toUnit X ≫ bot₀  := rfl
 
-  theorem psh_sup {X: Psh C} (φ ψ: X ⟶ SubobjectClassifier.prop) : φ ⊔ ψ = ChosenFiniteProducts.lift φ ψ ≫ SubobjectClassifier.disj := rfl
+  theorem psh_sup {X: Psh C} (φ ψ: X ⟶ SubobjectClassifier.prop) : φ ⊔ ψ = lift φ ψ ≫ SubobjectClassifier.disj := rfl
 
   theorem psh_sup_arrows {X: Psh C} (φ ψ: X ⟶ SubobjectClassifier.prop) (c: Cᵒᵖ) (x: X.obj c):
-   ((φ ⊔ ψ).app c x) = ((ChosenFiniteProducts.lift φ ψ ≫ SubobjectClassifier.disj).app c x):= rfl
+   ((φ ⊔ ψ).app c x) = ((lift φ ψ ≫ SubobjectClassifier.disj).app c x):= rfl
 
   --theorem disj_lift
   theorem psh_sup_arrows' {X: Psh C} (φ ψ: X ⟶ SubobjectClassifier.prop) (c: Cᵒᵖ) (x: X.obj c):
@@ -288,7 +289,7 @@ namespace SubobjectClassifier
     let s2 : Sieve c.unop := ψ.app c x
     ((φ ⊔ ψ).app c x) = s1 ⊔ s2 := rfl
 
-  theorem psh_inf {X: Psh C} (φ ψ: X ⟶ SubobjectClassifier.prop) : φ ⊓ ψ = ChosenFiniteProducts.lift φ ψ ≫ SubobjectClassifier.conj := rfl
+  theorem psh_inf {X: Psh C} (φ ψ: X ⟶ SubobjectClassifier.prop) : φ ⊓ ψ = lift φ ψ ≫ SubobjectClassifier.conj := rfl
 
   theorem psh_inf_arrows' {X: Psh C} (φ ψ: X ⟶ SubobjectClassifier.prop) (c: Cᵒᵖ) (x: X.obj c):
     let s1 : Sieve c.unop := φ.app c x
@@ -331,7 +332,7 @@ namespace SubobjectClassifier
 
   theorem lift_eq_eq {X A : Psh C} (t1 t2:X ⟶ A) (c: Cᵒᵖ) (x: X.obj c):
     (lift t1 t2 ≫ eq).app c x = (⊤ : Sieve c.unop) ↔ t1.app c x= t2.app c x := by
-     simp[psh_top,Sieve_eq',eq_app]
+     simp[Sieve_eq',eq_app]
      constructor
      · intro h ; let h1:= h c.unop (𝟙 c.unop);simp at h1; assumption
      · intro h ; simp[h]
@@ -385,17 +386,16 @@ namespace SubobjectClassifier
   theorem psh_inf_sSup_distr {X : Psh C} (a : X ⟶ prop) (b : I → (X ⟶ prop)) :
     a ⊓ (⨆ i, b i) ≤ ⨆ i, a ⊓ b i := by
     intros c x
-    simp [sSup]
     simp [psh_inf_arrows' a, psh_iSup_arrows _ c x, sieve_inf_sSup_distr]
 
   theorem complete_lattice_to_prop_top (X:Psh C) : (@SubobjectClassifier.complete_lattice_to_prop C _ X).top =
-   ChosenFiniteProducts.toUnit _ ≫ top₀ := rfl
+    toUnit _ ≫ top₀ := rfl
 
   theorem complete_lattice_to_prop_inf (X:Psh C) (φ ψ: X ⟶ prop): (@SubobjectClassifier.complete_lattice_to_prop C _ X).inf φ ψ  =
-   ChosenFiniteProducts.lift φ ψ ≫ conj := rfl
+    lift φ ψ ≫ conj := rfl
 
   theorem complete_lattice_to_prop_sup (X:Psh C) (φ ψ: X ⟶ prop): (@SubobjectClassifier.complete_lattice_to_prop C _ X).sup φ ψ  =
-   ChosenFiniteProducts.lift φ ψ ≫ disj := rfl
+    lift φ ψ ≫ disj := rfl
 
   theorem to_prop_naturality {X: Psh C}(φ :X ⟶ prop) (c: Cᵒᵖ) (x: X.obj c) {c': C} (f: c' ⟶ c.unop):
    φ.app (Opposite.op c') (X.map (Opposite.op f) x) =
@@ -633,6 +633,8 @@ end SubobjectClassifier
 
 namespace SubobjectClassifier.BaseChange
   variable {C D : Type} [Category C] [Category D] (F : Functor C D)
+  open Functor
+
 
     def pb_prop : F.op ⋙ SubobjectClassifier.prop (C:=D) ⟶ SubobjectClassifier.prop where
       app := fun c x =>
@@ -651,7 +653,7 @@ namespace SubobjectClassifier.BaseChange
 
     theorem map_pred_comp {X Y: Psh D} (f : X ⟶ Y) (φ : Y ⟶ SubobjectClassifier.prop) :
       map_pred F (f ≫ φ) = whiskerLeft F.op f ≫ map_pred F φ := by
-      simp only [map_pred, CategoryTheory.whiskerLeft_comp]
+      simp only [map_pred, Functor.whiskerLeft_comp]
       rfl
 
     def map_pred_mon {X : Psh D} : (X ⟶ SubobjectClassifier.prop) →o ((F.op ⋙ X) ⟶ SubobjectClassifier.prop) where
@@ -678,8 +680,7 @@ namespace SubobjectClassifier.BaseChange
       map_pred F (SubobjectClassifier.eq (A:=X)) = (SubobjectClassifier.eq (A:=F.op ⋙ X)) := by
         ext x ⟨a1 , a2⟩
         apply CategoryTheory.Sieve.arrows_ext
-        simp[CategoryTheory.whiskerLeft,pb_prop,
-             SubobjectClassifier.eq]
+        simp [pb_prop, SubobjectClassifier.eq]
         funext c0 f
         simp[Presieve.functorPullback]
 

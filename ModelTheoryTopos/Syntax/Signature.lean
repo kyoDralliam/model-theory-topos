@@ -250,7 +250,7 @@ theorem subst0_lift_subst {n n' : Subst m} (a : tm m n) (σ : n ⟶ n') :
   induction x using Fin.cases
   · simp only [CategoryStruct.comp, RelativeMonad.bind, Function.comp_apply,
       subst0, lift_subst, Fin.cases_zero, tm.subst]
-  · simp only [CategoryStruct.comp, RelativeMonad.bind, Function.comp_apply, tm.subst, Fin.eta,
+  · simp only [CategoryStruct.comp, RelativeMonad.bind, Function.comp_apply,
     lift_subst, Fin.cases_succ, ← tm.ren_subst_comp]
     symm ; apply tm.subst_id_ext
     funext y
@@ -281,7 +281,7 @@ theorem subst_0_succ {k n : Subst m} (σ : (k+1) ⟶ n) :
     simp [HAppend.hAppend]
     rfl
   | succ i =>
-    simp [tm.subst_comp_app, <-tm.ren_subst_comp, tm.subst, HAppend.hAppend]
+    simp [tm.subst_comp_app, tm.subst, HAppend.hAppend]
 
 
 theorem substn_liftn_subst {n k k' : Subst m} (σ : n ⟶ k) (f : k ⟶ k') :
@@ -373,9 +373,9 @@ def ε : tm magma n := .op true Fin.elim0
 def mult (t u : tm magma n) : tm magma n :=
   .op false (fun i : Fin 2 => [ t , u ][i])
 
-#check v0⟪ε ∷ 𝟙 _ ⟫
+-- #check v0⟪ε ∷ 𝟙 _ ⟫
 
 -- Oups...
-#reduce (mult v0 (mult v0 v0))⟪ε ∷ 𝟙 _ ⟫
+-- #reduce (mult v0 (mult v0 v0))⟪ε ∷ 𝟙 _ ⟫
 
 end Example

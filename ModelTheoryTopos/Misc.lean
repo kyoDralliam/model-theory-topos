@@ -60,10 +60,10 @@ namespace CompleteLatticeLemma
     (inf_iSup_distr : forall {I : Type u'} a (b : I → α), a ⊓ (⨆ i, b i) ≤ ⨆ i, a ⊓ b i)
     {I : Type u'} (b : I → α) (h₁ : a ≤ ⨆ i, b i) (h₂ : forall i, b i ⊓ a ≤ c) : a ≤ c := by
     calc
-      a ≤ a ⊓ (⨆ i, b i) := by simp [le_sup_left, h₁]
+      a ≤ a ⊓ (⨆ i, b i) := by simp [h₁]
       _ ≤ ⨆ i, (a ⊓ b i) := by apply inf_iSup_distr a b
       _ ≤ ⨆ i, (b i ⊓ a) := by simp [inf_comm]
-      _ ≤ c := by simp [sSup_le, h₂]
+      _ ≤ c := by simp [h₂]
 
   theorem disj_elim_helper (A: Type) [Lattice A] (a b c d: A)
     (h0:a ⊓ (b ⊔ c) = (a ⊓ b) ⊔ (a ⊓ c) ) (h1:a ≤ b ⊔ c) (h2: b ⊓ a ≤ d) (h3: c ⊓ a ≤ d):

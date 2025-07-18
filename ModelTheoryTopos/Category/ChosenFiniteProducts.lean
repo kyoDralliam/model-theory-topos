@@ -1,10 +1,8 @@
 import Mathlib.Data.List.GetD
 import Mathlib.CategoryTheory.Category.Basic
-import Mathlib.CategoryTheory.ChosenFiniteProducts
-import Mathlib.CategoryTheory.ChosenFiniteProducts.Cat
-import Mathlib.CategoryTheory.ChosenFiniteProducts.FunctorCategory
-
-#search "List.replicate length."
+import Mathlib.CategoryTheory.Monoidal.Cartesian.Basic
+import Mathlib.CategoryTheory.Monoidal.Cartesian.Cat
+import Mathlib.CategoryTheory.Monoidal.FunctorCategory
 
 
 namespace List
@@ -53,12 +51,12 @@ namespace List
 
 end List
 
-namespace CategoryTheory.ChosenFiniteProducts
+namespace CategoryTheory.CartesianMonoidalCategory
   open MonoidalCategory
 
   section NarryProducts
 
-  variable {D : Type u} [Category D] [ChosenFiniteProducts D]
+  variable {D : Type u} [Category D] [CartesianMonoidalCategory D]
 
   def finprod (l : List D) : D := l.foldr tensorObj (𝟙_ D)
 
@@ -90,6 +88,7 @@ namespace CategoryTheory.ChosenFiniteProducts
     finpair x (a :: l) cone = lift (cone (List.In.here a l)) (finpair x l (fun k => cone (k.there a))) := by
     simp only [finpair]
 
+
   theorem finpair_finproj {x : D} {l : List D} (k : l.In) : forall (cone : forall (k : l.In), x ⟶ l[k]),
     finpair x l cone ≫ finproj l k = cone k := by
     apply k.recOn fun {l} k => forall cone, finpair x l cone ≫ finproj l k = cone k
@@ -97,10 +96,11 @@ namespace CategoryTheory.ChosenFiniteProducts
       simp only [finpair_cons, finproj_here]
       apply lift_fst
     · intros a l h ih cone
-      simp [finpair_cons, List.In.here, finproj_there, ih]
+      simp [finpair_cons, finproj_there, <-Category.assoc, lift_snd (X:=a), ih]
 
   theorem finpair_univ {x : D} {l : List D} :
-    forall (cone : forall k : l.In, x ⟶ l[k]) (f : x ⟶  finprod l) (h : forall k : l.In, cone k = f ≫ finproj l k),
+    forall (cone : forall k : l.In, x ⟶ l[k]) (f : x ⟶  finprod l),
+    (forall k : l.In, cone k = f ≫ finproj l k) ->
     finpair x l cone = f := by
     induction l
     case nil =>
@@ -112,10 +112,11 @@ namespace CategoryTheory.ChosenFiniteProducts
       apply hom_ext
       · simp [List.In.here]
         apply hf
-      · simp [List.In.there, List.In.here]
+      · simp only [lift_snd]
         apply ih
         intros k
         simp [hf, finproj_there]
+        rfl
 
 
   def npow (x : D) (n : Nat) : D := finprod (List.replicate n x)
@@ -200,7 +201,7 @@ namespace CategoryTheory.ChosenFiniteProducts
    nlift x y n k = npair (npow x n) y n (fun i => nproj x n i ≫ k i) := by rfl
 
   theorem nlift_npair_nproj (x  : D) (n : Nat) :
-    nlift x x n (fun i => 𝟙 x) = npair (npow x n) x n (fun i => nproj x n i) := by
+    nlift x x n (fun _ => 𝟙 x) = npair (npow x n) x n (fun i => nproj x n i) := by
     apply npair_univ'
     intros i
     simp only [nlift_nproj, Category.comp_id, npair_nproj]
@@ -246,7 +247,7 @@ namespace CategoryTheory.ChosenFiniteProducts
 
   section NaryProductBaseChange
 
-  variable {C D : Type u} [Category C] [Category D] [ChosenFiniteProducts C] [ChosenFiniteProducts D] (F : C ⥤ D)
+  variable {C D : Type u} [Category C] [Category D] [CartesianMonoidalCategory C] [CartesianMonoidalCategory D] (F : C ⥤ D)
 
   def npow_oplax : npow_functor n ⋙ F ⟶ F ⋙ npow_functor n where
     app := fun X => npair (F.obj (npow X n)) (F.obj X) n (fun i => F.map (nproj X n i))
@@ -263,4 +264,4 @@ namespace CategoryTheory.ChosenFiniteProducts
 
   end NaryProductBaseChange
 
-end CategoryTheory.ChosenFiniteProducts
+end CategoryTheory.CartesianMonoidalCategory

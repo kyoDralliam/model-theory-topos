@@ -4,6 +4,13 @@ import ModelTheoryTopos.Syntax.Signature
 import ModelTheoryTopos.Syntax.GeometricLogic
 
 namespace HeytingThy
+  -- An empty universe instance,
+  -- we do not need any "large" disjunctions for the equational theory of semigroups
+  -- TODO: define the instance elsewhere and import it here
+  local
+  instance empty : SmallUniverse where
+    U := Empty
+    El := Empty.rec
 
   inductive ops where
     | conj

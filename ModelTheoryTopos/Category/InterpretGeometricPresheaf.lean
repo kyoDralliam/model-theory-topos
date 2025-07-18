@@ -1,9 +1,9 @@
 import Mathlib.CategoryTheory.Category.Basic
 import Mathlib.CategoryTheory.Types
 import Mathlib.CategoryTheory.Opposites
-import Mathlib.CategoryTheory.ChosenFiniteProducts
-import Mathlib.CategoryTheory.ChosenFiniteProducts.Cat
-import Mathlib.CategoryTheory.ChosenFiniteProducts.FunctorCategory
+import Mathlib.CategoryTheory.Monoidal.Cartesian.Basic
+import Mathlib.CategoryTheory.Monoidal.Cartesian.Cat
+import Mathlib.CategoryTheory.Monoidal.Cartesian.FunctorCategory
 import Mathlib.CategoryTheory.Monoidal.Types.Basic
 import Mathlib.CategoryTheory.Functor.Category
 import Mathlib.CategoryTheory.Sites.Sieves
@@ -16,7 +16,7 @@ import ModelTheoryTopos.Category.Presheaf
 import ModelTheoryTopos.Misc
 
 namespace InterpPsh
-open CategoryTheory MonoidalCategory ChosenFiniteProducts
+open CategoryTheory MonoidalCategory CartesianMonoidalCategory
 
 -- S-Structure over C: interpretation of the operations and predicates of a signature S on a presheaf on C
 structure Str (S : monosig) (C : Type) [Category C]  where
@@ -74,13 +74,13 @@ theorem interp_ren_succ (L: Str S C) (m : Subst S) (t: tm S m):
   apply npair_nproj
 
 theorem interp_lift_subst (L: Str S C) {m n: Subst S} (σ : m ⟶ n) :
-  L.interp_subst (lift_subst σ) = 𝟙 _ ⊗ L.interp_subst σ := by
+  L.interp_subst (lift_subst σ) = 𝟙 _ ⊗ₘ L.interp_subst σ := by
   simp only [Str.interp_subst, id_tensorHom]
   apply npair_univ'
   intro i
   simp only [npair_nproj]
   induction i using Fin.cases
-  · simp only [lift_subst, Fin.cases_zero,Str.interp_tm, nproj_zero, Fin.succRecOn_zero]
+  · simp only [lift_subst, Fin.cases_zero,Str.interp_tm, nproj_zero]
     symm
     apply whiskerLeft_fst
   · simp only [lift_subst, Fin.cases_succ, Function.comp_apply, ← interp_ren_succ, nproj_succ,
@@ -88,7 +88,7 @@ theorem interp_lift_subst (L: Str S C) {m n: Subst S} (σ : m ⟶ n) :
 
 theorem interp_lift_subst_snd (L: Str S C) {m n: Subst S} (σ : m ⟶ n) {c} {x : (npow L.carrier (n+1)).obj c}:
   ((L.interp_subst (lift_subst σ)).app c x).2 = (L.interp_subst σ).app c x.2 := by
-  simp only [interp_lift_subst, id_tensorHom, ChosenFiniteProducts.whiskerLeft_app]
+  simp only [interp_lift_subst, id_tensorHom, whiskerLeft_app]
 
 -- Morphisms of S-Structure over C
 structure morphism {S : monosig} (L L' : Str S C) where
@@ -152,9 +152,9 @@ instance Mod_Category: forall [SmallUniverse] {T : theory} {C : Type} [Category 
 namespace BaseChange
 variable {D : Type} [Category D] (F : Functor C D) [SmallUniverse] (T : theory)
 
-
+open Functor
 open SubobjectClassifier.BaseChange
-open ChosenFiniteProducts.BaseChange
+open CartesianMonoidalCategory.BaseChange
 
 noncomputable
 def pb_obj (L : Str T.sig D) : Str T.sig C where
@@ -184,12 +184,12 @@ def pb_map (L₁ L₂ : Str T.sig D) (f : L₁ ⟶ L₂) :
   ops_comm := by
     intros o
     simp only [pb_obj, SubobjectClassifier.prop.eq_1, nlift_diag, Category.assoc, ←
-      CategoryTheory.whiskerLeft_comp, ← f.ops_comm]
-    simp only [← Category.assoc, nlift_whisker, CategoryTheory.whiskerLeft_comp]
+      Functor.whiskerLeft_comp, ← f.ops_comm]
+    simp only [← Category.assoc, nlift_whisker, Functor.whiskerLeft_comp]
   preds_comm := by
     intros o
     simp only [pb_obj, SubobjectClassifier.prop, ← f.preds_comm]
-    simp only [nlift_diag, ← Category.assoc, nlift_whisker, CategoryTheory.whiskerLeft_comp]
+    simp only [nlift_diag, ← Category.assoc, nlift_whisker, Functor.whiskerLeft_comp]
 
 noncomputable
 def pullback : Str T.sig D ⥤ Str T.sig C where
@@ -212,7 +212,7 @@ theorem pb_prop_interp_tm (L : Str T.sig D) (n : ℕ ) (t : tm T.sig n) :
       simp only [Str.interp_tm, ←nproj_pb_prod, pb_prod_hom]
       rfl
     | op o a a_ih =>
-      simp only [Str.interp_tm_op, CategoryTheory.whiskerLeft_comp]
+      simp only [Str.interp_tm_op, Functor.whiskerLeft_comp]
       simp only [pb_obj_interp_ops, ←Category.assoc]
       congr 1
       simp only [Str.interp_subst, ←npair_pb_prod, pb_obj, ←npair_natural, a_ih]
@@ -232,7 +232,7 @@ theorem pb_prop_interp_fml {n : Nat} (L : Str T.sig D) (φ : fml T.sig n) :
     induction φ with
     | @pred m p ts =>
       simp only [Str.interp_fml, <-Category.assoc, <-pb_prop_interp_subst]
-      simp [map_pred,CategoryTheory.whiskerLeft_comp, Category.assoc, pb_obj_interp_preds]
+      simp [map_pred,Functor.whiskerLeft_comp, Category.assoc, pb_obj_interp_preds]
     | true =>
       simp only [Str.interp_fml, pb_prop_top]
       rfl
@@ -292,10 +292,10 @@ theorem subst_interp_fml (L: Str S C) (n : RenCtx) (m : Subst S) (σ : Fin n →
     simp only [SubobjectClassifier.prop, Str.interp_fml, ← Category.assoc, Str.interp_subst_comp]
     congr
   | true =>
-    simp only [SubobjectClassifier.prop, Str.interp_fml, Str.interp_subst, ← Category.assoc]
+    simp only [SubobjectClassifier.prop, Str.interp_fml, Str.interp_subst]
     congr 1
   | false =>
-    simp only [SubobjectClassifier.prop, Str.interp_fml, ← Category.assoc]
+    simp only [SubobjectClassifier.prop, Str.interp_fml]
     congr 1
   | conj f1 f2 ih1 ih2 =>
     simp only [Str.interp_fml, fml.subst, ih1, ih2]
@@ -307,8 +307,8 @@ theorem subst_interp_fml (L: Str S C) (n : RenCtx) (m : Subst S) (σ : Fin n →
     simp only [Str.interp_fml, fml.subst, ih, SubobjectClassifier.precomp_iSup]
   | @eq n t1 t2 =>
     simp[Str.interp_fml,fml.subst]
-    have h : ChosenFiniteProducts.lift (L.interp_tm (tm.subst σ t1)) (L.interp_tm (tm.subst σ t2)) =
-    (L.interp_subst σ) ≫ ChosenFiniteProducts.lift (L.interp_tm t1) (L.interp_tm t2) := by
+    have h : lift (L.interp_tm (tm.subst σ t1)) (L.interp_tm (tm.subst σ t2)) =
+    (L.interp_subst σ) ≫ lift (L.interp_tm t1) (L.interp_tm t2) := by
       apply hom_ext <;> simp only [lift_fst, comp_lift] <;> simp only [Str.subst_interp_tm, lift_snd]
     simp only [h, comp_lift, ← Category.assoc]
   | @existsQ n f ih =>
@@ -343,8 +343,7 @@ theorem subst_interp_fml (L: Str S C) (n : RenCtx) (m : Subst S) (σ : Fin n →
       · simp only [ih, SubobjectClassifier.prop, FunctorToTypes.comp]
         have liftsubstρ'' : (L.interp_subst (lift_subst σ)).app _  ρ'' = ρ' := by
           apply prod_ext
-          · simp only [Str.interp_subst, lift_subst, Fin.cases_zero, npair_app_pt, Str.interp_tm, nproj_zero,
-            Fin.succRecOn_zero, fst_app, ρ'']
+          · simp only [Str.interp_subst, lift_subst, Fin.cases_zero, npair_app_pt, Str.interp_tm, nproj_zero, fst_app, ρ'']
           · simp only [Str.interp_lift_subst_snd, ρ'']
             have opeq: (Opposite.op f1) = f1.op := rfl
             rw [opeq]
@@ -362,9 +361,9 @@ theorem interp_fml_eq_refl (L: Str S C) (n : RenCtx) (t: tm S n) :
 
 theorem interp_subst_fst (L: Str msig D) (t : tm msig n) (φ: (Fml msig).obj (n + 1)) :
   L.interp_fml (φ⟪t∷𝟙 _⟫) = lift (L.interp_tm t) (𝟙 _) ≫ L.interp_fml φ := by
-    simp only [ScopedSubstitution.ssubst, Fml, subst_interp_fml, Str.interp_subst]
+    simp only [ScopedSubstitution.ssubst, subst_interp_fml, Str.interp_subst]
     congr 1
-    simp [npair_succ, subst0, tm.ret_var, Str.interp_tm]
+    simp [npair_succ, Str.interp_tm]
     congr 1
     apply npair_univ'
     intros; simp
@@ -402,42 +401,42 @@ theorem soundness {T : theory} {n : RenCtx} (M:Mod T D) (φ ψ: fml T.sig n)
   (h:Hilbert.proof φ ψ): InterpPsh.Str.model M.str (sequent.mk _ φ ψ) := by
   induction h with
   | «axiom» hyp =>
-      simp only [Str.model, prop, ge_iff_le] at *
-      simp only [subst_interp_fml, prop]
+      simp only [Str.model] at *
+      simp only [subst_interp_fml]
       exact le_precomp _ _ _ (M.valid _ hyp)
   | cut phi2tau tau2psi Mphitau Mtaupsi =>
-    simp only [Str.model, prop] at *
+    simp only [Str.model] at *
     apply complete_lattice_to_prop.le_trans <;> assumption
   | var =>
-    simp only [Str.model, prop]
+    simp only [Str.model]
     apply complete_lattice_to_prop.le_refl
   | true_intro =>
-    simp only [Str.model, prop, Str.interp_fml]
+    simp only [Str.model]
     apply complete_lattice_to_prop.le_top
   | false_elim a a_ih =>
     rename_i n φ ψ
-    simp only [Str.model, prop, Str.interp_fml] at *
+    simp only [Str.model, Str.interp_fml] at *
     apply complete_lattice_to_prop.le_trans
     assumption
-    simp only [prop, bot_le]
+    simp only [bot_le]
   | conj_intro _ _ _ _ =>
     simp only[InterpPsh.Str.model] at *
     simp only[Str.interp_fml]
     apply SemilatticeInf.le_inf <;> assumption
   | conj_elim_l =>
-    simp only [Str.model, prop, Str.interp_fml]
+    simp only [Str.model, Str.interp_fml]
     apply complete_lattice_to_prop.inf_le_left
   | conj_elim_r =>
-    simp only [Str.model, prop, Str.interp_fml]
+    simp only [Str.model, Str.interp_fml]
     apply complete_lattice_to_prop.inf_le_right
   | disj_intro_l =>
-    simp only [Str.model, prop, Str.interp_fml]
+    simp only [Str.model, Str.interp_fml]
     apply complete_lattice_to_prop.le_sup_left
   | disj_intro_r =>
-    simp only [Str.model, prop, Str.interp_fml]
+    simp only [Str.model, Str.interp_fml]
     apply complete_lattice_to_prop.le_sup_right
   | @disj_elim n f1 f2 f3 f4 f1pf2orf3 f2cf1pf4 f3cf1pf4 h1 h2 h3 =>
-    simp only [Str.model, prop, Str.interp_fml] at *
+    simp only [Str.model, Str.interp_fml] at *
     set a := M.str.interp_fml f1 with a_def
     set b := M.str.interp_fml f2 with b_def
     set c := M.str.interp_fml f3 with c_def
@@ -446,16 +445,16 @@ theorem soundness {T : theory} {n : RenCtx} (M:Mod T D) (φ ψ: fml T.sig n)
     apply CompleteLatticeLemma.disj_elim_helper (npow M.str.carrier n ⟶ prop) a b c d <;> try assumption
     simp only[psh_distr]
   | infdisj_intro =>
-    simp only [Str.model, prop, Str.interp_fml]
+    simp only [Str.model, Str.interp_fml]
     apply complete_lattice_to_prop.le_sSup
     simp
   | infdisj_elim _ _ ih₁ ih₂ =>
-    simp only [Str.model, prop, Str.interp_fml] at *
+    simp only [Str.model, Str.interp_fml] at *
     apply CompleteLatticeLemma.inf_disj_elim_helper (α:= _ ⟶ prop) <;> try assumption
     intros; apply psh_inf_sSup_distr
   | eq_intro =>
-    simp only [Str.model, prop, interp_fml_eq_refl]
-    simp only [prop, Str.interp_fml]
+    simp only [Str.model, interp_fml_eq_refl]
+    simp only [Str.interp_fml]
     apply complete_lattice_to_prop.le_refl
   | eq_elim φ γ _ _ _ _ =>
     simp only[InterpPsh.Str.model] at *
@@ -476,24 +475,24 @@ theorem soundness {T : theory} {n : RenCtx} (M:Mod T D) (φ ψ: fml T.sig n)
     simp only[inf_eq_top_iff] at cjae
     rcases cjae with ⟨ha, he⟩
     have ad:= @Sieve_le_alt _ _ _ a d
-    simp only [prop, <-d_def, ad] at h1
+    simp only [ad] at h1
     have hd := h1 _ _ ha
     have beqe : b.app d0 x0 = e.app d0 x0 := by
-      simp only [prop, b_def, e_def]
+      simp only [b_def, e_def]
       apply interp_tm_eq_conseq_app
       simp only [d_def] at hd
       assumption
     have ceqf1 : c.app d0 x0 = f1.app d0 x0 := by
-      simp only [prop, c_def, f1_def]
+      simp only [c_def, f1_def]
       apply interp_tm_eq_conseq_app
       simp only [d_def] at hd
       assumption
-    simp only [prop, ← ceqf1]
+    simp only [← ceqf1]
     have abc:= @Sieve_le_alt _ _ _ (a ⊓ b) c
     simp[Str.interp_fml, <-a_def, <-b_def, abc] at h2
     apply h2
     have := @psh_inf_arrows' _ _ _ a b d0 x0
-    simp only [this, prop, beqe, inf_eq_top_iff]
+    simp only [this, beqe, inf_eq_top_iff]
     constructor
     · assumption
     · assumption
@@ -509,8 +508,7 @@ theorem soundness {T : theory} {n : RenCtx} (M:Mod T D) (φ ψ: fml T.sig n)
     let x' := (npow M.str.carrier n).map opf x
     let a := (lift (M.str.interp_tm t) (𝟙 _)).app opd' x'
     exists a ; constructor
-    · simp only [types_comp_apply, lift_app_pt, NatTrans.id_app, types_id_apply,
-      npow_suc_map_snd, a] ; rfl
+    · simp only [lift_app_pt, NatTrans.id_app, types_id_apply, a] ; rfl
     · simp only[interp_subst_fst] at h
       simp only [a]
       simp only[CategoryTheory.Sieve.mem_iff_pullback_eq_top] at h

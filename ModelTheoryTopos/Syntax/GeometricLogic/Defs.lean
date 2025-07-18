@@ -81,9 +81,9 @@ theorem ren_to_subst  (f : n ⟶ n') (φ: fml S n):
     funext i
     simp [lift_subst, lift₁]
     induction i using Fin.cases with
-    | zero => simp [lift₁]
+    | zero => simp []
     | succ i =>
-      simp only [lift₁, Fin.cases_succ, Function.comp_apply, tm.ren]
+      simp only [Fin.cases_succ, Function.comp_apply, tm.ren]
 
 end fml
 
@@ -107,11 +107,10 @@ theorem subst_conjn {k n n': RenCtx} (σ : Fin n -> tm m n') (fs: Fin k -> fml m
  subst σ (conjn fs) = conjn (fun i => subst σ (fs i)) := by
    induction k generalizing n with
    | zero =>
-     simp only [conjn,  Fin.foldr,
-          Nat.zero_eq,Fin.foldr.loop,subst]
+     simp only [conjn,  Fin.foldr, Fin.foldr.loop,subst]
    | succ n1 ih =>
      have := ih σ (fs ∘ Fin.succ)--(fun i => fs (Fin.castAdd 1 i))
-     simp only[conjn,subst]
+     simp only[conjn]
      simp only[Fin.foldr_succ]
      simp only [Nat.succ_eq_add_one, Function.comp_apply]
      simp only[subst]
@@ -123,8 +122,8 @@ theorem subst_eq:
 theorem subst_eqs :
   subst σ (eqs ts1 ts2) =
   eqs (fun i => tm.subst σ (ts1 i)) (fun i => tm.subst σ (ts2 i)) := by
-   simp only[subst,eqs]
-   simp only[subst_conjn,subst_eq]
+   simp only [eqs]
+   simp only [subst_conjn, subst_eq]
 
 
 open CategoryTheory
