@@ -140,18 +140,44 @@ theorem R.in01_natAdd : R.in01 i = Fin.natAdd m i := by
       simp [fml.ren_comp]
       apply Hilbert.proof.cut g.preserves_formula f.preserves_formula.ren
 
-  instance : Category (fmlInCtx m) where
+
+/-@[simps! id_base id_fiber comp_base comp_fiber]
+instance categoryStruct : CategoryStruct (∫ F) where
+  Hom X Y := Hom X Y
+  id X := {
+    base := 𝟙 X.base
+    fiber := (F.mapId ⟨X.base⟩).hom.app X.fiber }
+  comp {X _ _} f g := {
+    base := f.base ≫ g.base
+    fiber := (F.mapComp f.base.toLoc g.base.toLoc).hom.app X.fiber ≫
+      (F.map g.base.toLoc).map f.fiber ≫ g.fiber }-/
+
+
+
+
+  instance categoryStruct : CategoryStruct (fmlInCtx m) where
     Hom := fmlMap
     id := idMap
     comp := compMap
 
-  @[ext (iff := false)]
-  lemma fmlMap_eq  (xφ yψ : fmlInCtx m) (f g: fmlMap xφ yψ):
+  instance (X : fmlInCtx m) : Inhabited (fmlMap X X) :=
+  ⟨𝟙 X⟩
+
+  instance : Category (fmlInCtx m) where
+    toCategoryStruct := categoryStruct
+    -- Hom := fmlMap
+    -- id := idMap
+    -- comp := compMap
+
+  @[ext]
+  lemma fmlMap_eq  (xφ yψ : fmlInCtx m) (f g: xφ⟶  yψ):
    f.map = g.map → f = g := by
    intro a
+   simp[categoryStruct]
    ext
+   assumption
    --ext
-   sorry
+   --sorry
 
 
   /-Given a theory m, formula-in-context xφ and a map σ over xφ,
@@ -217,8 +243,8 @@ theorem R.in01_natAdd : R.in01 i = Fin.natAdd m i := by
 
   @[simp]
   noncomputable
-  def pullback_fst  {xφ yψ zξ : fmlInCtx m}  (f : fmlMap xφ yψ) (g: fmlMap zξ yψ) :
-    fmlMap (pullback_obj f g) xφ where
+  def pullback_fst  {xφ yψ zξ : fmlInCtx m}  (f :  xφ⟶  yψ) (g:  zξ⟶  yψ) :
+     (pullback_obj f g) ⟶ xφ where
        map := inl f.map g.map
        preserves_formula := by
         simp[pullback_obj]
@@ -236,23 +262,21 @@ theorem R.in01_natAdd : R.in01 i = Fin.natAdd m i := by
 
 
 
-  lemma fmlInCtx.map_comp (f : fmlMap xφ yψ) (g: yψ ⟶ zξ):
+  lemma fmlInCtx.map_comp {xφ yψ zξ : fmlInCtx m} (f :  xφ⟶  yψ) (g: yψ ⟶ zξ):
   (f ≫ g).map = g.map ≫ f.map := by
+   dsimp[CategoryStruct.comp,compMap]
 
-   sorry
 
-  lemma pushout_comm_sq (f : fmlMap xφ yψ)  (g: zξ ⟶ yψ) :
+  lemma RenCtx.pushout_comm_sq (f : fmlMap xφ yψ)  (g: zξ ⟶ yψ) :
      f.map ≫ inl f.map g.map = g.map ≫ inr f.map g.map := by
      apply CategoryTheory.Limits.pushout.condition
 
-  lemma pullback_comm_sq (f : fmlMap xφ yψ) (g: fmlMap zξ yψ):
+  lemma fmlInCtx.pullback_comm_sq (f : fmlMap xφ yψ) (g: fmlMap zξ yψ):
      (pullback_fst f g) ≫ f = (pullback_snd f g) ≫ g := by
      apply fmlMap_eq
-     simp[fmlInCtx.map_comp,pushout_comm_sq]
+     simp[fmlInCtx.map_comp,RenCtx.pushout_comm_sq]
 
 
-     --apply fmlMap_eq
-     --simp[pullback_fst]
 
 
   lemma pullback_isPullback :
