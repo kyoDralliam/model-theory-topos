@@ -16,6 +16,11 @@
 \newcommand{\fmlInCtx}[2]{\{ #1 | #2 \}}
 \newcommand{\subs}[2]{{#1}[{#1}]}
 \newcommand{\Univ}{\ensuremath{\mathscr{U}}}
+%added
+\newcommand{\quot}{\text{quot}}
+\newcommand{\vxz}{\vec{x}+\vec{z}}
+\newcommand{\iotas}{\ensuremath{[\iota_1,\iota_2]}}
+%added
 
 For the whole section, we fix a geometric theory \thT{} over some universe \Univ{}.
 
@@ -39,3 +44,42 @@ For the whole section, we fix a geometric theory \thT{} over some universe \Univ
 
 \begin{lemma}[Stability of covering families]
 \end{lemma}
+
+%added
+
+
+Define relations $R$ and $S$ as follows:
+
+For each $u_1,u_2\in \vec{x}+\vec{z}$, 
+\[S(u_1,u_2):= [\iota_1,\iota_2]u_1 =  [\iota_1,\iota_2]u_2\] 
+
+i.e. $S$ relates $u_1$ and $u_2$ iff $u_1$ is identified with $u_2$ in the quotient.
+
+\[R(inl(x_{f(i)}),inr(z_{\sigma(i)}))\]
+
+Goal: Proving the sequent 
+\[\phi\land \zeta\land \bigwedge_{i\in \vec{y}} x_{f(i)} = z_{\sigma(i)}\vdash (\overline{\phi}\land \overline{\zeta}\land\bigwedge_{j\in\vec{x}} x_j = w_{\iota_i(j)})[w_l:=(\vxz)_{s(l)}] \]
+
+Let $\Gamma :=$ LHS of the above sequent.
+
+This is achieved in four steps.
+
+Lemma 1 : For each $l\in \vxz$, we have $S((\vxz)_l, (\vxz)_{s(\iotas l)})$
+
+Lemma 2 : Provide the proof of \emph{exact} in the structure \emph{effectiveQuotient}. This is effectively proving $S\subset R^*$, where $R^*$ is the equivalence closure of $R$.
+
+Here $\alpha:= \vxz$, $\quot:= \iotas$
+
+Lemma 3 : Prove for all $l\in \vxz$, $r\in R^*((\vxz)_l,(\vxz)_{s(\iotas l)})$, we have 
+
+
+\[\Gamma \vdash (\vxz)_l = (\vxz)_{s(\iotas l)}\]. 
+
+The proof is by induction of the construction of the proof of $R^*$.
+
+Lemma 4 : Prove $r\in R^*((\vxz)_l,(\vxz)_{s(\iotas l)})$ implies
+
+\[\Gamma \vdash (\bigwedge_{j\in\vec{x}}x_j = w_{\iota_1(j)}\land \bigwedge_{j'\in\vec{z}}z_{j'}= w_{\iota_2(j')}) [w_l:=(\vxz)_{s(l)}] \]
+
+
+%added
