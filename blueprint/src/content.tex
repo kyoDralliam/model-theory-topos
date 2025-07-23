@@ -77,6 +77,13 @@ Lemma 3 : Prove for all $l\in \vxz$, $r\in R^*((\vxz)_l,(\vxz)_{s(\iotas l)})$, 
 
 The proof is by induction of the construction of the proof of $R^*$.
 
+\begin{itemize}
+    \item reflexivity should be according to proof rules for equality, same for symmetry and transitivity.
+    \item base case requires us to prove
+    \[\Gamma\vdash (\vxz)_{inl(f(i))} = (\vxz)_{inr(\sigma(i))}\]
+    LHS is $x_{f(i)}$ and RHS is $z_{\sigma(i)}$, which equals by assumptions in $\Gamma$.
+\end{itemize}
+
 Lemma 4 : Prove $r\in R^*((\vxz)_l,(\vxz)_{s(\iotas l)})$ implies
 
 \[\Gamma \vdash (\bigwedge_{j\in\vec{x}}x_j = w_{\iota_1(j)}\land \bigwedge_{j'\in\vec{z}}z_{j'}= w_{\iota_2(j')}) [w_l:=(\vxz)_{s(l)}] \]
