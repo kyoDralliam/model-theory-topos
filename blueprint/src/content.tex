@@ -85,8 +85,24 @@ The proof is by induction of the construction of the proof of $R^*$.
 \end{itemize}
 
 Lemma 4 : Prove 
-
 \[\Gamma \vdash (\bigwedge_{j\in\vec{x}}x_j = w_{\iota_1(j)}\land \bigwedge_{j'\in\vec{z}}z_{j'}= w_{\iota_2(j')}) [w_l:=(\vxz)_{s(l)}] \]
+from Lemma 3.
 
+We take the reduction 
+\[(x_j = w_{\iota_1(j)}) [w_l:=(\vxz)_{s(l)}]\]
+\[x_j = (\vxz)_{s(\iota_1(j))}\]
+\[(\vxz)_{inl(j)} = (\vxz)_{s(\iota_1(j))}\]
+\[(\vxz)_{inl(j)} = (\vxz)_{s(\iotas (inl(j)))}\]
+so the final equation is what we want.
+
+This is just the conclusion of Lemma 3, taking $l := inl(j)$. 
+
+So we want to show $R^*((\vxz)_l,(\vxz)_{s(\iotas l)})$. By Lemma 2, we want to show \[S((\vxz)_{inl(j)},(\vxz)_{s(\iotas (inl(j)))})\].
+
+By definition of $S$, it is to prove:
+
+\[\iotas (inl(j)) = \iotas (s(\iotas (inl(j)))) \]
+
+$\iotas\circ s = 1$ cancels out. Both LHS and RHS is $\iota_1(j)$.
 
 %added
