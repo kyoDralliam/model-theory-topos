@@ -1,2 +1,9 @@
 /.lake
 .vscode
+**/*.aux
+**/*.out
+**/*.pdf
+**/*.fls
+**/*.log
+**/*.synctex.gz
+**/*.fdb_latexmk

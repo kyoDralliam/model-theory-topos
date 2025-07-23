@@ -5,3 +5,37 @@
 % If you want to split the blueprint content into several files then
 % the current file can be a simple sequence of \input. Otherwise It
 % can start with a \section or \chapter for instance.
+
+\section{Geometric Signature, Theories and Logic}
+
+
+
+\section{Syntactic Site for a Geometric Theory}
+
+\newcommand{\thT}{\ensuremath{\mathcal{T}}}
+\newcommand{\fmlInCtx}[2]{\{ #1 | #2 \}}
+\newcommand{\subs}[2]{{#1}[{#1}]}
+\newcommand{\Univ}{\ensuremath{\mathscr{U}}}
+
+For the whole section, we fix a geometric theory \thT{} over some universe \Univ{}.
+
+
+\begin{definition}[Syntactic Category]
+  \lean{Joshua.fmlInCtx, Joshua.fmlMap, Joshua.categoryStruct}
+  \leanok
+  The syntactic category associated to $\mathcal{T}$ has:
+  \begin{itemize}
+    \item as objects, pairs $\fmlInCtx{\vec{x}}{\varphi}$ of a context $\vec{x} \coloneq x_1, \ldots, x_{n}$ of variables and a geometric formula $\vec{x} \vdash_{\thT} \varphi$ over \thT{};
+    \item as morphisms between $\fmlInCtx{\vec{x}}{\varphi}$ and $\fmlInCtx{\vec{y}}{\psi}$, a renaming $\rho : \vec{y} \to \vec{x}$ such that $\vec{x} | \varphi \vdash \subs{\psi}{\rho}$.
+  \end{itemize}
+\end{definition}
+
+\begin{definition}[Covering family]
+  \lean{Josua.CoveringFamily, Joshua.cover_from_over}
+  \leanok
+  A family of maps $(\rho_k : \fmlInCtx{\vec{x}_k}{\varphi_k}\to \fmlInCtx{\vec{y}}{\psi})_{k \in K}$ with $K \in \Univ$ is covering when
+  $\vec{y} | \psi \vdash \bigvee_{k \in K} \exists \vec{x}_k, \phi \wedge \bigwedge_{i \in \vec{y}} y_i = x_{\rho_k(i)}$.
+\end{definition}
+
+\begin{lemma}[Stability of covering families]
+\end{lemma}
