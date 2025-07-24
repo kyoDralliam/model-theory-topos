@@ -36,7 +36,7 @@ For the whole section, we fix a geometric theory \thT{} over some universe \Univ
 \end{definition}
 
 \begin{definition}[Covering family]
-  \lean{Josua.CoveringFamily, Joshua.cover_from_over}
+  \lean{Joshua.CoveringFamily, Joshua.cover_from_over}
   \leanok
   A family of maps $(\rho_k : \fmlInCtx{\vec{x}_k}{\varphi_k}\to \fmlInCtx{\vec{y}}{\psi})_{k \in K}$ with $K \in \Univ$ is covering when
   $\vec{y} | \psi \vdash \bigvee_{k \in K} \exists \vec{x}_k, \phi \wedge \bigwedge_{i \in \vec{y}} y_i = x_{\rho_k(i)}$.
@@ -50,14 +50,14 @@ For the whole section, we fix a geometric theory \thT{} over some universe \Univ
 
 Define relations $R$ and $S$ as follows:
 
-For each $u_1,u_2\in \vec{x}+\vec{z}$, 
-\[S(u_1,u_2):= [\iota_1,\iota_2]u_1 =  [\iota_1,\iota_2]u_2\] 
+For each $u_1,u_2\in \vec{x}+\vec{z}$,
+\[S(u_1,u_2):= [\iota_1,\iota_2]u_1 =  [\iota_1,\iota_2]u_2\]
 
 i.e. $S$ relates $u_1$ and $u_2$ iff $u_1$ is identified with $u_2$ in the quotient.
 
 \[R(inl(x_{f(i)}),inr(z_{\sigma(i)}))\]
 
-Goal: Proving the sequent 
+Goal: Proving the sequent
 \[\phi\land \zeta\land \bigwedge_{i\in \vec{y}} x_{f(i)} = z_{\sigma(i)}\vdash (\overline{\phi}\land \overline{\zeta}\land\bigwedge_{j\in\vec{x}} x_j = w_{\iota_i(j)})[w_l:=(\vxz)_{s(l)}] \]
 
 Let $\Gamma :=$ LHS of the above sequent.
@@ -70,10 +70,10 @@ Lemma 2 : Provide the proof of \emph{exact} in the structure \emph{effectiveQuot
 
 Here $\alpha:= \vxz$, $\quot:= \iotas$
 
-Lemma 3 : Prove for all $l\in \vxz$, $r\in R^*((\vxz)_l,(\vxz)_{s(\iotas l)})$, we have 
+Lemma 3 : Prove for all $l\in \vxz$, $r\in R^*((\vxz)_l,(\vxz)_{s(\iotas l)})$, we have
 
 
-\[\Gamma \vdash (\vxz)_l = (\vxz)_{s(\iotas l)}\]. 
+\[\Gamma \vdash (\vxz)_l = (\vxz)_{s(\iotas l)}\].
 
 The proof is by induction of the construction of the proof of $R^*$.
 
@@ -84,18 +84,18 @@ The proof is by induction of the construction of the proof of $R^*$.
     LHS is $x_{f(i)}$ and RHS is $z_{\sigma(i)}$, which equals by assumptions in $\Gamma$.
 \end{itemize}
 
-Lemma 4 : Prove 
+Lemma 4 : Prove
 \[\Gamma \vdash (\bigwedge_{j\in\vec{x}}x_j = w_{\iota_1(j)}\land \bigwedge_{j'\in\vec{z}}z_{j'}= w_{\iota_2(j')}) [w_l:=(\vxz)_{s(l)}] \]
 from Lemma 3.
 
-We take the reduction 
+We take the reduction
 \[(x_j = w_{\iota_1(j)}) [w_l:=(\vxz)_{s(l)}]\]
 \[x_j = (\vxz)_{s(\iota_1(j))}\]
 \[(\vxz)_{inl(j)} = (\vxz)_{s(\iota_1(j))}\]
 \[(\vxz)_{inl(j)} = (\vxz)_{s(\iotas (inl(j)))}\]
 so the final equation is what we want.
 
-This is just the conclusion of Lemma 3, taking $l := inl(j)$. 
+This is just the conclusion of Lemma 3, taking $l := inl(j)$.
 
 So we want to show $R^*((\vxz)_l,(\vxz)_{s(\iotas l)})$. By Lemma 2, we want to show \[S((\vxz)_{inl(j)},(\vxz)_{s(\iotas (inl(j)))})\].
 
