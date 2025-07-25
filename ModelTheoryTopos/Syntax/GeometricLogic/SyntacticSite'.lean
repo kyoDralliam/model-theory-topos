@@ -347,59 +347,59 @@ instance categoryStruct : CategoryStruct (∫ F) where
       by conjI and trans
   -/
 
- theorem Hilbert.conj_copy [SmallUniverse] {T: theory} (φ ψ : fml T.sig n) :
- Hilbert.proof φ ψ → Hilbert.proof φ (fml.conj φ ψ) := by
-   intro p
-   apply Hilbert.proof.conj_intro
-   · apply Hilbert.proof.var
-   · assumption
+--  theorem Hilbert.conj_copy [SmallUniverse] {T: theory} (φ ψ : fml T.sig n) :
+--  Hilbert.proof φ ψ → Hilbert.proof φ (fml.conj φ ψ) := by
+--    intro p
+--    apply Hilbert.proof.conj_intro
+--    · apply Hilbert.proof.var
+-- --    · assumption
 
-  theorem conj_infdisj_distr_d1 :
-   Hilbert.proof (fml.conj φ (fml.infdisj a f))
-    (fml.infdisj a (fun i => fml.conj φ (f i))) := by
-     apply Hilbert.proof.infdisj_elim (Hilbert.proof.conj_elim_r)
-     intro k
-     have p : (f k).conj (φ.conj (fml.infdisj a f)) ⊢ fml.conj φ (f k) := by
-      apply Hilbert.proof.conj_intro
-      · have p1 :
-         (f k).conj (φ.conj (fml.infdisj a f)) ⊢ (φ.conj (fml.infdisj a f)) := by
-         apply Hilbert.proof.conj_elim_r
-        apply Hilbert.proof.cut p1
-        apply Hilbert.proof.conj_elim_l
-      · apply Hilbert.proof.conj_elim_l
-     apply Hilbert.proof.cut p
-     apply Hilbert.proof.infdisj_intro k
-
-
-
-  theorem infdisj_elim' (a : SmallUniverse.U)
-   (φ : SmallUniverse.El a → fml _ m) :
-   (∀ k, φ k ⊢ ψ) → fml.infdisj a φ ⊢ ψ := by
-    intro h
-    have p: (fml.infdisj a φ) ⊢ (fml.infdisj a φ) := by
-     apply Hilbert.proof.var
-    apply Hilbert.proof.infdisj_elim p
-    intro k
-    have p' : (φ k).conj (fml.infdisj a φ) ⊢ φ k := by apply Hilbert.proof.conj_elim_l
-    apply Hilbert.proof.cut p'
-    apply h
+--   theorem conj_infdisj_distr_d1 :
+--    Hilbert.proof (fml.conj φ (fml.infdisj a f))
+--     (fml.infdisj a (fun i => fml.conj φ (f i))) := by
+--      apply Hilbert.proof.infdisj_elim (Hilbert.proof.conj_elim_r)
+--      intro k
+--      have p : (f k).conj (φ.conj (fml.infdisj a f)) ⊢ fml.conj φ (f k) := by
+--       apply Hilbert.proof.conj_intro
+--       · have p1 :
+--          (f k).conj (φ.conj (fml.infdisj a f)) ⊢ (φ.conj (fml.infdisj a f)) := by
+--          apply Hilbert.proof.conj_elim_r
+--         apply Hilbert.proof.cut p1
+--         apply Hilbert.proof.conj_elim_l
+--       · apply Hilbert.proof.conj_elim_l
+--      apply Hilbert.proof.cut p
+--      apply Hilbert.proof.infdisj_intro k
 
 
 
-  theorem conj_infdisj_distr_d2 :
-   Hilbert.proof
-    (fml.infdisj a (fun i => fml.conj φ (f i)))
-    (fml.conj φ (fml.infdisj a f)) := by
-    apply Hilbert.proof.conj_intro
-    · apply infdisj_elim'
-      intro k
-      apply Hilbert.proof.conj_elim_l
-    · apply infdisj_elim'
-      intro k
-      have p: φ.conj (f k) ⊢ f k := by
-        apply Hilbert.proof.conj_elim_r
-      apply Hilbert.proof.cut p
-      apply Hilbert.proof.infdisj_intro k
+  -- theorem infdisj_elim' (a : SmallUniverse.U)
+  --  (φ : SmallUniverse.El a → fml _ m) :
+  --  (∀ k, φ k ⊢ ψ) → fml.infdisj a φ ⊢ ψ := by
+  --   intro h
+  --   have p: (fml.infdisj a φ) ⊢ (fml.infdisj a φ) := by
+  --    apply Hilbert.proof.var
+  --   apply Hilbert.proof.infdisj_elim p
+  --   intro k
+  --   have p' : (φ k).conj (fml.infdisj a φ) ⊢ φ k := by apply Hilbert.proof.conj_elim_l
+  --   apply Hilbert.proof.cut p'
+  --   apply h
+
+
+
+  -- theorem conj_infdisj_distr_d2 :
+  --  Hilbert.proof
+  --   (fml.infdisj a (fun i => fml.conj φ (f i)))
+  --   (fml.conj φ (fml.infdisj a f)) := by
+  --   apply Hilbert.proof.conj_intro
+  --   · apply infdisj_elim'
+  --     intro k
+  --     apply Hilbert.proof.conj_elim_l
+  --   · apply infdisj_elim'
+  --     intro k
+  --     have p: φ.conj (f k) ⊢ f k := by
+  --       apply Hilbert.proof.conj_elim_r
+  --     apply Hilbert.proof.cut p
+  --     apply Hilbert.proof.infdisj_intro k
 
   theorem conj_infdisj_distr_iff_left :
    Hilbert.proof
@@ -516,7 +516,7 @@ instance categoryStruct : CategoryStruct (∫ F) where
 
 
       simp only[← conj_infdisj_distr_iff_left]
-      apply infdisj_elim'
+      apply Hilbert.infdisj_elim'
       intro k
       apply Hilbert.proof.cut _ (Hilbert.proof.infdisj_intro k)
       dsimp only[cover_from_over']
@@ -542,7 +542,7 @@ instance categoryStruct : CategoryStruct (∫ F) where
       --· refine (eqToHom sorry ≫ l ≫ eqToHom sorry)
 
       let fs := fun i ↦ fml.ren f.map (cover_from_over yψ (cf.maps i))
-      have p:= @Joshua.conj_infdisj_distr_d2 _ (cf.index) _ _ (xφ.formula.conj (fml.infdisj cf.index (fun i ↦ fml.ren f.map (cover_from_over yψ (cf.maps i))))) fs
+      --have p:= @Hilbert.conj_infdisj_distr_d2 _ (cf.index) _ _ (xφ.formula.conj (fml.infdisj cf.index (fun i ↦ fml.ren f.map (cover_from_over yψ (cf.maps i))))) fs
 
       --apply Hilbert.proof.cut p
       generalize h: xφ.formula.conj (fml.infdisj cf.index fun i ↦ fml.ren f.map (cover_from_over yψ (cf.maps i))) = f1

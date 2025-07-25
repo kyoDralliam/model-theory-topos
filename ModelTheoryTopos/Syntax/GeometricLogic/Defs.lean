@@ -175,6 +175,15 @@ theorem subst_comp {n1 n2 n3 : Subst m} (f : n1 ⟶ n2) (g : n2 ⟶ n3) (t : fml
   | eq t u => simp only [subst, tm.subst_comp]
   | existsQ φ ih => simp only [subst, lift_subst_comp, ih]
 
+
+theorem substn_section {T: theory} {k n : Subst T.sig} (φ : fml T.sig k) (σ :  k ⟶ n) :
+  (φ.ren R.in01).subst (substn σ) = φ.subst σ := by
+  simp [fml.ren_to_subst, <-fml.subst_comp, R.in01]
+  congr
+  funext i
+  simp [tm.subst_comp_app, tm.subst, substn]
+
+
 theorem ren_existsn {n1 n2 n m} (f: n1 ⟶ n2) (φ : fml m (n1 + n)):
  φ.existsn.ren f = (φ.ren (liftn_ren f)).existsn := by
  induction n with

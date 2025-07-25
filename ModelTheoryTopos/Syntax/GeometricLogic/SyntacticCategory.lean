@@ -72,6 +72,12 @@ variable [SmallUniverse]
      apply CategoryTheory.Limits.pushout.condition
 
 
+
+  lemma fmlMap_comp_map {xφ yψ zξ: fmlInCtx m}
+    (f : xφ ⟶ yψ) (g: yψ⟶ zξ) :
+    (f ≫ g).map = g.map ≫ f.map := by
+     simp[CategoryStruct.comp,compMap]
+
   /-
   constructing the pullback in the syntactic category
   -/

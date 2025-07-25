@@ -305,6 +305,7 @@ theorem substn_liftn_subst {n k k' : Subst m} (σ : n ⟶ k) (f : k ⟶ k') :
     rw [Function.comp_apply, substn, Fin.casesAdd_left]
   · simp only [tm.subst_comp_app, substn, Fin.casesAdd_right, liftn_subst, tm.subst]
 
+
 lemma liftn_ren_left {n1 n2 n : RenCtx} (f : n1 ⟶ n2) (i: Fin n1):
  liftn_ren (n:=n) f (R.in10 i) = R.in10 (f i) := by
   simp[liftn_ren]
@@ -445,6 +446,9 @@ theorem substnsucc'' (σ : Fin n ⟶ tm m k) (t: tm m k):
     change substn (scons t σ) i.succ with (substn (scons t σ) ∘ Fin.succ) i
     rw [← substn_atsucc (scons t σ)]
     rfl
+
+
+
 
 lemma lift_liftn_ren {n1 n2 n : RenCtx} (f : n1 ⟶ n2) :
   lift_ren (liftn_ren f) = liftn_ren (n:=n+ 1) f := by
