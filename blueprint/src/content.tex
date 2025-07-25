@@ -39,11 +39,37 @@ For the whole section, we fix a geometric theory \thT{} over some universe \Univ
   \lean{Joshua.CoveringFamily, Joshua.cover_from_over}
   \leanok
   A family of maps $(\rho_k : \fmlInCtx{\vec{x}_k}{\varphi_k}\to \fmlInCtx{\vec{y}}{\psi})_{k \in K}$ with $K \in \Univ$ is covering when
-  $\vec{y} | \psi \vdash \bigvee_{k \in K} \exists \vec{x}_k, \phi \wedge \bigwedge_{i \in \vec{y}} y_i = x_{\rho_k(i)}$.
+  $\vec{y} | \psi \vdash \bigvee_{k \in K} (\exists \vec{x}_k, \phi \wedge \bigwedge_{i \in \vec{y}} y_i = x_{\rho_k(i)}$).
 \end{definition}
 
+The formulation of stability is centered around the following commutative square.
+
+\[
+\begin{tikzcd}
+   \vec{w}\mid \phi\land \zeta \ar[r,"\iota_2"]\ar[d,"\iota_1"]  & \vec{z}\mid \zeta\ar[d,"\sigma"]\\
+   \vec{x}\mid \phi \ar[r,"f"] & \vec{y}\mid \psi
+\end{tikzcd}
+\]
+
+where $\vec{w}:= \vec{x}+ \vec{z}$ is the pushout of $f$ and $\sigma$.
+
+with the abuse of notation of denoting a map between formulas and the underlying map between contexts using the same letter, $\vec{w}$ is constructed as:
+\[
+\begin{tikzcd}
+ \vec{y}\ar[d,"f"]\ar[r,"\sigma"] & \vec{z}\ar[d,"\iota_2"]\\
+ \vec{x}\ar[r,"\iota_1"] & \vec{w}
+\end{tikzcd}
+\]
+
+
 \begin{lemma}[Stability of covering families]
+  If a family $\{\rho_k\}\to \vec{y}\mid \psi$ is a covering family, then for each $f: \vec{x}\mid \phi\to \vec{y}\mid\psi$, the pullback of this covering is again a covering family.
 \end{lemma}
+
+\begin{theorem}[Stability of covering sieves]
+  If a family $\{\rho_k\}\to \vec{y}\mid \psi$ is a covering sieve, the the pullback sieve $f^*\{\rho_k\}$ is a covering sieve on $\vec{x}\mid\phi$.
+
+\end{theorem}
 
 %added
 
