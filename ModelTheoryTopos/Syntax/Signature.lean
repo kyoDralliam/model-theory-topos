@@ -313,6 +313,72 @@ lemma liftn_ren_right {n1 n2 n : RenCtx} (f : n1 ⟶ n2) (i: Fin n) :
  liftn_ren (n:=n) f (R.in01 i) = R.in01 i := by
   simp[liftn_ren]
 
+theorem liftn_ren_zero {n1 n2 : RenCtx} (f : n1 ⟶ n2) : liftn_ren (n :=0) f = f := by
+  have p : ∀ x, liftn_ren (n :=0) f x = f x := by
+    fapply Fin.casesAdd
+    · intro i
+      apply liftn_ren_left
+    intro i; exact Fin.elim0 i
+  funext
+  apply p
+
+
+lemma addNat_succ :
+  (@R.in10 n1 (n2 + 1) i) =  Fin.succ (@R.in10 n1 n2 i) := by
+  simp[Fin.addNat]
+  rfl
+
+lemma castAdd'_succ {n m} (i: Fin m):
+ Fin.castAdd' n i.succ = (Fin.castAdd' n i).succ := by
+ simp[Fin.castAdd']
+
+
+lemma lift_ren_liftn_ren {n n' : RenCtx} (f : n ⟶ n') :
+  lift_ren f = @liftn_ren n n' 1 f := by
+  have p: ∀ i : Fin (n+1), lift_ren f i = @liftn_ren _ _ 1 f i := by
+   apply @Fin.casesAdd
+   · intro i
+     have e: (i.addNat 1) = @R.in10 n 1 i := rfl
+     simp only[e,liftn_ren_left]
+     simp[addNat_succ,lift_ren]
+   · intro i
+     simp[liftn_ren_right,lift_ren]
+     have e: i = 0 := by
+      ext : 1
+      simp_all only [Fin.val_eq_zero, Fin.isValue]
+     have e' : (Fin.castAdd' n 0) = (0: Fin (n + 1)) := rfl
+     simp[e,e']
+     rfl
+  funext i
+  apply p
+
+
+lemma liftn_ren_add {n1 n2 m1 m2 : RenCtx} (f : n1 ⟶ n2) (i: Fin n1):
+ liftn_ren (liftn_ren f (n:=m1)) (n:=m2) (R.in10 (R.in10 i))=
+ Fin.cast ((Nat.add_assoc n2 m1 m2).symm)
+  (liftn_ren f (n:= m1 + m2) (R.in10 i)):= by
+  simp[liftn_ren_left]
+  simp[Fin.cast]
+  ext
+  simp[Fin.addNat]
+  simp[Nat.add_assoc]
+
+lemma lift1_liftn_ren_left {n1 n2 n : RenCtx} (f : n1 ⟶ n2) (i: Fin n1) :
+  lift_ren (liftn_ren f) (R.in10 (R.in10 i)) = @liftn_ren _ _ (n+ 1) f (R.in10 i) := by
+  simp only [lift_ren_liftn_ren,  liftn_ren_left]
+  simp[Fin.addNat,Nat.add_assoc]
+
+
+lemma liftn_ren_liftn_ren_right {n1 n2 n : RenCtx} (f : n1 ⟶ n2) (i: Fin n) :
+  lift_ren (liftn_ren f) (R.in10 (R.in01 i)) = @liftn_ren _ _ (n+ 1) f (R.in01 (R.in10 i)) := by
+  simp only[lift_ren_liftn_ren,liftn_ren_left,liftn_ren_right]
+  simp[castAdd'_succ]
+
+lemma liftn_ren_liftn_ren_zero {n1 n2 n : RenCtx} (f : n1 ⟶ n2) (i: Fin 1) :
+  lift_ren (liftn_ren f) (R.in01 (R.in01 i)) = @liftn_ren _ _ (n+ 1) f (R.in01 (R.in01 i)) := by
+  simp only[lift_ren_liftn_ren,liftn_ren_right]
+  rfl
+
 
 
 -- Comparison of n-ary combinators with unary/0-ary operators
