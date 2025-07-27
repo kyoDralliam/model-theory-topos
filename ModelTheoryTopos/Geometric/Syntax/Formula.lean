@@ -58,21 +58,6 @@ def Formula.subst {Γ Δ : S.Context} (σ : Δ ⟶ Γ) (P : Γ ⊢ᶠ𝐏) : Δ 
   | existsQ (A := A) P =>
       existsQ (P.subst (Context.Hom.cons (Δ.π A ≫ σ) (Context.var Δ A)))
 
-variable (S) in
-structure Sequent : Type* where
-  ctx : S.Context
-  premise : Formula ctx := .true
-  concl : Formula ctx
-
-variable (S) in
-class Theory where
-  axioms : Set S.Sequent
-
-attribute [coe] Theory.axioms
-
-instance : Coe (Theory (κ := κ)) (Set S.Sequent) where
-  coe T := T.axioms
-
 @[ext]
 structure FormulaContext (Γ : S.Context) : Type* where
   length : ℕ
@@ -100,6 +85,21 @@ instance instMembershipFormulaContext {Γ} :
   Membership (Formula Γ) (FormulaContext (κ := κ) Γ) := {
   mem Θ P := ∃ i, Θ.ctx i = P
 }
+
+variable (S) in
+structure Sequent : Type* where
+  ctx : S.Context
+  premise : Formula ctx
+  concl : Formula ctx
+
+variable (S) in
+class Theory where
+  axioms : Set S.Sequent
+
+attribute [coe] Theory.axioms
+
+instance : Coe (Theory (κ := κ)) (Set S.Sequent) where
+  coe T := T.axioms
 
 instance instMembershipTheory :
   Membership (S.Sequent) (S.Theory (κ := κ)) := {

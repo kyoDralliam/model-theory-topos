@@ -34,4 +34,7 @@ attribute [instance] Geometric.isRegular Geometric.hasFalse Geometric.hasJoins
 
 abbrev Coherent := Geometric C Bool
 
+variable [geo : Geometric κ C]
+instance geoHasFiniteProducts (X : C) : HasFiniteProducts (Subobject X) := sorry
+
 end CategoryTheory

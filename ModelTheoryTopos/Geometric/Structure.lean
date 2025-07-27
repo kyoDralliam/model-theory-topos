@@ -6,6 +6,7 @@ import Mathlib.CategoryTheory.Limits.Shapes.FiniteLimits
 import Mathlib.CategoryTheory.MorphismProperty.Limits
 import Mathlib.CategoryTheory.Limits.Shapes.RegularMono
 import ModelTheoryTopos.Geometric.Syntax.Formula
+import ModelTheoryTopos.Geometric.Syntax.Derivation
 import ModelTheoryTopos.Geometric.RegularCategory
 
 open CategoryTheory Limits Signature
@@ -83,7 +84,12 @@ notation:arg "⟦" M "|" P "⟧ᶠ" =>
 def Sequent.interpret (U : S.Sequent) : Prop :=
   ⟦M | U.premise⟧ᶠ ≤ ⟦M | U.concl⟧ᶠ
 
-def Theory.interpret (T : S.Theory) := ∀ Seq ∈ T.axioms, Seq.interpret M
+def Theory.interpret (T : S.Theory) : Prop := ∀ Seq ∈ T.axioms, Seq.interpret M
+
+def Soundness  (T : S.Theory) {Γ : Context S} {Θ : FormulaContext Γ} (P : Γ ⊢ᶠ𝐏) :
+  Derivation (T := T) Θ P → Theory.interpret M T →
+    ∏ᶜ (fun i ↦ ⟦M | Θ.ctx i⟧ᶠ) ≤ ⟦M | P⟧ᶠ := by
+  sorry
 
 end
 end Signature
