@@ -75,7 +75,15 @@ noncomputable def Formula.interpret {Γ : Context S} : Γ ⊢ᶠ𝐏 →
   | .eq t1 t2 => .mk <| equalizer.ι ⟦M | t1⟧ᵗ ⟦M | t2⟧ᵗ
   | .existsQ (A := A) P => (Subobject.«exists» ((Γ.π A).interpret M)).obj <|
       P.interpret
-  | .infdisj fP => ∐ (Formula.interpret ∘ fP)
+  | .infdisj fP => ∐ (fun i ↦ Formula.interpret (fP i))
+
+notation:arg "⟦" M "|" P "⟧ᶠ" =>
+  Formula.interpret M P
+
+def Sequent.interpret (U : S.Sequent) : Prop :=
+  ⟦M | U.premise⟧ᶠ ≤ ⟦M | U.concl⟧ᶠ
+
+def Theory.interpret (T : S.Theory) := ∀ Seq ∈ T.axioms, Seq.interpret M
 
 end
 end Signature
