@@ -36,7 +36,7 @@ inductive Formula : S.Context → Type* where
   | existsQ {A Γ} : Formula (A ∶ Γ) → Formula Γ
 
 scoped notation:min "⊤'" => Formula.true
-scoped notation:min "⊤'" => Formula.false
+scoped notation:min "⊥'" => Formula.false
 scoped infixr:62 " ∧' " => Formula.conj
 scoped prefix:100 "⋁'" => Formula.infdisj
 scoped infixr:50 " =' " => Formula.eq
@@ -50,13 +50,13 @@ scoped macro_rules
 def Formula.subst {Γ Δ : S.Context} (σ : Δ ⟶ Γ) (P : Γ ⊢ᶠ𝐏) : Δ ⊢ᶠ𝐏 :=
   match P with
   | rel P ft => .rel P (fun i ↦ (ft i).subst σ)
-  | true => true
-  | false => false
-  | conj P Q => conj (P.subst σ) (Q.subst σ)
-  | infdisj fP => infdisj (fun i ↦ (fP i).subst σ)
-  | eq t1 t2 => eq (t1.subst σ) (t2.subst σ)
+  | ⊤' => ⊤'
+  | ⊥' => ⊥'
+  | P ∧' Q => (P.subst σ) ∧' (Q.subst σ)
+  | ⋁' fP => ⋁' (fun i ↦ (fP i).subst σ)
+  | t1 =' t2 => (t1.subst σ) =' (t2.subst σ)
   | existsQ (A := A) P =>
-      existsQ (P.subst (Context.Hom.cons (Δ.π A ≫ σ) (Context.var Δ A)))
+      ∃' (P.subst (Context.Hom.cons (Δ.π A ≫ σ) (Context.var Δ A)))
 
 @[ext]
 structure FormulaContext (Γ : S.Context) : Type* where
