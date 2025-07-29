@@ -8,7 +8,13 @@ open CategoryTheory
 
 
 instance : Limits.HasPushouts RenCtx := sorry
+
 instance {x y z} (f: x ⟶ y) (g: x⟶ z) : @Limits.HasPushout RenCtx _ x y z f g := sorry
+
+
+instance : Limits.HasCoproducts RenCtx := sorry
+
+
 
 open Limits pushout
 
@@ -117,9 +123,3 @@ variable [SmallUniverse]
   lemma pullback_isPullback :
    CategoryTheory.IsPullback (pullback_fst f g) (pullback_snd f g) f g := by
     sorry
-
-
-
-class SmallUniverse.UniverseClosureProps [SmallUniverse] where
-  uUnit : U
-  utt : El uUnit
