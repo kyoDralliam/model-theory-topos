@@ -17,22 +17,23 @@ variable (S) in
 @[ext]
 structure Context : Type* where
   length : ℕ
-  ctx : Fin length → S.Sorts
+  ctx : Fin length → S.derivedSorts
 
-abbrev Context.cons (A : S) (Γ : S.Context) : S.Context where
+@[reducible]
+def Context.cons (A : S) (Γ : S.Context) : S.Context where
   length := Γ.length + 1
   ctx := Matrix.vecCons A Γ.ctx
 
-abbrev Context.signature : S.Context → Signature := fun _ => S
+@[reducible]
+def Context.signature : S.Context → Signature := fun _ => S
 
 -- Note that this is `\:`
 scoped[Signature] infixr:67 " ∶ " => Signature.Context.cons
 
-inductive Term : S.Context → S → Type* where
+inductive Term : S.Context → S.derivedSorts → Type* where
   -- x1, .. xn ⊢ xk
   | var {Γ A} : {i : Fin Γ.length // Γ.ctx i = A} → Term Γ A
-  | func {Γ} (f : S.Functions) :
-      ((i : Fin f.arity) → Term Γ (f.sortedArity i)) → Term Γ f.codomain
+  | func (Γ) (f : S.Functions) : Term Γ f.arity → Term Γ f.codomain
 
 scoped syntax:25 term:51 " ⊢ᵗ " term:50 : term
 
@@ -46,11 +47,12 @@ def Context.Hom (Δ Γ : S.Context) : Type* := (i : Fin Γ.length) → Δ ⊢ᵗ
 
 def Context.id (Γ : S.Context) : Context.Hom Γ Γ := Γ.nth
 
-def Term.subst {Δ Γ : S.Context} {A : S} (σ : Context.Hom Δ Γ) (t : Γ ⊢ᵗ A) :
-    Δ ⊢ᵗ A :=
-  match t with
-  | var v => v.prop ▸ σ v.val
-  | func f h => .func f fun i => Term.subst σ (h i)
+noncomputable def Term.subst {Δ Γ : S.Context} {A : S.derivedSorts} (σ : Context.Hom Δ Γ) :
+  Γ ⊢ᵗ A → Δ ⊢ᵗ A :=
+    Term.rec
+    (motive := fun X t ↦ Δ ⊢ᵗ X)
+    (var := fun v ↦ by let n := σ v.val; rw [v.prop] at n; exact n)
+    (func := fun f a m ↦ .func Δ f (Term.subst σ a))
 
 @[simp]
 def Context.comp {Θ Δ Γ : S.Context} (f : Context.Hom Θ Δ) (g : Context.Hom Δ Γ) :
