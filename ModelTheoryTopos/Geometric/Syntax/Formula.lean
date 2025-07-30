@@ -16,23 +16,23 @@ open Cardinal CategoryTheory
 variable {S : Signature}
 
 class SmallUniverse (S : Signature) where
-  type : Type*
+  U : Type*
+  El : U -> Type*
 
-attribute [coe] SmallUniverse.type
+attribute [coe] SmallUniverse.U
 
 instance : CoeSort (SmallUniverse S) Type* where
-  coe κ := κ.type
+  coe U := U.U
 
 variable [κ : SmallUniverse S]
 
 inductive Formula : S.Context → Type* where
-  | rel {Γ} (o : S.Relations) :
-      ((i : Fin o.arity) → S.Term Γ (o.sortedArity i)) → Formula Γ
+  | rel {Γ} (o : S.Relations) : Term Γ (o.domain) → Formula Γ
   | true {Γ} : Formula Γ
   | false {Γ} : Formula Γ
   | conj {Γ} : Formula Γ → Formula Γ → Formula Γ
   | infdisj {Γ} : (κ → Formula Γ) → Formula Γ
-  | eq {Γ A} : S.Term Γ A → S.Term Γ A → Formula Γ
+  | eq {Γ A} : Γ ⊢ᵗ A → Γ ⊢ᵗ A → Formula Γ
   | existsQ {A Γ} : Formula (A ∶ Γ) → Formula Γ
 
 scoped notation:min "⊤'" => Formula.true
@@ -49,7 +49,7 @@ scoped macro_rules
 
 def Formula.subst {Γ Δ : S.Context} (σ : Δ ⟶ Γ) (P : Γ ⊢ᶠ𝐏) : Δ ⊢ᶠ𝐏 :=
   match P with
-  | rel P ft => .rel P (fun i ↦ (ft i).subst σ)
+  | rel P t => .rel P (t.subst σ)
   | ⊤' => ⊤'
   | ⊥' => ⊥'
   | P ∧' Q => (P.subst σ) ∧' (Q.subst σ)

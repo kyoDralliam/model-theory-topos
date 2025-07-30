@@ -11,25 +11,24 @@ open CategoryTheory Limits
 namespace Signature
 
 inductive DerivedSorts (Sorts : Type*) where
-  | prod {n : ℕ} : (Fin n → Sorts) → DerivedSorts Sorts
+  | inj : Sorts → DerivedSorts Sorts
+  | prod {n : ℕ} : (Fin n → DerivedSorts Sorts) → DerivedSorts Sorts
 
 instance {Sorts : Type*} : Coe Sorts (DerivedSorts Sorts) where
-  coe A := DerivedSorts.prod (n := 1) (fun _ ↦ A)
+  coe A := DerivedSorts.inj A
 
 structure SortedSymbols (Sorts : Type*) where
   Symbols : Type*
-  arity : Symbols → DerivedSorts Sorts
+  domain : Symbols → DerivedSorts Sorts
 
 attribute [coe] SortedSymbols.Symbols
 
 instance {Sorts : Type*} : CoeSort (SortedSymbols Sorts) Type* where
   coe := SortedSymbols.Symbols
 
-namespace SortedSymbols.Symbols
 
-abbrev arity {Sorts : Type*} {X : SortedSymbols Sorts} (x : X) := X.arity x
-
-end SortedSymbols.Symbols
+abbrev SortedSymbols.Symbols.domain
+  {Sorts : Type*} {X : SortedSymbols Sorts} (x : X) := X.domain x
 
 structure SortedSymbolsWOutput (Sorts : Type*) extends SortedSymbols Sorts where
   codomain : Symbols → DerivedSorts Sorts
@@ -37,11 +36,11 @@ structure SortedSymbolsWOutput (Sorts : Type*) extends SortedSymbols Sorts where
 attribute [coe] SortedSymbolsWOutput
 
 instance {Sorts} : CoeSort (SortedSymbolsWOutput Sorts) Type* where
-  coe X := X.Symbols
+  coe X := X.toSortedSymbols
 
 abbrev SortedSymbols.Symbols.codomain
-    {Sorts : Type*} {X : SortedSymbolsWOutput Sorts} (x : X) : DerivedSorts Sorts :=
-  X.codomain x
+  {Sorts : Type*} {X : SortedSymbolsWOutput Sorts} (x : X) :
+  DerivedSorts Sorts := X.codomain x
 
 end Signature
 
@@ -51,6 +50,4 @@ structure Signature where
   Relations : Signature.SortedSymbols Sorts
 
 instance : CoeSort Signature Type* where
-  coe := Signature.Sorts
-
-abbrev Signature.derivedSorts (S : Signature) := DerivedSorts S.Sorts
+  coe S := Signature.DerivedSorts S.Sorts

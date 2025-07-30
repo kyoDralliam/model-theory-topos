@@ -7,6 +7,10 @@ import Mathlib.CategoryTheory.MorphismProperty.Limits
 import Mathlib.CategoryTheory.Limits.Shapes.RegularMono
 import ModelTheoryTopos.Geometric.Syntax.Signature
 
+
+import Mathlib.Data.Fin.Basic
+import Mathlib.Data.Finset.Basic
+
 open CategoryTheory Limits
 
 namespace Signature
@@ -17,7 +21,7 @@ variable (S) in
 @[ext]
 structure Context : Type* where
   length : ℕ
-  ctx : Fin length → S.derivedSorts
+  ctx : Fin length → S
 
 @[reducible]
 def Context.cons (A : S) (Γ : S.Context) : S.Context where
@@ -30,10 +34,12 @@ def Context.signature : S.Context → Signature := fun _ => S
 -- Note that this is `\:`
 scoped[Signature] infixr:67 " ∶ " => Signature.Context.cons
 
-inductive Term : S.Context → S.derivedSorts → Type* where
-  -- x1, .. xn ⊢ xk
-  | var {Γ A} : {i : Fin Γ.length // Γ.ctx i = A} → Term Γ A
-  | func (Γ) (f : S.Functions) : Term Γ f.arity → Term Γ f.codomain
+inductive Term (Γ : S.Context) : S → Type* where
+  | var {A} : {i : Fin Γ.length // Γ.ctx i = A} → Term Γ A
+  | func (f : S.Functions) : Term Γ f.domain → Term Γ f.codomain
+  | pair {n} {Aᵢ : Fin n → S} :
+      ((i : Fin n) → Term Γ (Aᵢ i)) → Term Γ (.prod Aᵢ)
+  | proj {n} {Aᵢ : Fin n → S} : Term Γ (.prod Aᵢ) → (i : Fin n) → Term Γ (Aᵢ i)
 
 scoped syntax:25 term:51 " ⊢ᵗ " term:50 : term
 
@@ -47,12 +53,13 @@ def Context.Hom (Δ Γ : S.Context) : Type* := (i : Fin Γ.length) → Δ ⊢ᵗ
 
 def Context.id (Γ : S.Context) : Context.Hom Γ Γ := Γ.nth
 
-noncomputable def Term.subst {Δ Γ : S.Context} {A : S.derivedSorts} (σ : Context.Hom Δ Γ) :
-  Γ ⊢ᵗ A → Δ ⊢ᵗ A :=
-    Term.rec
-    (motive := fun X t ↦ Δ ⊢ᵗ X)
-    (var := fun v ↦ by let n := σ v.val; rw [v.prop] at n; exact n)
-    (func := fun f a m ↦ .func Δ f (Term.subst σ a))
+@[reducible]
+def Term.subst {Δ Γ : S.Context} (σ : Context.Hom Δ Γ) {A : S} :
+   Γ ⊢ᵗ A → Δ ⊢ᵗ A
+  | var v => v.prop ▸ σ v.val
+  | func f t  => .func f (t.subst σ)
+  | pair tᵢ => pair (fun i ↦ (tᵢ i).subst σ)
+  | proj (Aᵢ := Aᵢ) t i => proj (t.subst σ) i
 
 @[simp]
 def Context.comp {Θ Δ Γ : S.Context} (f : Context.Hom Θ Δ) (g : Context.Hom Δ Γ) :
@@ -62,7 +69,9 @@ def Context.comp {Θ Δ Γ : S.Context} (f : Context.Hom Θ Δ) (g : Context.Hom
 lemma Term.subst_id {Γ : S.Context} {A : S} (t : Γ ⊢ᵗ A) : t.subst Γ.id = t :=
   match t with
   | var v => by aesop
-  | func f h => by simp only [subst, func.injEq]; funext i; simp [Term.subst_id]
+  | func f h => by simp only [subst, func.injEq]; simp [Term.subst_id]
+  | pair tᵢ => by simp [subst]; funext i; simp [Term.subst_id]
+  | proj (Aᵢ := Aᵢ) t i => by simp [subst, Term.subst_id]
 
 lemma Context.assoc {Θ Δ Γ Υ : S.Context}
     (σ : Context.Hom Θ Δ) (σ' : Context.Hom Δ Γ) (σ'' : Context.Hom Γ Υ) :

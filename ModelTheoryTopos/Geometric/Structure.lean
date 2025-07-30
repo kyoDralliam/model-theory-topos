@@ -18,34 +18,42 @@ universe u v
 section
 variable {S : Signature} {C : Type u} [Category.{v} C] [HasFiniteProducts C]
 
+@[simp, reducible]
+noncomputable def DerivedSorts.interpret {Sorts : Type*} (f : Sorts → C) : DerivedSorts Sorts → C := fun
+  | .inj x => f x
+  | .prod fᵢ => ∏ᶜ (fun i ↦ DerivedSorts.interpret f (fᵢ i))
+
 variable (S) (C) in
 structure Structure where
-  sorts : S → C
-  Functions (f : S.Functions) : ∏ᶜ (sorts ∘ f.sortedArity) ⟶ sorts f.codomain
-  Relations (f : S.Relations) : Subobject <| ∏ᶜ (sorts ∘ f.sortedArity)
+  sorts : S.Sorts → C
+  Functions (f : S.Functions) : f.domain.interpret sorts ⟶ f.codomain.interpret sorts
+  Relations (f : S.Relations) : Subobject <| f.domain.interpret sorts
 
 noncomputable section
 
 variable (M : Structure S C) {Δ Γ : S.Context} (σ : Context.Hom Δ Γ)
 
 abbrev Context.interpret (Γ : S.Context) : C :=
-  ∏ᶜ M.sorts ∘ Γ.ctx
+  ∏ᶜ (fun i ↦ (Γ.ctx i).interpret M.sorts)
 
-notation:arg "⟦" M "|" Γ "⟧ᶜ" =>  Context.interpret M Γ
+notation:arg "⟦" M "|" A "⟧ᵈ" => DerivedSorts.interpret (Structure.sorts M) A
+notation:arg "⟦" M "|" Γ "⟧ᶜ" => Context.interpret M Γ
 notation:arg "⟦" M "|" A "⟧ˢ" => Structure.sorts (self := M) A
 notation:arg "⟦" M "|" Γ "⟧ᵖ" =>
   Subobject <| ∏ᶜ Structure.sorts (self := M) ∘ Context.ctx Γ
 
-@[simp]
+@[reducible]
 def Term.interpret {A : S} :
-    Γ ⊢ᵗ A → (⟦M | Γ⟧ᶜ ⟶ (⟦M | A⟧ˢ))
-  | .var v => Pi.π (M.sorts ∘ Γ.ctx) v.val ≫ eqToHom (congrArg M.sorts v.prop)
-  | .func f t => Pi.lift (fun b ↦ (t b).interpret) ≫ M.Functions f
+    Γ ⊢ᵗ A → (⟦M | Γ⟧ᶜ ⟶ (⟦M | A⟧ᵈ))
+  | .var v => Pi.π (fun i ↦ ⟦M | Γ.ctx i⟧ᵈ) v.val ≫ eqToHom (by aesop)
+  | .func f t => t.interpret ≫ M.Functions f
+  | pair tᵢ => Pi.lift fun i ↦ (tᵢ i).interpret
+  | proj (Aᵢ := Aᵢ) t i => t.interpret ≫ Pi.π (fun i ↦ ⟦M | Aᵢ i⟧ᵈ) i
 
 notation:arg "⟦" M "|" t "⟧ᵗ" =>
   Term.interpret M t
 
-@[simp]
+@[reducible]
 def Context.Hom.interpret : ⟦M | Δ⟧ᶜ ⟶ ⟦M | Γ⟧ᶜ := Pi.lift (fun i ↦ ⟦M | σ i⟧ᵗ)
 
 notation:arg "⟦" M "|" σ "⟧ʰ" => Context.Hom.interpret M σ
@@ -56,10 +64,15 @@ lemma Context.Hom.interpret_subst {A : S} (t : Γ ⊢ᵗ A) :
   induction t with
   | var v => aesop
   | func f s ih =>
-      simp only [Term.subst, Term.interpret, Context.Hom.interpret]
-      rw [← Category.assoc]
-      congr
-      aesop_cat
+      simp only [Term.interpret, Context.Hom.interpret]
+      rw [← Category.assoc]; congr
+  | pair tᵢ =>
+      simp only [Term.interpret, Context.Hom.interpret]
+      ext; simp_all
+  | proj t i =>
+      simp only [Term.interpret, Context.Hom.interpret]
+      rw [← Category.assoc]; congr
+
 end
 
 variable {S : Signature} {C : Type u} [Category.{v} C]
@@ -68,8 +81,7 @@ variable [κ : SmallUniverse S] [G : Geometric κ C] (M : Structure S C)
 @[simp]
 noncomputable def Formula.interpret {Γ : Context S} : Γ ⊢ᶠ𝐏 →
     (Subobject <| ⟦M | Γ ⟧ᶜ)
-  | .rel P t => (Subobject.pullback (Pi.lift (fun b ↦ ⟦M | t b⟧ᵗ))).obj <|
-      M.Relations P
+  | .rel P t => (Subobject.pullback ⟦M | t⟧ᵗ).obj <| M.Relations P
   | .true => ⊤
   | .false => ⊥_ _
   | .conj P Q => P.interpret ⊓ Q.interpret
