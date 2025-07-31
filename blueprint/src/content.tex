@@ -7,8 +7,9 @@
 % can start with a \section or \chapter for instance.
 
 
-\section{Big Picture}
+\chapter{Big Picture}
 
+\chapter{Monosorted Geometric Logic}
 \section{Geometric Signature, Theories and Logic}
 
 \begin{definition}
@@ -25,9 +26,17 @@ A geometric signature contains the information of
 %added
 \newcommand{\quot}{\text{quot}}
 \newcommand{\vxz}{\vec{x}+\vec{z}}
+\newcommand{\vw}{\vec{w}}
+\newcommand{\vx}{\vec{x}}
+\newcommand{\vy}{\vec{y}}
 \newcommand{\iotas}{\ensuremath{[\iota_1,\iota_2]}}
 \newcommand{\xphi}{\vec{x}\mid\phi}
 \newcommand{\ypsi}{\vec{y}\mid\psi}
+\newcommand{\zzeta}{\vec{z}\mid\zeta}
+\newcommand{\ophi}{\overline{\phi}}
+\newcommand{\ozeta}{\overline{\zeta}}
+\newcommand{\ox}{\overline{x}}
+\newcommand{\oz}{\overline{z}}
 %added
 
 For the whole section, we fix a geometric theory \thT{} over some universe \Univ{}.
@@ -43,6 +52,9 @@ For the whole section, we fix a geometric theory \thT{} over some universe \Univ
   \end{itemize}
 \end{definition}
 
+
+
+\section{Syntactic Site}
 \begin{definition}[Covering family]
   \label{Def:CoveringFamily}
   \lean{WrigleyTopology.CoveringFamily}
@@ -75,9 +87,29 @@ We prove these three conditions in the following three subsections.
 
 
 \subsection{Stability}
+
+
+
+\begin{theorem}[Stability of covering sieves]
+  If a family $\{g_K\}\to \vec{y}\mid \psi$ is a covering sieve, then the pullback sieve $f^*\{g_k\}$ is a covering sieve on $\xphi$.
+\end{theorem}
+
+\begin{proof}
+  If $\{g_K\}\to \vec{y}\mid \psi$ is a covering sieve, then it contains a covering family $\{g_k: \to \vec{y}\mid \psi\}$.
+  %
+  For each of the map $g_{k}:\vec{z_k}\mid \zeta_k$ in the covering family, we consider the object 
+  \[\vec{w}\mid \ophi\land \ozeta \land\bigwedge_{i\in \vec{x}} \ox_{f(i)} = \oz_{g(i)}\]. 
+
+  Here we have $\vec{w}:= \vec{x}+ \vec{z}$ is the pushout of $f$ and $\sigma$.
+\end{proof}
+
 \begin{lemma}[Stability of covering families]
   If a family $\{\rho_k\}\to \vec{y}\mid \psi$ is a covering family, then for each $f: \vec{x}\mid \phi\to \vec{y}\mid\psi$, the pullback of this covering is again a covering family.
 \end{lemma}
+
+
+
+
 
 The formulation of stability is centered around the following commutative square.
 
@@ -102,16 +134,6 @@ with the abuse of notation of denoting a map between formulas and the underlying
 
 
 
-
-\begin{theorem}[Stability of covering sieves]
-  If a family $\{\rho_k\}\to \vec{y}\mid \psi$ is a covering sieve, then the pullback sieve $f^*\{\rho_k\}$ is a covering sieve on $\vec{x}\mid\phi$.
-
-\end{theorem}
-
-\begin{proof}
-  If $\{\rho_k\}\to \vec{y}\mid \psi$ is a covering sieve, then it contains a covering family $\{g_{k'}\}\to \vec{y}\mid \psi$
-  For each of the 
-\end{proof}
 
 To prove the pullback of a covering sieve is again a covering sieve, we consider a covering family $\{\rho_k\}\to \vec{y}\mid \psi$, and prove that the pullback of this cover
 
