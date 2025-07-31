@@ -29,12 +29,18 @@ A geometric signature contains the information of
 \newcommand{\vw}{\vec{w}}
 \newcommand{\vx}{\vec{x}}
 \newcommand{\vy}{\vec{y}}
+\newcommand{\vz}{\vec{z}}
 \newcommand{\iotas}{\ensuremath{[\iota_1,\iota_2]}}
 \newcommand{\xphi}{\vec{x}\mid\phi}
 \newcommand{\ypsi}{\vec{y}\mid\psi}
 \newcommand{\zzeta}{\vec{z}\mid\zeta}
 \newcommand{\ophi}{\overline{\phi}}
+\newcommand{\opsi}{\overline{\psi}}
 \newcommand{\ozeta}{\overline{\zeta}}
+
+\newcommand{\tphi}{\tilde{\phi}}
+\newcommand{\tpsi}{\tilde{\psi}}
+\newcommand{\tzeta}{\tilde{\zeta}}
 \newcommand{\ox}{\overline{x}}
 \newcommand{\oz}{\overline{z}}
 %added
@@ -91,22 +97,58 @@ We prove these three conditions in the following three subsections.
 
 
 \begin{theorem}[Stability of covering sieves]
-  If a family $\{g_K\}\to \vec{y}\mid \psi$ is a covering sieve, then the pullback sieve $f^*\{g_k\}$ is a covering sieve on $\xphi$.
+  If a family $\{g_K\}\to \vec{y}\mid \psi$ is a covering sieve, then the pullback sieve $f^*\{g_K\}$ is a covering sieve on $\xphi$.
 \end{theorem}
 
 \begin{proof}
   If $\{g_K\}\to \vec{y}\mid \psi$ is a covering sieve, then it contains a covering family $\{g_k: \to \vec{y}\mid \psi\}$.
   %
   For each of the map $g_{k}:\vec{z_k}\mid \zeta_k$ in the covering family, we consider the object 
-  \[\vec{w}\mid \ophi\land \ozeta \land\bigwedge_{i\in \vec{x}} \ox_{f(i)} = \oz_{g(i)}\]. 
+  \[C:=\vec{w}\mid \ophi\land \ozeta \land\bigwedge_{i\in \vec{y}} \ox_{f(i)} = \oz_{g(i)}\]. 
 
   Here we have $\vec{w}:= \vec{x}+ \vec{z}$ is the pushout of $f$ and $\sigma$.
+
+  \[
+   \begin{tikzcd}
+     \vec{w}\mid \phi\land \zeta \ar[r,"\iota_2"]\ar[d,"\iota_1"]  & \vec{z}\mid \zeta\ar[d,"g"]\\
+     \vec{x}\mid \phi \ar[r,"f"] & \vec{y}\mid \psi
+   \end{tikzcd}
+  \]
+
+  The underlying map $\iota_1:\vx\to\vw$ actually defines a map $C \to \xphi$. 
+  %
+  For each of $g_k$, we have such a map. And such maps form a covering family on $\xphi$.
+  %
+  We will prove that we have commutative squares:
+
+  \[
+     \begin{tikzcd}
+        \vec{w}\mid \ophi\land \ozeta \land\bigwedge_{i\in \vec{y}} \ox_{f(i)} = \oz_{g(i)} \ar[r,"\iota_2"]\ar[d,"\iota_1"]  & \vec{z}\mid \zeta\ar[d,"g"]\\
+        \vec{x}\mid \phi \ar[r,"f"] & \vec{y}\mid \psi
+     \end{tikzcd}
+  \]
+  Observe from the above square that the composition $f\circ \iota_1$ is equal to a pre-composition of arrow with an arrow $g\in\{g_K\}$, so each of the composition
+   $f\circ \iota_1 \in \{g_K\}$. 
+  %
+  This proves the maps of the form $\iota_1$ are all in the pullback sieve $f^*\{g_K\}$.
+  %
+  Hence it is sufficient to prove these $\iota_1$'s form a covering family of $\xphi$.
+  %
+  We will prove it as the lemma \ref{Lemma:stabCovFam} below.
 \end{proof}
 
-\begin{lemma}[Stability of covering families]
-  If a family $\{\rho_k\}\to \vec{y}\mid \psi$ is a covering family, then for each $f: \vec{x}\mid \phi\to \vec{y}\mid\psi$, the pullback of this covering is again a covering family.
+\begin{lemma}[Stability of covering families]\label{Lemma:stabCovFam}
+  If a family $\{g_k\}\to \vec{y}\mid \psi$ is a covering family, 
+  then for each $f: \vec{x}\mid \phi\to \vec{y}\mid\psi$, the pullback of this covering is again a covering family.
 \end{lemma}
+\begin{proof}
+  We want to show that from:
+  \[\psi\vdash_\vy \bigvee_k \exists\vz_k.\; \tzeta_k\land z_{g_k(i)} = y_i\]
+  that 
+  \[\phi \vdash_\vx \bigvee_k (\exists\vw_k.\;(\ophi\land \ozeta_k \land\bigwedge_{i\in \vec{y}} \ox_{f(i)} = \oz_{g(i)}) \land \bigwedge_{j\in\vec{x}}w_{{\iota^k_1(j)}} = x_j )\]
 
+  
+\end{proof}
 
 
 
