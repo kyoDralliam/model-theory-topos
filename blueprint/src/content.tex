@@ -37,6 +37,8 @@ A geometric signature contains the information of
 \newcommand{\ophi}{\overline{\phi}}
 \newcommand{\opsi}{\overline{\psi}}
 \newcommand{\ozeta}{\overline{\zeta}}
+\newcommand{\inl}{\mathsf{inl}}
+\newcommand{\inr}{\mathsf{inr}}
 
 \newcommand{\tphi}{\tilde{\phi}}
 \newcommand{\tpsi}{\tilde{\psi}}
@@ -143,16 +145,204 @@ We prove these three conditions in the following three subsections.
 \end{lemma}
 \begin{proof}
   We want to show that from:
-  \[\psi\vdash_\vy \bigvee_k \exists\vz_k.\; \tzeta_k\land z_{g_k(i)} = y_i\]
+  \[\psi\vdash_{\vy} \bigvee_k \exists \vz_k.\; \tzeta_k\land y_i = z_{g_k(i)}\]
   that 
-  \[\phi \vdash_\vx \bigvee_k (\exists\vw_k.\;(\ophi\land \ozeta_k \land\bigwedge_{i\in \vec{y}} \ox_{f(i)} = \oz_{g(i)}) \land \bigwedge_{j\in\vec{x}}w_{{\iota^k_1(j)}} = x_j )\]
+  \[\phi \vdash_{\vx} \bigvee_k (\exists\vw_k.\;(\ophi\land \ozeta_k \land\bigwedge_{i\in \vec{y}} \ox_{f(i)} = \oz_{g(i)}) \land \bigwedge_{j\in\vec{x}}w_{{\iota^k_1(j)}} = x_j )\]
+
+  We only spell out how to reduce the goal to lemma \ref{Lem:Witness}. After this reduction, we can drop the index $k$ in the proof.
+
+  By definition of map between formulas in context, $f:\xphi\to \ypsi$ gives
+
+  \begin{equation}\label{e1}
+   \phi\vdash_{\vx} \psi[x_{f(i)}/y_i]
+  \end{equation}
+   
+
+  As $\{g_k:\zzeta\to \ypsi\}$ is a covering family on $\ypsi$, by definition \ref{Def:CoveringFamily}, we have 
+  \[\psi\vdash_{\vy} \bigvee_k \exists z_k.\;\zeta_k \land \bigwedge_{i\in \vy} y_i = z_{g_k(i)}\]
+
+  By the proof rule on substitution, we have 
 
   
+  \begin{equation}\label{e2}
+  \psi [x_{f(i)}/y_i]\vdash_{\vx} (\bigvee_k \exists z_k.\;\zeta_k \land \bigwedge_{i\in \vy} y_i = z_{g_k(i)})  [x_{f(i)}/y_i]
+  \end{equation}
+
+  
+  where the RHS reduces to, by definition of substitution
+  \[\bigvee_k \exists z_k.\;\zeta_k \land \bigwedge_{i\in \vy} x_{f(i)} = z_{g_k(i)}\]
+  
+  Applying the cut rule on \ref{e1} and \ref{e2} gives
+  \[\phi\vdash_{\vx} \bigvee_k \exists z_k.\;\zeta_k \land \bigwedge_{i\in \vy} x_{f(i)} = z_{g_k(i)}\]
+
+  It is sufficient to show
+  \begin{equation*}
+    \phi\land \bigvee_k \exists z_k.\;\zeta_k \land \bigwedge_{i\in \vy} x_{f(i)} = z_{g_k(i)}\vdash_{\vx}
+      \bigvee_k \exists \vw_k. \;(\ophi\land \ozeta_k \land\bigwedge_{i\in \vec{y}} \ox_{f(i)} = \oz_{g(i)}) \land \bigwedge_{j\in\vec{x}}w_{{\iota^k_1(j)}} = x_j  
+  \end{equation*}
+
+  Frobinus and distributivity transform the LHS into 
+  \begin{equation}
+     \bigvee_k \exists z_k. \phi\land \zeta_k \land \bigwedge_{i\in \vy} x_{f(i)} = z_{g_k(i)}
+  \end{equation}
+
+
+  Elimination of existential reduces it into:
+  \begin{equation*}
+    \phi\land \zeta_k \land \bigwedge_{i\in \vy} x_{f(i)} = z_{g_k(i)} \vdash_{\vx + \vz}
+    \exists \vw_k.\;(\ophi\land \ozeta_k \land\bigwedge_{i\in \vec{y}} \ox_{f(i)} = \oz_{g(i)}) \land \bigwedge_{j\in\vec{x}}w_{{\iota^k_1(j)}} = x_j 
+  \end{equation*}
+
+  The witness is given by any section of the quotient map $[\iota_1,\iota_2]:\vx + \vz \to \vw$. It reduces the goal to the lemma \ref{Lem:Witness}.
+  The index $k$ is now fixed so we are not keeping it from now on.
+\end{proof}
+
+  
+\begin{lemma}[Witness for the existential quantification in lemma \ref{Lemma:stabCovFam}]\label{Lem:Witness}
+  \lean{WrigleyTopology.Stability.coveringWitness}
+  \begin{equation*}
+    \phi\land \zeta\land \bigwedge_{i\in \vec{y}} x_{f(i)} = z_{\sigma(i)}\vdash_{\vx + \vz} (\overline{\phi}\land \overline{\zeta}\land\bigwedge_{j\in\vec{x}} x_j = w_{\iota_1(j)})[w_l:=(\vxz)_{s(l)}] 
+  \end{equation*}
+\end{lemma}
+
+\begin{proof}
+  Let $\Gamma$ denote the LHS of the sequent. We prove 
+  \begin{equation*}
+    \Gamma \vdash (\bigwedge_{j\in\vec{x}}x_j = w_{\iota_1(j)}\land \bigwedge_{j'\in\vec{z}}z_{j'}= w_{\iota_2(j')}) [w_l:=(\vxz)_{s(l)}] 
+  \end{equation*}
+
+  We prove as the next lemma:
+  
+  \begin{equation*}
+   \bigwedge_{i\in \vec{y}} x_{f(i)} = z_{\sigma(i)} \vdash 
+    (\bigwedge_{j\in\vec{x}}x_j = w_{\iota_1(j)}) [w_l:=(\vxz)_{s(l)}] 
+  \end{equation*}
+
+  and symmetrically
+
+  \begin{equation*}
+    \bigwedge_{i\in \vec{y}} x_{f(i)} = z_{\sigma(i)} \vdash 
+    (\bigwedge_{j'\in\vec{z}}z_{j'}= w_{\iota_2(j')}) [w_l:=(\vxz)_{s(l)}] 
+  \end{equation*}
+  This will prove the equational part of the RHS of lemma \ref{Lem:Witness}, and by congruence of equalities we will have:
+  Then as $\ophi := \phi[w_{\iota(j)}/x_j]$, we will have 
+  \begin{equation*}
+    \phi\land ((\bigwedge_{j\in\vec{x}}x_j = w_{\iota_1(j)})[w_l:=(\vxz)_{s(l)}])  \vdash_{\vx + \vz} \ophi [w_l:=(\vxz)_{s(l)}] 
+  \end{equation*}
+
+  
+  The proof will need some constructs about \emph{effective quotient}. Relevant definitions and lemmas are below.
+
+  
+
+
+
 \end{proof}
 
 
+\begin{definition}[Relation defined by the equalities in $\Gamma$]
+  Relation $R$ is the non-equivalence relation, that only relates pairs of elements in $\vx+\vz$ 
+  by the equality part in $\Gamma$. That is 
+  \lean{WrigleyTopology.Stability.Rrel}
+  \begin{equation}
+    R(l_1,l_2):= \text{exists}\; i \in \vy \;\text{such that}\; l_1 = \inl(f(i))\; \text{and}\;  l_2 = \inl(g(i))
+  \end{equation}
+\end{definition}
+
+\begin{definition}[Relation defined by mapping to the same element in the quotient]
+  Relation $S$ is defined by having the same image under the quotient map $\iotas:\vx+\vz\to \vw$. That is 
+  \lean{WrigleyTopology.Stability.Srel}
+  \begin{equation}
+    S(l_1,l_2):= \iotas(l_1) = \iotas(l_2)
+  \end{equation}
+\end{definition}
+
+\begin{definition}[Equivalence Closure]
+  The equivalence closure of an equivalence relation.
+  \lean{eqv}
+  \leanok
+\end{definition}
+
+\begin{definition}[Effective Quotient]
+  \lean{effectiveQuotient}
+  \leanok
+  An effective quotient on a type $\alpha$ is a relation $R$ on $\alpha$ and a carrier set $Q$ represents of the quotient
+  set by $R$. With a quotient map $q:\alpha\to Q$ and a section $s:Q\to \alpha$, such that $q\circ s = \mathbf{1}_Q$. Such that:
+  \begin{itemize}
+    \item soundness: if $R(a_1,a_2)$, then $q(a_1) = q(a_2)$ in the quotient set $Q$.
+    \item exactness: if $q(a_1) = q(a_2)$, then $a_1$ and $a_2$ are related by the equivalence closure of $R$.
+  \end{itemize}
+
+\end{definition}
+
+\begin{lemma}[1/4 step for covering witness lemma]\label{Lem:CovWit1}
+  For each $l\in \vxz$, we have $S((\vxz)_l, (\vxz)_{s(\iotas l)})$
+  \lean{WrigleyTopology.Stability.sιsSrel}
+\end{lemma}
+
+\begin{lemma}[2/4 step for covering witness lemma]\label{Lem:CovWit2}
+  Prove $\iotas$ has a section $s$, hence establish $\vw$ as an effective quotient of $\vx +\vz$ via $\iotas$ and $s$.
+  \lean{WrigleyTopology.Stability.ReffectiveQuotient}
+  The hardest point is to provide the exactness proof.
+  This is effectively proving $S\subset R^*$, where $R^*$ is the equivalence closure of $R$.
+\end{lemma}
 
 
+\begin{lemma}[3/4 step for covering witness lemma]\label{Lem:CovWit3}
+  Prove for all $l\in \vxz$, $r\in R^*((\vxz)_l,(\vxz)_{s(\iotas l)})$, we have
+  \begin{equation*}
+    \Gamma \vdash (\vxz)_l = (\vxz)_{s(\iotas l)}
+  \end{equation*}
+\end{lemma}
+
+\begin{proof}
+  The proof is by induction of the construction of the proof of $R^*$. (Remark: It is doable since we formalize equivalence closure 
+  as a type instead of a proposition.)
+
+\begin{itemize}
+    \item reflexivity should be according to proof rules for equality, same for symmetry and transitivity.
+    \item base case requires us to prove
+    \[\Gamma\vdash (\vxz)_{inl(f(i))} = (\vxz)_{inr(\sigma(i))}\]
+    LHS is $x_{f(i)}$ and RHS is $z_{\sigma(i)}$, which equals by assumptions in $\Gamma$.
+\end{itemize}
+\end{proof}
+
+\begin{lemma}[4/4 step for covering witness lemma]\label{Lem:CovWit4}
+  \begin{equation*}
+    \Gamma \vdash (\bigwedge_{j\in\vec{x}}x_j = w_{\iota_1(j)}\land \bigwedge_{j'\in\vec{z}}z_{j'}= w_{\iota_2(j')}) [w_l:=(\vxz)_{s(l)}]
+  \end{equation*}
+\end{lemma}
+
+\begin{proof}
+  We spell out the proof of 
+  \lean{WrigleyTopology.Stability.xφcoveringWitness}
+  \begin{equation*}
+    \bigwedge_{i\in \vec{y}} x_{f(i)} = z_{\sigma(i)} \vdash 
+     (\bigwedge_{j\in\vec{x}}x_j = w_{\iota_1(j)}) [w_l:=(\vxz)_{s(l)}] 
+   \end{equation*}
+   for illustration. The other half is by symmetry.
+
+  We take the reduction
+\[(x_j = w_{\iota_1(j)}) [w_l:=(\vxz)_{s(l)}]\]
+\[x_j = (\vxz)_{s(\iota_1(j))}\]
+\[(\vxz)_{\inl(j)} = (\vxz)_{s(\iota_1(j))}\]
+\[(\vxz)_{\inl(j)} = (\vxz)_{s(\iotas (\inl(j)))}\]
+so the final equation is what we want.
+
+This is just the conclusion of lemma \ref{Lem:CovWit3}, taking $l := \inl(j)$.
+
+So we want to show $R^*((\vxz)_l,(\vxz)_{s(\iotas l)})$. By lemma \ref{Lem:CovWit2}, we want to show \[S((\vxz)_{\inl(j)},(\vxz)_{s(\iotas (\inl(j)))})\].
+
+By definition of $S$, it is to prove:
+
+\[\iotas (\inl(j)) = \iotas (s(\iotas (inl(j)))) \]
+
+$\iotas\circ s = 1$ cancels out. Both LHS and RHS is $\iota_1(j)$.
+
+\end{proof}
+
+
+\begin{comment}
 The formulation of stability is centered around the following commutative square.
 
 \[
@@ -179,8 +369,7 @@ with the abuse of notation of denoting a map between formulas and the underlying
 
 To prove the pullback of a covering sieve is again a covering sieve, we consider a covering family $\{\rho_k\}\to \vec{y}\mid \psi$, and prove that the pullback of this cover
 
-\begin{definition}[Definition of the relation $R$ as in the informal proof]
-\end{definition}
+
 
 %added
 
@@ -195,7 +384,7 @@ i.e. $S$ relates $u_1$ and $u_2$ iff $u_1$ is identified with $u_2$ in the quoti
 \[R(inl(x_{f(i)}),inr(z_{\sigma(i)}))\]
 
 Goal: Proving the sequent
-\[\phi\land \zeta\land \bigwedge_{i\in \vec{y}} x_{f(i)} = z_{\sigma(i)}\vdash (\overline{\phi}\land \overline{\zeta}\land\bigwedge_{j\in\vec{x}} x_j = w_{\iota_i(j)})[w_l:=(\vxz)_{s(l)}] \]
+\[\phi\land \zeta\land \bigwedge_{i\in \vec{y}} x_{f(i)} = z_{\sigma(i)}\vdash (\overline{\phi}\land \overline{\zeta}\land\bigwedge_{j\in\vec{x}} x_j = w_{\iota_1(j)})[w_l:=(\vxz)_{s(l)}] \]
 
 Let $\Gamma :=$ LHS of the above sequent.
 
@@ -241,5 +430,5 @@ By definition of $S$, it is to prove:
 \[\iotas (inl(j)) = \iotas (s(\iotas (inl(j)))) \]
 
 $\iotas\circ s = 1$ cancels out. Both LHS and RHS is $\iota_1(j)$.
-
+\end{comment}
 %added
