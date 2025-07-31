@@ -16,7 +16,7 @@
 A geometric signature contains the information of 
 \end{definition}
 
-\section{Syntactic Site for a Geometric Theory}
+%\section{Syntactic Site for a Geometric Theory} Previously @KM: is that okay?
 
 \newcommand{\thT}{\ensuremath{\mathcal{T}}}
 \newcommand{\fmlInCtx}[2]{\{ #1 | #2 \}}
@@ -26,11 +26,13 @@ A geometric signature contains the information of
 \newcommand{\quot}{\text{quot}}
 \newcommand{\vxz}{\vec{x}+\vec{z}}
 \newcommand{\iotas}{\ensuremath{[\iota_1,\iota_2]}}
+\newcommand{\xphi}{\vec{x}\mid\phi}
+\newcommand{\ypsi}{\vec{y}\mid\psi}
 %added
 
 For the whole section, we fix a geometric theory \thT{} over some universe \Univ{}.
 
-
+\section{Syntactic Category}
 \begin{definition}[Syntactic Category]
   \lean{Joshua.fmlInCtx, Joshua.fmlMap, Joshua.categoryStruct}
   \leanok
@@ -42,11 +44,40 @@ For the whole section, we fix a geometric theory \thT{} over some universe \Univ
 \end{definition}
 
 \begin{definition}[Covering family]
-  \lean{Joshua.CoveringFamily, Joshua.cover_from_over}
+  \label{Def:CoveringFamily}
+  \lean{WrigleyTopology.CoveringFamily}
   \leanok
   A family of maps $(\rho_k : \fmlInCtx{\vec{x}_k}{\varphi_k}\to \fmlInCtx{\vec{y}}{\psi})_{k \in K}$ with $K \in \Univ$ is covering when
   $\vec{y} | \psi \vdash \bigvee_{k \in K} (\exists \vec{x}_k, \phi \wedge \bigwedge_{i \in \vec{y}} y_i = x_{\rho_k(i)}$).
 \end{definition}
+
+This covering family defines a syntactic site:
+
+\begin{definition}[Syntactic Site]
+  \lean{WrigleyTopology.SyntacticTopology}
+  Define a sieve to be a covering sieve when it contains a covering family as defined in Definition \ref{Def:CoveringFamily}. This requires us to prove the following three lemmas.
+\end{definition}
+
+We prove these three conditions in the following three subsections.
+\subsection{Identity}
+\begin{lemma}[Identity map its own consists of a covering family]
+  \lean{WrigleyTopology.id_covers}
+  For each object $\vec{x}\mid \phi$ in the syntactic category, the identity map $\{\mathbf{1}_{\vec{x}\mid\phi}\}$ is a covering family.
+\end{lemma}
+
+\subsection{Transitivity}
+\begin{lemma}[Transitivity]
+  \lean{WrigleyTopology.Transitivity.transitivity}
+  Given a formula in context $\xphi$ and a two sieves $S,R$ on it, where $S$ is a covering sieve, then if for each arrow $f:\ypsi\to\xphi$ in the
+  covering sieve $S$, the pullback of $R$ along $f$ is a covering sieve on $\ypsi$, then $R$ itself is a covering sieve.
+\end{lemma}
+
+
+
+\subsection{Stability}
+\begin{lemma}[Stability of covering families]
+  If a family $\{\rho_k\}\to \vec{y}\mid \psi$ is a covering family, then for each $f: \vec{x}\mid \phi\to \vec{y}\mid\psi$, the pullback of this covering is again a covering family.
+\end{lemma}
 
 The formulation of stability is centered around the following commutative square.
 
@@ -68,14 +99,24 @@ with the abuse of notation of denoting a map between formulas and the underlying
 \]
 
 
-\begin{lemma}[Stability of covering families]
-  If a family $\{\rho_k\}\to \vec{y}\mid \psi$ is a covering family, then for each $f: \vec{x}\mid \phi\to \vec{y}\mid\psi$, the pullback of this covering is again a covering family.
-\end{lemma}
+
+
+
 
 \begin{theorem}[Stability of covering sieves]
-  If a family $\{\rho_k\}\to \vec{y}\mid \psi$ is a covering sieve, the the pullback sieve $f^*\{\rho_k\}$ is a covering sieve on $\vec{x}\mid\phi$.
+  If a family $\{\rho_k\}\to \vec{y}\mid \psi$ is a covering sieve, then the pullback sieve $f^*\{\rho_k\}$ is a covering sieve on $\vec{x}\mid\phi$.
 
 \end{theorem}
+
+\begin{proof}
+  If $\{\rho_k\}\to \vec{y}\mid \psi$ is a covering sieve, then it contains a covering family $\{g_{k'}\}\to \vec{y}\mid \psi$
+  For each of the 
+\end{proof}
+
+To prove the pullback of a covering sieve is again a covering sieve, we consider a covering family $\{\rho_k\}\to \vec{y}\mid \psi$, and prove that the pullback of this cover
+
+\begin{definition}[Definition of the relation $R$ as in the informal proof]
+\end{definition}
 
 %added
 

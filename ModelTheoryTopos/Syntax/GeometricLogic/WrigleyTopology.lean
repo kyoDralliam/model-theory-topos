@@ -281,14 +281,14 @@ end Stability
 
 namespace Transitivity
 
-theorem transitivity  ⦃X : fmlInCtx m⦄ ⦃S : Sieve X⦄
-(h_S:  S ∈ sieves X ) (R : Sieve X)
-   (h_R: ∀ ⦃Y : fmlInCtx m⦄ ⦃f : Y ⟶ X⦄, S.arrows f → Sieve.pullback f R ∈ sieves Y) : R ∈ sieves X := sorry
+theorem transitivity  ⦃xφ : fmlInCtx m⦄ ⦃S : Sieve xφ⦄
+(h_S:  S ∈ sieves xφ ) (R : Sieve xφ)
+   (h_R: ∀ ⦃yψ : fmlInCtx m⦄ ⦃f : yψ ⟶ xφ⦄, S.arrows f → Sieve.pullback f R ∈ sieves yψ) : R ∈ sieves xφ := sorry
 
 end Transitivity
 
 
-instance [SmallUniverse.UniverseClosureProps] : GrothendieckTopology (fmlInCtx m) where
+instance SyntacticTopology [SmallUniverse.UniverseClosureProps] : GrothendieckTopology (fmlInCtx m) where
     sieves := WrigleyTopology.sieves
     top_mem' := by
       intro xφ
