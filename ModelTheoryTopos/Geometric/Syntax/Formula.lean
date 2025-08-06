@@ -63,17 +63,33 @@ structure FormulaContext (Γ : S.Context) : Type* where
   length : ℕ
   ctx : Fin length → S.Formula Γ
 
-def FormulaContext.cons {Γ} (Θ : S.FormulaContext Γ) (P : S.Formula Γ) :
+def FormulaContext.nil (Γ : S.Context) : FormulaContext Γ where
+  length := 0
+  ctx := ![]
+
+variable {Δ Γ : S.Context} (Θ : S.FormulaContext Γ)
+
+@[simp]
+lemma FormulaContext.length_0_isNil (φ : Fin 0 → S.Formula Γ) :
+  FormulaContext.mk 0 φ = FormulaContext.nil Γ := by
+  ext <;> simp [nil]; ext i; exact Fin.elim0 i
+
+def FormulaContext.cons (P : S.Formula Γ) :
     FormulaContext Γ where
   length := Θ.length + 1
   ctx := Matrix.vecCons P Θ.ctx
 
-def FormulaContext.subst {Δ Γ : S.Context} (σ : Δ ⟶ Γ) :
+def FormulaContext.snoc (P : S.Formula Γ) :
+    FormulaContext Γ where
+  length := Θ.length + 1
+  ctx := Matrix.vecSnoc P Θ.ctx
+
+def FormulaContext.subst (σ : Δ ⟶ Γ) :
     S.FormulaContext Γ → S.FormulaContext Δ := fun Θ ↦ {
   length := Θ.length
   ctx i := (Θ.ctx i).subst σ }
 
-instance instHAppendFormulaContext {Γ} :
+instance instHAppendFormulaContext :
   HAppend (FormulaContext Γ) (FormulaContext Γ) (FormulaContext (κ := κ) Γ) := {
   hAppend Θ Θ' := {
     length := Θ.length + Θ'.length
@@ -81,10 +97,25 @@ instance instHAppendFormulaContext {Γ} :
   }
 }
 
-instance instMembershipFormulaContext {Γ} :
+instance instMembershipFormulaContext :
   Membership (Formula Γ) (FormulaContext (κ := κ) Γ) := {
   mem Θ P := ∃ i, Θ.ctx i = P
 }
+
+@[simp]
+lemma FormulaContext.append_nil :
+  Θ ++ FormulaContext.nil Γ = Θ := by
+  ext <;> simp [nil, HAppend.hAppend]
+
+@[simp]
+lemma FormulaContext.snoc_append {n : ℕ} (φᵢ : Fin (n + 1) → Formula Γ) :
+  (Θ ++ { length := n, ctx := Matrix.vecInit φᵢ}).snoc (Matrix.vecLast φᵢ) =
+    Θ ++ { length := n + 1, ctx := φᵢ } := by
+  ext
+  · simp [HAppend.hAppend, FormulaContext.snoc]; omega
+  · simp [HAppend.hAppend, FormulaContext.snoc]
+    rw [← Matrix.vecLast_Append (n := Θ.length) (m := n) Θ.ctx φᵢ,
+      ← Matrix.vecAppend_init, Matrix.snoc_last_init]
 
 variable (S) in
 structure Sequent : Type* where

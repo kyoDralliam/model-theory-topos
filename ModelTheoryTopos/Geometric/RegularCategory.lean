@@ -11,26 +11,18 @@ namespace CategoryTheory
 
 variable (κ : Type w) (C : Type u) [Category.{v} C]
 
-class Regular where
-  hasFiniteLimits : HasFiniteLimits C := by infer_instance
-  hasStrongEpiMonoFactorizations : Limits.HasStrongEpiMonoFactorisations C := by
-    infer_instance
+class Regular extends HasFiniteLimits C, Limits.HasStrongEpiMonoFactorisations C where
   strongIsRegular {X Y : C} (f : X ⟶ Y) : StrongEpi f → EffectiveEpi f
   RegularStable {X Y Y' S : C} {f : X ⟶ S} {g : Y ⟶ S} {f' : Y' ⟶ Y}
     {h : Y' ⟶ X} (sq : IsPullback f' h g f) (hg : RegularEpi g) : RegularEpi h
 
-attribute [instance] Regular.hasFiniteLimits
-  Regular.hasStrongEpiMonoFactorizations Regular.strongIsRegular
+attribute [instance] Regular.strongIsRegular Regular.RegularStable
 
-class Geometric where
-  hasFiniteLimits : HasFiniteLimits C := by infer_instance
-  hasStrongEpiMonoFactorizations : HasStrongEpiMonoFactorisations C :=
-    by infer_instance
-  isRegular : Regular C := by infer_instance
+class Geometric extends Regular C where
   hasFalse (X : C) : HasInitial (Subobject X)
   hasJoins (X : C) : HasCoproductsOfShape κ (Subobject X)
 
-attribute [instance] Geometric.isRegular Geometric.hasFalse Geometric.hasJoins
+attribute [instance] Geometric.hasFalse Geometric.hasJoins
 
 abbrev Coherent := Geometric C Bool
 

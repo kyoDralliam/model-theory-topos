@@ -29,10 +29,19 @@ inductive Derivation : {Γ : S.Context} → S.FormulaContext Γ → S.Formula Γ
   | existsQ_elim {Γ A} {Θ : S.FormulaContext Γ} (φ : S.Formula (A ∶ Γ)) :
       Derivation Θ (.existsQ φ) → Derivation (Θ.subst (Γ.π A)) φ
 
-variable {Γ : S.Context} (Θ Θ' : FormulaContext Γ) (ψ : Formula Γ)
+variable {Γ : S.Context} {Θ Θ' : FormulaContext Γ} {ψ : Formula Γ}
+
+def Derivation.weaken' (P) : (Derivation Θ ψ) → Derivation (Θ.snoc P) ψ := by
+  sorry
 
 def Derivation.weaken : (Derivation Θ ψ) → Derivation (Θ ++ Θ') ψ := by
-  sorry
+  obtain ⟨n, φᵢ⟩ := Θ'
+  induction n with
+  | zero => intro D; simp; exact D
+  | succ n hp =>
+    intro D;
+    rw [← FormulaContext.snoc_append]
+    exact Derivation.weaken' _ <| hp (Matrix.vecInit φᵢ) D
 
 def Derivation.cut : Derivation Θ' ψ → (∀ i, Derivation Θ' (Θ.ctx i)) → Derivation Θ ψ := by
   sorry
