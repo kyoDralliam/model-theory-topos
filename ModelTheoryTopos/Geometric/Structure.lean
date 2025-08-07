@@ -111,27 +111,17 @@ def Sequent.interpret (U : S.Sequent) : Prop :=
 
 def Theory.interpret (T : S.Theory) : Prop := ∀ Seq ∈ T.axioms, Seq.interpret M
 
--- theorem le_bot_iff : a ≤ ⊥ ↔ a = ⊥ :=
---   bot_le.le_iff_eq
-
--- theorem bot_unique (h : a ≤ ⊥) : a = ⊥ :=
-
 def Soundness {T : S.Theory} {Γ : Context S} {Θ : FormulaContext Γ} {P : Γ ⊢ᶠ𝐏} :
   Derivation (T := T) Θ P → Theory.interpret M T →
     ∏ᶜ (fun i ↦ ⟦M | Θ.ctx i⟧ᶠ) ≤ ⟦M | P⟧ᶠ := by
   intro D int
   induction D with
   | «axiom» φinT D hp =>
-      apply le_trans hp
-      simp
-      apply Functor.monotone
-      exact int _ φinT
+      apply le_trans hp; simp only [Formula.interpret_subst];
+      apply Functor.monotone; exact int _ φinT
   | var i => sorry
   | true_intro => simp
-  | false_elim D h =>
-      unfold Formula.interpret at h
-      let arst := bot_unique h
-      sorry
+  | false_elim D h => rw [bot_unique h]; simp
   | conj_intro _ _ _ _ => sorry
   | conj_elim_l _ _ => sorry
   | conj_elim_r _ _ => sorry
