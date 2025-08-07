@@ -119,11 +119,18 @@ def Soundness {T : S.Theory} {Γ : Context S} {Θ : FormulaContext Γ} {P : Γ �
   | «axiom» φinT D hp =>
       apply le_trans hp; simp only [Formula.interpret_subst];
       apply Functor.monotone; exact int _ φinT
-  | var i => sorry
+  | var i =>
+
+    sorry
   | true_intro => simp
   | false_elim D h => rw [bot_unique h]; simp
-  | conj_intro _ _ _ _ => sorry
-  | conj_elim_l _ _ => sorry
+  | conj_intro _ _ _ _ =>
+    simp only [Formula.interpret]
+    apply SemilatticeInf.le_inf <;> assumption
+  | conj_elim_l _ h =>
+    simp only [Formula.interpret] at *
+    apply le_trans h
+    apply SemilatticeInf.inf_le_left
   | conj_elim_r _ _ => sorry
   | infdisj_intro P i _ _ => sorry
   | infdisj_elim _ _ _ _ => sorry
