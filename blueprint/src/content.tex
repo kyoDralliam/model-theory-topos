@@ -10,6 +10,9 @@
 \chapter{Big Picture}
 
 \chapter{Monosorted Geometric Logic}
+We aim for multi-sorted geometric logic eventually. But the part of completeness proof of our project is rather complicated, we stick to 
+monosorted signature in our experimental stage. We will integrate it into multisorted case once the monosorted case is done.
+
 \section{Geometric Signature, Theories and Logic}
 
 \begin{definition}
@@ -31,9 +34,9 @@ A geometric signature contains the information of
 \newcommand{\vy}{\vec{y}}
 \newcommand{\vz}{\vec{z}}
 \newcommand{\iotas}{\ensuremath{[\iota_1,\iota_2]}}
-\newcommand{\xphi}{\vec{x}\mid\phi}
-\newcommand{\ypsi}{\vec{y}\mid\psi}
-\newcommand{\zzeta}{\vec{z}\mid\zeta}
+\newcommand{\xphi}{\fmlInCtx{\vec{x}}{\phi}}
+\newcommand{\ypsi}{\fmlInCtx{\vec{y}}{\psi}}
+\newcommand{\zzeta}{\fmlInCtx{\vec{z}}{\zeta}}
 \newcommand{\ophi}{\overline{\phi}}
 \newcommand{\opsi}{\overline{\psi}}
 \newcommand{\ozeta}{\overline{\zeta}}
@@ -55,8 +58,14 @@ For the whole section, we fix a geometric theory \thT{} over some universe \Univ
   \leanok
   The syntactic category associated to $\mathcal{T}$ has:
   \begin{itemize}
-    \item as objects, pairs $\fmlInCtx{\vec{x}}{\varphi}$ of a context $\vec{x} \coloneq x_1, \ldots, x_{n}$ of variables and a geometric formula $\vec{x} \vdash_{\thT} \varphi$ over \thT{};
-    \item as morphisms between $\fmlInCtx{\vec{x}}{\varphi}$ and $\fmlInCtx{\vec{y}}{\psi}$, a renaming $\rho : \vec{y} \to \vec{x}$ such that $\vec{x} | \varphi \vdash \subs{\psi}{\rho}$.
+    \item An object is of the form $\xphi$ where $\vx$ is a context consists of variables $x_1, \ldots, x_{n}$ and $\phi $ is a geometric
+    formula under this context. i.e. $\phi$ contains only free variables from $\vx$.
+    %as objects, pairs $\fmlInCtx{\vec{x}}{\varphi}$ of a context $\vec{x} \coloneq x_1, \ldots, x_{n}$ of variables and a geometric formula $\vec{x} \vdash_{\thT} \varphi$ over \thT{};
+    \item A map $\xphi\to \ypsi$ is a renaming $\vy\to \vx$ satisfying some extra condition. 
+    A \emph{renaming} $\vy\to \vx$ is a function $f:\{y_1,\ldots,y_m\}\to \{x_1,\ldots,x_n\}$ that maps variables to variables.
+    Such a renaming defines a map $\xphi\to \ypsi$ if $\phi\vdash_{\vx}\psi[x_{f(i)}/y_i]$, means that as formulas in the context $\vx$, we have $\phi$
+    proves $\psi[x_{f(i)}/y_i]$ in the theory  \thT{}.
+    %as morphisms between $\fmlInCtx{\vec{x}}{\varphi}$ and $\fmlInCtx{\vec{y}}{\psi}$, a renaming $\rho : \vec{y} \to \vec{x}$ such that $\varphi \vdash_{\vx} {\psi}[x_{\rho(i)}/y_i]$.
   \end{itemize}
 \end{definition}
 
@@ -67,22 +76,25 @@ For the whole section, we fix a geometric theory \thT{} over some universe \Univ
   \label{Def:CoveringFamily}
   \lean{WrigleyTopology.CoveringFamily}
   \leanok
-  A family of maps $(\rho_k : \fmlInCtx{\vec{x}_k}{\varphi_k}\to \fmlInCtx{\vec{y}}{\psi})_{k \in K}$ with $K \in \Univ$ is covering when
-  $\vec{y} | \psi \vdash \bigvee_{k \in K} (\exists \vec{x}_k, \phi \wedge \bigwedge_{i \in \vec{y}} y_i = x_{\rho_k(i)}$).
+  A family of maps $(\sigma_k : \fmlInCtx{\vec{x}_k}{\varphi_k}\to \fmlInCtx{\vec{y}}{\psi})_{k \in K}$ with $K \in \Univ$ is covering when
+  $\psi \vdash_{\vy} \bigvee_{k \in K} (\exists \vec{x}_k, \phi \wedge \bigwedge_{i \in \vec{y}} y_i = x_{\sigma_k(i)}$).
 \end{definition}
 
 This covering family defines a syntactic site:
 
 \begin{definition}[Syntactic Site]
   \lean{WrigleyTopology.SyntacticTopology}
-  Define a sieve to be a covering sieve when it contains a covering family as defined in Definition \ref{Def:CoveringFamily}. This requires us to prove the following three lemmas.
+  A sieve is a covering sieve when it contains a covering family as defined in Definition \ref{Def:CoveringFamily}. 
 \end{definition}
 
+To prove Definition \ref{Def:CoveringFamily} gives a topology, we need to check the three conditions as in the definition of Grothendieck
+topology.
 We prove these three conditions in the following three subsections.
+
 \subsection{Identity}
 \begin{lemma}[Identity map its own consists of a covering family]
   \lean{WrigleyTopology.id_covers}
-  For each object $\vec{x}\mid \phi$ in the syntactic category, the identity map $\{\mathbf{1}_{\vec{x}\mid\phi}\}$ is a covering family.
+  For each object $\xphi$ in the syntactic category, the identity map $\{\mathbf{1}_{\xphi}\}$ is a covering family.
 \end{lemma}
 
 \subsection{Transitivity}
@@ -96,47 +108,251 @@ We prove these three conditions in the following three subsections.
 
 \subsection{Stability}
 
+The definition of stability is as follows: For a site $(C,J)$, the covering $J$ is stable under pullback if for a arrow $f:x\to y$ in $C$, 
+if $S\in J(y)$, i.e. $S$, is a covering sieve on $y$, then the pullback $f^*(S)$ along $f$ is a covering sieve on $x$, i.e. $f^*(S) \in J(x)$.
+
+Note that the notion of ``pullback of sieves'' is not in terms of pullback squares by definition. The definition is:
 
 
-\begin{theorem}[Stability of covering sieves]
-  If a family $\{g_K\}\to \vec{y}\mid \psi$ is a covering sieve, then the pullback sieve $f^*\{g_K\}$ is a covering sieve on $\xphi$.
-\end{theorem}
+\begin{equation*}
+  f^*(S) := \{a: t \to x \mid (f\circ a: t\to y) \in S\}
+\end{equation*}
+
+To be super clear, whenever we say refer to ``pullback of sieves'' under this definition in English words, rather than ``pullback squares'', we will write it
+as pullback'. 
+In our case, we want to prove that if we have a covering sieve $\{g_K\}\to \ypsi$, then its pullback' is a covering sieve.
+That is, if we have a covering family in $\{g_K\}$, covering $\ypsi$ as in definition \ref{Def:CoveringFamily}, then the pullback'
+$f^*\{g_K\}$ contains a covering family.
+
+We use the fact that if $\{g_k\}\subseteq \{g_K\}$ is the covering family, then the covering family contained in $f^*\{g_K\}$ has arrows obtained in the following 
+way: for each $k$, consider the pullback square: 
+\[
+  \begin{tikzcd}
+     f^* \zzeta \ar[r,"\iota_2^k"]\ar[d,"f^*(g_k):= \iota_1^k"]  & \zzeta\ar[d,"g_k"]\\
+     \xphi \ar[r,"f"] & \ypsi
+  \end{tikzcd}
+\]
+
+then the covering family consists of arrows of the form $\iota_1^k$ as in the diagram above.
+
+In fact, we are not using the universal property of pullbacks in our proof. Instead, we effectively construct a pullback structure and use
+one of the projection maps as the covers we want, without proving that what we construct is actually a pullback.
+
+The construction of pullbacks in the syntactic category is as follows. For a pair of arrows $f: \xphi\to \ypsi$ and $g:\zzeta\to \ypsi$, 
+the pullback of $g$ along $f$ is pictured as:
+
+
+\[
+  \begin{tikzcd}
+     \fmlInCtx{\vw}{\ophi\land \ozeta \land\bigwedge_{i\in \vec{y}} \ox_{f(i)} = \oz_{g(i)}} \ar[r,"\iota_2"]\ar[d,"\iota_1"]  & \zzeta\ar[d,"g"]\\
+     \xphi \ar[r,"f"] & \ypsi
+  \end{tikzcd}
+\]
+We will take the abuse of the notation and denote both a map $f:\xphi\to \ypsi$ and the underlying renaming map between contexts $f:\vy\to \vx$ 
+using the same letter. 
+Then the context $\vw$ is the pushout of the maps $f:\vy\to \vx$ and $g:\vy\to \vz$ in the category of finite sets. 
+The coprojections into $\vw$ are denoted $\iota_1:\vx\to\vw$ and $\iota_2:\vz\to \vw$, as below:
+
+\[
+\begin{tikzcd}
+ \vec{y}\ar[d,"f"]\ar[r,"\sigma"] & \vec{z}\ar[d,"\iota_2"]\\
+ \vec{x}\ar[r,"\iota_1"] & \vec{w}
+\end{tikzcd}
+\]
+
+That is, $\vw$ is the quotient from the disjoint union $\vx + \vz$ by gluing images in $\vx$ and $\vz$ of the same $y_i\in \vy$ together.
+
+
+Then we prove the family of all the maps of the form $\iota_1$ obtained from each element $g_k$ from the covering family on $\xphi$.
+The hardest part is to prove that this family satisfies the condition as required in \ref{Def:CoveringFamily}, i.e.
+
+\begin{equation}
+\phi \vdash_{\vx} \bigvee_k (\exists\vw_k.\;(\ophi\land \ozeta_k \land\bigwedge_{i\in \vec{y}} \ox_{f(i)} = \oz_{g(i)}) \land \bigwedge_{j\in\vec{x}}w_{{\iota^k_1(j)}} = x_j )
+\end{equation}
+
+from the assumption that $\{g_k\}$ is a covering family, i.e.
+
+\[\psi\vdash_{\vy} \bigvee_k \exists \vz_k.\; \tzeta_k\land y_i = z_{g_k(i)}\]
+
+  
+Our strategy is to establish $\vw$ as an \emph{effective quotient} of $\vx+ \vz$. 
+Here we can take quotient by any relation $R$, instead of only equivalence relations. 
+The exactness condition will refer to the equivalence closure of the relation $R$, defined as:
+
+\begin{definition}[Equivalence Closure]
+  The equivalence closure of an equivalence relation is defined inductively.
+  \lean{eqv}
+  \leanok
+\end{definition}
+
+We then define effective quotient as:
+
+\begin{definition}[Effective Quotient]
+  \lean{effectiveQuotient}
+  \leanok
+  An effective quotient on a type $\alpha$ is a relation $R$ on $\alpha$ and a carrier set $Q$ represents of the quotient
+  set by $R$. With a quotient map $q:\alpha\to Q$ and a section $s:Q\to \alpha$, such that $q\circ s = \mathbf{1}_Q$. Such that:
+  \begin{itemize}
+    \item soundness: if $R(a_1,a_2)$, then $q(a_1) = q(a_2)$ in the quotient set $Q$.
+    \item exactness: if $q(a_1) = q(a_2)$, then $a_1$ and $a_2$ are related by the equivalence closure of $R$.
+  \end{itemize}
+
+\end{definition}
+
+In our case, the relation $R$ will be 
+
+
+
+\begin{definition}[Relation defined by the equalities in $f(i) = g(i)$]
+  Relation $R$ is the non-equivalence relation, that only relates pairs of elements in $\vx+\vz$ 
+  iff they are images of the same element in $\vy$. That is 
+  \lean{WrigleyTopology.Stability.Rrel}
+  \begin{equation}
+    R(l_1,l_2):= \text{exists}\; y_i \in \vy \;\text{such that}\; l_1 = \inl(f(i))\; \text{and}\;  l_2 = \inl(g(i))
+  \end{equation}
+\end{definition}
+
+The quotient map $\iotas: \vx+ \vz\to \vw$ will be induced by the
+universal property of the coproduct, and the $s$ will be any section of it. For the moment, we assume such a section exists, although we do not define it 
+computably.
+
+Let $s:\vw\to \vx+\vz$ be a section of $\iotas$, we will be able to use this $s$ to provide a witness, i.e. a substitution for the $\exists \vw_k$, to prove the
+sequent that establishes the pullback family $f^*\{g_k\}$ as a covering family on $\vx$.
+
+
+Assuming we have an effective quotient structure $s:\vw\to \vx+\vz$ and $\iotas:\vx+\vz\to \vw$, we take four steps to prove critical lemmas:
+
+  \begin{equation*}
+    \bigwedge_{i\in \vec{y}} x_{f(i)} = z_{\sigma(i)} \vdash 
+     (\bigwedge_{j\in\vec{x}}x_j = w_{\iota_1(j)}) [w_l:=(\vxz)_{s(l)}] 
+   \end{equation*}
+
+and symmetrically:
+
+\begin{equation*}
+  \bigwedge_{i\in \vec{y}} x_{f(i)} = (z_{\sigma(i)} \vdash \bigwedge_{j'\in\vec{z}}z_{j'}= w_{\iota_2(j')}) [w_l:=(\vxz)_{s(l)}]
+\end{equation*}
+
+We denote the LHS of the above sequents by $E$.
+
+For proving the above, to facilitate the use of effective quotient structure, we define a relation $S$ on the set $\vx+\vz$.
+\begin{definition}[Relation defined by mapping to the same element in the quotient]
+  Relation $S$ is defined by having the same image under the quotient map $\iotas:\vx+\vz\to \vw$. That is 
+  \lean{WrigleyTopology.Stability.Srel}
+  \begin{equation}
+    S(l_1,l_2):= \iotas(l_1) = \iotas(l_2)
+  \end{equation}
+\end{definition}
+
+
+
+\begin{lemma}[1/4 step for covering witness lemma]\label{Lem:CovWit1}
+  For each $l\in \vxz$, we have $S((\vxz)_l, (\vxz)_{s(\iotas l)})$
+  \lean{WrigleyTopology.Stability.sιsSrel}
+\end{lemma}
+
+\begin{lemma}[2/4 step for covering witness lemma]\label{Lem:CovWit2}
+  Prove $\iotas$ has a section $s$, hence establish $\vw$ as an effective quotient of $\vx +\vz$ via $\iotas$ and $s$.
+  \lean{WrigleyTopology.Stability.ReffectiveQuotient}
+  The hardest point is to provide the exactness proof.
+  This is effectively proving $S\subset R^*$, where $R^*$ is the equivalence closure of $R$.
+\end{lemma}
+
+
+\begin{lemma}[3/4 step for covering witness lemma]\label{Lem:CovWit3}
+  For all $l\in \vxz$, $r\in R^*((\vxz)_l,(\vxz)_{s(\iotas l)})$, we have
+  \begin{equation*}
+    E \vdash (\vxz)_l = (\vxz)_{s(\iotas l)}
+  \end{equation*}
+\end{lemma}
 
 \begin{proof}
-  If $\{g_K\}\to \vec{y}\mid \psi$ is a covering sieve, then it contains a covering family $\{g_k: \to \vec{y}\mid \psi\}$.
-  %
-  For each of the map $g_{k}:\vec{z_k}\mid \zeta_k$ in the covering family, we consider the object 
-  \[C:=\vec{w}\mid \ophi\land \ozeta \land\bigwedge_{i\in \vec{y}} \ox_{f(i)} = \oz_{g(i)}\]. 
+  The proof is by induction of the construction of the proof of $R^*$. (Remark: It is doable since we formalize equivalence closure 
+  as a type instead of a proposition.)
 
-  Here we have $\vec{w}:= \vec{x}+ \vec{z}$ is the pushout of $f$ and $\sigma$.
+\begin{itemize}
+    \item reflexivity should be according to proof rules for equality, same for symmetry and transitivity.
+    \item base case requires us to prove
+    \[E\vdash (\vxz)_{\inl(f(i))} = (\vxz)_{\inr(\sigma(i))}\]
+    LHS is $x_{f(i)}$ and RHS is $z_{\sigma(i)}$, which equals by assumptions in $\Gamma$.
+\end{itemize}
+\end{proof}
 
-  \[
-   \begin{tikzcd}
-     \vec{w}\mid \phi\land \zeta \ar[r,"\iota_2"]\ar[d,"\iota_1"]  & \vec{z}\mid \zeta\ar[d,"g"]\\
-     \vec{x}\mid \phi \ar[r,"f"] & \vec{y}\mid \psi
-   \end{tikzcd}
-  \]
+\begin{lemma}[4/4 step for covering witness lemma]\label{Lem:CovWit4}
+  \begin{equation*}
+    E \vdash (\bigwedge_{j\in\vec{x}}x_j = w_{\iota_1(j)}\land \bigwedge_{j'\in\vec{z}}z_{j'}= w_{\iota_2(j')}) [w_l:=(\vxz)_{s(l)}]
+  \end{equation*}
+\end{lemma}
+\begin{proof}
+  We spell out the proof of 
+  \lean{WrigleyTopology.Stability.xφcoveringWitness}
+  \begin{equation*}
+    \bigwedge_{i\in \vec{y}} x_{f(i)} = z_{\sigma(i)} \vdash 
+     (\bigwedge_{j\in\vec{x}}x_j = w_{\iota_1(j)}) [w_l:=(\vxz)_{s(l)}] 
+   \end{equation*}
+   for illustration. The other half is by symmetry.
 
-  The underlying map $\iota_1:\vx\to\vw$ actually defines a map $C \to \xphi$. 
-  %
-  For each of $g_k$, we have such a map. And such maps form a covering family on $\xphi$.
-  %
-  We will prove that we have commutative squares:
+  We take the reduction
+\[(x_j = w_{\iota_1(j)}) [w_l:=(\vxz)_{s(l)}]\]
+\[x_j = (\vxz)_{s(\iota_1(j))}\]
+\[(\vxz)_{\inl(j)} = (\vxz)_{s(\iota_1(j))}\]
+\[(\vxz)_{\inl(j)} = (\vxz)_{s(\iotas (\inl(j)))}\]
+so the final equation is what we want.
 
-  \[
-     \begin{tikzcd}
-        \vec{w}\mid \ophi\land \ozeta \land\bigwedge_{i\in \vec{y}} \ox_{f(i)} = \oz_{g(i)} \ar[r,"\iota_2"]\ar[d,"\iota_1"]  & \vec{z}\mid \zeta\ar[d,"g"]\\
-        \vec{x}\mid \phi \ar[r,"f"] & \vec{y}\mid \psi
-     \end{tikzcd}
-  \]
-  Observe from the above square that the composition $f\circ \iota_1$ is equal to a pre-composition of arrow with an arrow $g\in\{g_K\}$, so each of the composition
-   $f\circ \iota_1 \in \{g_K\}$. 
-  %
-  This proves the maps of the form $\iota_1$ are all in the pullback sieve $f^*\{g_K\}$.
-  %
-  Hence it is sufficient to prove these $\iota_1$'s form a covering family of $\xphi$.
-  %
-  We will prove it as the lemma \ref{Lemma:stabCovFam} below.
+This is just the conclusion of lemma \ref{Lem:CovWit3}, taking $l := \inl(j)$.
+
+So we want to show $R^*((\vxz)_l,(\vxz)_{s(\iotas l)})$. By lemma \ref{Lem:CovWit2}, we want to show \[S((\vxz)_{\inl(j)},(\vxz)_{s(\iotas (\inl(j)))})\].
+
+By definition of $S$, it is to prove:
+
+\[\iotas (\inl(j)) = \iotas (s(\iotas (\inl(j)))) \]
+
+$\iotas\circ s = 1$ cancels out. Both LHS and RHS is $\iota_1(j)$.
+
+\end{proof}
+
+
+
+  
+\begin{lemma}[Witness for the existential quantification in lemma \ref{Lemma:stabCovFam}]\label{Lem:Witness}
+  \lean{WrigleyTopology.Stability.coveringWitness}
+  \begin{equation*}
+    \phi\land \zeta\land \bigwedge_{i\in \vec{y}} x_{f(i)} = z_{\sigma(i)}\vdash_{\vx + \vz} (\overline{\phi}\land \overline{\zeta}\land\bigwedge_{j\in\vec{x}} x_j = w_{\iota_1(j)})[w_l:=(\vxz)_{s(l)}] 
+  \end{equation*}
+\end{lemma}
+
+\begin{proof}
+  Let $\Gamma$ denote the LHS of the sequent. We prove 
+  \begin{equation*}
+    \Gamma \vdash (\bigwedge_{j\in\vec{x}}x_j = w_{\iota_1(j)}\land \bigwedge_{j'\in\vec{z}}z_{j'}= w_{\iota_2(j')}) [w_l:=(\vxz)_{s(l)}] 
+  \end{equation*}
+
+  By the lemma above, we have:
+  
+  \begin{equation*}
+   \bigwedge_{i\in \vec{y}} x_{f(i)} = z_{\sigma(i)} \vdash 
+    (\bigwedge_{j\in\vec{x}}x_j = w_{\iota_1(j)}) [w_l:=(\vxz)_{s(l)}] 
+  \end{equation*}
+
+  and 
+
+  \begin{equation*}
+    \bigwedge_{i\in \vec{y}} x_{f(i)} = z_{\sigma(i)} \vdash 
+    (\bigwedge_{j'\in\vec{z}}z_{j'}= w_{\iota_2(j')}) [w_l:=(\vxz)_{s(l)}] 
+  \end{equation*}
+  This will prove the equational part of the RHS of lemma \ref{Lem:Witness}, and by congruence of equalities we have:
+  Then as $\ophi := \phi[w_{\iota(j)}/x_j]$, we have 
+  \begin{equation*}
+    \phi\land ((\bigwedge_{j\in\vec{x}}x_j = w_{\iota_1(j)})[w_l:=(\vxz)_{s(l)}])  \vdash_{\vx + \vz} \ophi [w_l:=(\vxz)_{s(l)}] 
+  \end{equation*}
+
+  
+  %The proof will need some constructs about \emph{effective quotient}. Relevant definitions and lemmas are below.
+
+  
+
+
+
 \end{proof}
 
 \begin{lemma}[Stability of covering families]\label{Lemma:stabCovFam}
@@ -194,151 +410,50 @@ We prove these three conditions in the following three subsections.
   \end{equation*}
 
   The witness is given by any section of the quotient map $[\iota_1,\iota_2]:\vx + \vz \to \vw$. It reduces the goal to the lemma \ref{Lem:Witness}.
-  The index $k$ is now fixed so we are not keeping it from now on.
-\end{proof}
-
   
-\begin{lemma}[Witness for the existential quantification in lemma \ref{Lemma:stabCovFam}]\label{Lem:Witness}
-  \lean{WrigleyTopology.Stability.coveringWitness}
-  \begin{equation*}
-    \phi\land \zeta\land \bigwedge_{i\in \vec{y}} x_{f(i)} = z_{\sigma(i)}\vdash_{\vx + \vz} (\overline{\phi}\land \overline{\zeta}\land\bigwedge_{j\in\vec{x}} x_j = w_{\iota_1(j)})[w_l:=(\vxz)_{s(l)}] 
-  \end{equation*}
-\end{lemma}
-
-\begin{proof}
-  Let $\Gamma$ denote the LHS of the sequent. We prove 
-  \begin{equation*}
-    \Gamma \vdash (\bigwedge_{j\in\vec{x}}x_j = w_{\iota_1(j)}\land \bigwedge_{j'\in\vec{z}}z_{j'}= w_{\iota_2(j')}) [w_l:=(\vxz)_{s(l)}] 
-  \end{equation*}
-
-  We prove as the next lemma:
-  
-  \begin{equation*}
-   \bigwedge_{i\in \vec{y}} x_{f(i)} = z_{\sigma(i)} \vdash 
-    (\bigwedge_{j\in\vec{x}}x_j = w_{\iota_1(j)}) [w_l:=(\vxz)_{s(l)}] 
-  \end{equation*}
-
-  and symmetrically
-
-  \begin{equation*}
-    \bigwedge_{i\in \vec{y}} x_{f(i)} = z_{\sigma(i)} \vdash 
-    (\bigwedge_{j'\in\vec{z}}z_{j'}= w_{\iota_2(j')}) [w_l:=(\vxz)_{s(l)}] 
-  \end{equation*}
-  This will prove the equational part of the RHS of lemma \ref{Lem:Witness}, and by congruence of equalities we will have:
-  Then as $\ophi := \phi[w_{\iota(j)}/x_j]$, we will have 
-  \begin{equation*}
-    \phi\land ((\bigwedge_{j\in\vec{x}}x_j = w_{\iota_1(j)})[w_l:=(\vxz)_{s(l)}])  \vdash_{\vx + \vz} \ophi [w_l:=(\vxz)_{s(l)}] 
-  \end{equation*}
-
-  
-  The proof will need some constructs about \emph{effective quotient}. Relevant definitions and lemmas are below.
-
-  
-
-
-
 \end{proof}
 
 
-\begin{definition}[Relation defined by the equalities in $\Gamma$]
-  Relation $R$ is the non-equivalence relation, that only relates pairs of elements in $\vx+\vz$ 
-  by the equality part in $\Gamma$. That is 
-  \lean{WrigleyTopology.Stability.Rrel}
-  \begin{equation}
-    R(l_1,l_2):= \text{exists}\; i \in \vy \;\text{such that}\; l_1 = \inl(f(i))\; \text{and}\;  l_2 = \inl(g(i))
-  \end{equation}
-\end{definition}
 
-\begin{definition}[Relation defined by mapping to the same element in the quotient]
-  Relation $S$ is defined by having the same image under the quotient map $\iotas:\vx+\vz\to \vw$. That is 
-  \lean{WrigleyTopology.Stability.Srel}
-  \begin{equation}
-    S(l_1,l_2):= \iotas(l_1) = \iotas(l_2)
-  \end{equation}
-\end{definition}
-
-\begin{definition}[Equivalence Closure]
-  The equivalence closure of an equivalence relation.
-  \lean{eqv}
-  \leanok
-\end{definition}
-
-\begin{definition}[Effective Quotient]
-  \lean{effectiveQuotient}
-  \leanok
-  An effective quotient on a type $\alpha$ is a relation $R$ on $\alpha$ and a carrier set $Q$ represents of the quotient
-  set by $R$. With a quotient map $q:\alpha\to Q$ and a section $s:Q\to \alpha$, such that $q\circ s = \mathbf{1}_Q$. Such that:
-  \begin{itemize}
-    \item soundness: if $R(a_1,a_2)$, then $q(a_1) = q(a_2)$ in the quotient set $Q$.
-    \item exactness: if $q(a_1) = q(a_2)$, then $a_1$ and $a_2$ are related by the equivalence closure of $R$.
-  \end{itemize}
-
-\end{definition}
-
-\begin{lemma}[1/4 step for covering witness lemma]\label{Lem:CovWit1}
-  For each $l\in \vxz$, we have $S((\vxz)_l, (\vxz)_{s(\iotas l)})$
-  \lean{WrigleyTopology.Stability.sιsSrel}
-\end{lemma}
-
-\begin{lemma}[2/4 step for covering witness lemma]\label{Lem:CovWit2}
-  Prove $\iotas$ has a section $s$, hence establish $\vw$ as an effective quotient of $\vx +\vz$ via $\iotas$ and $s$.
-  \lean{WrigleyTopology.Stability.ReffectiveQuotient}
-  The hardest point is to provide the exactness proof.
-  This is effectively proving $S\subset R^*$, where $R^*$ is the equivalence closure of $R$.
-\end{lemma}
-
-
-\begin{lemma}[3/4 step for covering witness lemma]\label{Lem:CovWit3}
-  Prove for all $l\in \vxz$, $r\in R^*((\vxz)_l,(\vxz)_{s(\iotas l)})$, we have
-  \begin{equation*}
-    \Gamma \vdash (\vxz)_l = (\vxz)_{s(\iotas l)}
-  \end{equation*}
-\end{lemma}
+\begin{theorem}[Stability of covering sieves]
+  If a family $\{g_K\}\to \vec{y}\mid \psi$ is a covering sieve, then the pullback sieve $f^*\{g_K\}$ is a covering sieve on $\xphi$.
+\end{theorem}
 
 \begin{proof}
-  The proof is by induction of the construction of the proof of $R^*$. (Remark: It is doable since we formalize equivalence closure 
-  as a type instead of a proposition.)
+  If $\{g_K\}\to \vec{y}\mid \psi$ is a covering sieve, then it contains a covering family $\{g_k: \to \vec{y}\mid \psi\}$.
+  %
+  For each of the map $g_{k}:\vec{z_k}\mid \zeta_k$ in the covering family, we consider the object 
+  \[C:=\vec{w}\mid \ophi\land \ozeta \land\bigwedge_{i\in \vec{y}} \ox_{f(i)} = \oz_{g(i)}\]. 
 
-\begin{itemize}
-    \item reflexivity should be according to proof rules for equality, same for symmetry and transitivity.
-    \item base case requires us to prove
-    \[\Gamma\vdash (\vxz)_{inl(f(i))} = (\vxz)_{inr(\sigma(i))}\]
-    LHS is $x_{f(i)}$ and RHS is $z_{\sigma(i)}$, which equals by assumptions in $\Gamma$.
-\end{itemize}
-\end{proof}
+  Here we have $\vec{w}:= \vec{x}+ \vec{z}$ is the pushout of $f$ and $\sigma$.
 
-\begin{lemma}[4/4 step for covering witness lemma]\label{Lem:CovWit4}
-  \begin{equation*}
-    \Gamma \vdash (\bigwedge_{j\in\vec{x}}x_j = w_{\iota_1(j)}\land \bigwedge_{j'\in\vec{z}}z_{j'}= w_{\iota_2(j')}) [w_l:=(\vxz)_{s(l)}]
-  \end{equation*}
-\end{lemma}
+  \[
+   \begin{tikzcd}
+     \vec{w}\mid \phi\land \zeta \ar[r,"\iota_2"]\ar[d,"\iota_1"]  & \vec{z}\mid \zeta\ar[d,"g"]\\
+     \vec{x}\mid \phi \ar[r,"f"] & \vec{y}\mid \psi
+   \end{tikzcd}
+  \]
 
-\begin{proof}
-  We spell out the proof of 
-  \lean{WrigleyTopology.Stability.xφcoveringWitness}
-  \begin{equation*}
-    \bigwedge_{i\in \vec{y}} x_{f(i)} = z_{\sigma(i)} \vdash 
-     (\bigwedge_{j\in\vec{x}}x_j = w_{\iota_1(j)}) [w_l:=(\vxz)_{s(l)}] 
-   \end{equation*}
-   for illustration. The other half is by symmetry.
+  The underlying map $\iota_1:\vx\to\vw$ actually defines a map $C \to \xphi$. 
+  %
+  For each of $g_k$, we have such a map. And such maps form a covering family on $\xphi$.
+  %
+  We will prove that we have commutative squares:
 
-  We take the reduction
-\[(x_j = w_{\iota_1(j)}) [w_l:=(\vxz)_{s(l)}]\]
-\[x_j = (\vxz)_{s(\iota_1(j))}\]
-\[(\vxz)_{\inl(j)} = (\vxz)_{s(\iota_1(j))}\]
-\[(\vxz)_{\inl(j)} = (\vxz)_{s(\iotas (\inl(j)))}\]
-so the final equation is what we want.
-
-This is just the conclusion of lemma \ref{Lem:CovWit3}, taking $l := \inl(j)$.
-
-So we want to show $R^*((\vxz)_l,(\vxz)_{s(\iotas l)})$. By lemma \ref{Lem:CovWit2}, we want to show \[S((\vxz)_{\inl(j)},(\vxz)_{s(\iotas (\inl(j)))})\].
-
-By definition of $S$, it is to prove:
-
-\[\iotas (\inl(j)) = \iotas (s(\iotas (inl(j)))) \]
-
-$\iotas\circ s = 1$ cancels out. Both LHS and RHS is $\iota_1(j)$.
-
+  \[
+     \begin{tikzcd}
+        \vec{w}\mid \ophi\land \ozeta \land\bigwedge_{i\in \vec{y}} \ox_{f(i)} = \oz_{g(i)} \ar[r,"\iota_2"]\ar[d,"\iota_1"]  & \vec{z}\mid \zeta\ar[d,"g"]\\
+        \vec{x}\mid \phi \ar[r,"f"] & \vec{y}\mid \psi
+     \end{tikzcd}
+  \]
+  Observe from the above square that the composition $f\circ \iota_1$ is equal to a pre-composition of arrow with an arrow $g\in\{g_K\}$, so each of the composition
+   $f\circ \iota_1 \in \{g_K\}$. 
+  %
+  This proves the maps of the form $\iota_1$ are all in the pullback sieve $f^*\{g_K\}$.
+  %
+  Hence it is sufficient to prove these $\iota_1$'s form a covering family of $\xphi$.
+  %
+  We will prove it as the lemma \ref{Lemma:stabCovFam} below.
 \end{proof}
 
 
