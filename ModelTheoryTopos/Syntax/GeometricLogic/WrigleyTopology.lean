@@ -16,7 +16,7 @@ open CategoryTheory
 namespace WrigleyTopology
 variable [SmallUniverse]
 
-def cover_from_over.represent_renaming (xφ : fmlInCtx m) (σ : Over xφ)
+def cover_from_over.represent_renaming {m:theory} (xφ : fmlInCtx m) (σ : Over xφ)
    :fml m.sig (xφ.ctx + σ.left.ctx) :=
       .eqs (k:=xφ.ctx)
         (fun i => .var (R.in10 i)) -- x_i
