@@ -9,7 +9,7 @@ variable {S : Signature} [κ : SmallUniverse S] [T : S.Theory]
 inductive Derivation : {Γ : S.Context} → S.FormulaContext Γ → S.Formula Γ → Type* where
   | axiom {Γ} {Θ : S.FormulaContext Γ} {φ : S.Sequent} {σ : Context.Hom Γ φ.ctx} :
       φ ∈ T → Derivation Θ (φ.premise.subst σ) → Derivation Θ (φ.concl.subst σ)
-  | var {Γ} {Θ : S.FormulaContext Γ} (i : Fin Θ.length) : Derivation Θ (Θ.ctx i)
+  | var {Γ} (Θ : S.FormulaContext Γ) (i : Fin Θ.length) : Derivation Θ (Θ.ctx i)
   | true_intro {Θ} : Derivation Θ .true
   | false_elim {Θ φ} : Derivation Θ .false → Derivation Θ φ
   | conj_intro {Θ φ ψ} : Derivation Θ φ → Derivation Θ ψ → Derivation Θ (φ ∧' ψ)

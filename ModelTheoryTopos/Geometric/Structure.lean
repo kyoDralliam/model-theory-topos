@@ -93,23 +93,39 @@ noncomputable def Formula.interpret {Γ : Context S} : Γ ⊢ᶠ𝐏 →
 notation:arg "⟦" M "|" P "⟧ᶠ" =>
   Formula.interpret M P
 
+
+
 @[simp]
 noncomputable def Formula.interpret_subst
     {Δ Γ : Context S} (σ: Δ ⟶ Γ) (P : Γ ⊢ᶠ𝐏) :
     ⟦M | P.subst σ⟧ᶠ = (Subobject.pullback ⟦M|σ⟧ʰ).obj ⟦M | P⟧ᶠ := by
   induction P with
-  | rel o _ => sorry
-  | true => sorry
-  | false => sorry
-  | conj _ _ _ _ => sorry
+  | rel o _ =>
+    simp[Formula.subst,Subobject.pullback_comp]
+  | true =>
+    simp[Formula.subst,CategoryTheory.Subobject.pullback_top]
+  | false =>
+    simp[Formula.subst]
+    sorry
+  | conj _ _ _ _ =>
+    simp[Formula.subst]
+    sorry
   | infdisj _ _ => sorry
-  | eq _ _ => sorry
+  | eq _ _ =>
+
+    sorry
   | existsQ _ _ => sorry
 
 def Sequent.interpret (U : S.Sequent) : Prop :=
   ⟦M | U.premise⟧ᶠ ≤ ⟦M | U.concl⟧ᶠ
 
 def Theory.interpret (T : S.Theory) : Prop := ∀ Seq ∈ T.axioms, Seq.interpret M
+
+/-
+f: A ⟶ B , A B: Subobject X
+ A <= B
+
+-/
 
 def Soundness {T : S.Theory} {Γ : Context S} {Θ : FormulaContext Γ} {P : Γ ⊢ᶠ𝐏} :
   Derivation (T := T) Θ P → Theory.interpret M T →
@@ -119,8 +135,11 @@ def Soundness {T : S.Theory} {Γ : Context S} {Θ : FormulaContext Γ} {P : Γ �
   | «axiom» φinT D hp =>
       apply le_trans hp; simp only [Formula.interpret_subst];
       apply Functor.monotone; exact int _ φinT
-  | var i =>
+  | var t i =>
+    let p := Pi.π (fun i ↦ ⟦M|t.ctx i⟧ᶠ) i
+    apply Quotient.ind₂'
 
+    --simp[LE.le]
     sorry
   | true_intro => simp
   | false_elim D h => rw [bot_unique h]; simp
@@ -131,11 +150,20 @@ def Soundness {T : S.Theory} {Γ : Context S} {Θ : FormulaContext Γ} {P : Γ �
     simp only [Formula.interpret] at *
     apply le_trans h
     apply SemilatticeInf.inf_le_left
-  | conj_elim_r _ _ => sorry
-  | infdisj_intro P i _ _ => sorry
+  | conj_elim_r _ h =>
+    apply le_trans h
+    apply SemilatticeInf.inf_le_right
+  | infdisj_intro P i _ h =>
+    apply le_trans h
+    simp only [Formula.interpret]
+    sorry
   | infdisj_elim _ _ _ _ => sorry
-  | eq_intro => sorry
-  | eq_elim φ _ _ _ _ => sorry
+  | eq_intro =>
+    simp only [Formula.interpret]
+    --equalizer of two identical maps is the id
+    sorry
+  | eq_elim φ _ _ _ _ =>
+    sorry
   | existsQ_intro φ t _ _ => sorry
   | existsQ_elim φ _ _ => sorry
 
