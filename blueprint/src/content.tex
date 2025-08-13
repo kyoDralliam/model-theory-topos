@@ -9,6 +9,49 @@
 
 \chapter{Big Picture}
 
+
+In (the first big part of) this project, we will formalize the topos semantics of geometric logic, where `topos' refer to a Grothendieck topos.
+
+We formalize sequentially 
+\begin{itemize}
+  \item a deep embedding of (multi-sorted) syntax of geometric logic
+  \item interpretation of geometric syntax on a geometric category
+  \item soundness of geometric semantics
+  \item soundness of topos semantics
+  \item completeness of topos semantics
+\end{itemize}
+
+As we have both soundness and completeness, we have a central milestone of this project:
+A geometric sequent is constructively provable if and only if it holds in any Grothendieck topos.
+
+The `only if' direction is for the positive use of the semantics---it gives us a shortcut to prove non-trivial result in a geometric category with complicated construction.
+The `if' diection is for the negative use of the semantics---to show a sequent is not provable, it is sufficient to give an example of a topos where it does not hold.
+
+We will give examples for both ways of the application.
+
+
+
+Here is a list of choices that we made:
+\begin{itemize}
+  \item We use de Brujin indices instead of name-carrying for variables in our syntax
+  \item We close the sorts under finite product
+  \item We use sequent calculi instead of Hilbert-style proof rules
+  \item We allow infinite many sorts, which is reasonable for the application on internal logic of any category
+  \item We employ the construction of syntactic site in Wrigley's PhD work, which is equivalent to the standard construction
+  in Johnstone
+  \item We use an intrisic characterization of sheaf topos in terms of axioms. In particular, the objects in 
+  our topos are not a priori functors
+
+\end{itemize}
+
+
+Our plan is to split the project into three big parts:
+\begin{itemize}
+  \item soundness and completeness proof among geometric logic 
+  \item completeness among Grothendieck topoi via syntactic site
+  \item applications of soundness and completeness
+\end{itemize}
+
 \chapter{Monosorted Geometric Logic}
 We aim for multi-sorted geometric logic eventually. But the part of completeness proof of our project is rather complicated, we stick to 
 monosorted signature in our experimental stage. We will integrate it into multisorted case once the monosorted case is done.
@@ -77,7 +120,7 @@ For the whole section, we fix a geometric theory \thT{} over some universe \Univ
   \lean{WrigleyTopology.CoveringFamily}
   \leanok
   A family of maps $(\sigma_k : \fmlInCtx{\vec{x}_k}{\varphi_k}\to \fmlInCtx{\vec{y}}{\psi})_{k \in K}$ with $K \in \Univ$ is covering when
-  $\psi \vdash_{\vy} \bigvee_{k \in K} (\exists \vec{x}_k, \phi \wedge \bigwedge_{i \in \vec{y}} y_i = x_{\sigma_k(i)}$).
+  $\psi \vdash_{\vy} \bigvee_{k \in K} (\exists \vec{x}_k, \phi \wedge \bigwedge_{i \in \vec{y}} y_i = x_{\sigma_{k(i)}}$).
 \end{definition}
 
 This covering family defines a syntactic site:
@@ -103,6 +146,62 @@ We prove these three conditions in the following three subsections.
   Given a formula in context $\xphi$ and a two sieves $S,R$ on it, where $S$ is a covering sieve, then if for each arrow $f:\ypsi\to\xphi$ in the
   covering sieve $S$, the pullback of $R$ along $f$ is a covering sieve on $\ypsi$, then $R$ itself is a covering sieve.
 \end{lemma}
+
+\begin{proof}
+  As $S$ is a covering sieve, $S$ contains a covering family, say the family $\{\sigma^i: \ypsi^i\to \xphi\}$ indexed by $i\in I$. 
+  By definition of covering family, we have 
+  \begin{equation}\label{seq1}
+    \phi \vdash_{\vx} \bigvee^{i\in I} (\exists \vy^i. \;\psi^i \wedge \bigwedge_{n \in \vx} x_n = {y^i}_{\sigma^i(n)})
+  \end{equation}
+
+  The assumption says for each $\sigma^i: \{\vy^i\mid \psi^i\} \to \xphi$, the pullback' of $R$ along $\sigma^i$ is a covering sieve
+  on  $\{\vy^i\mid \psi^i\}$ .
+  This means each such sieve contains a covering family. Say, for each $i\in I$, we have a set $J^i$ indexing this covering family, and 
+  the family is written as $\{\rho_j: \zzeta_j\to \ypsi^i\}$ then we have
+
+  \begin{equation}\label{seq2}
+    \psi^i \vdash_{\vy^i} \bigvee_{j\in J^i}
+     (\exists \vz_j.\; \zeta_j \wedge \bigwedge_{m \in \vy^i} y_m = {z_j}_{\rho_j(m)})
+  \end{equation}
+
+  Then we obtain a family indexing by $\Sigma_{i\in I}J^i$ that covers $\xphi$. The arrows are of the form:
+  \[
+  \begin{tikzcd}
+    \zzeta^i_j\ar[r,"\rho^i_j"] & \ypsi^i\ar[r,"\sigma^i"] & \xphi
+  \end{tikzcd}
+  \]
+  Recall that $\rho^i_j$ is in the pullback' of the sieve $R$ along $\sigma^i$, so we have the composition $\sigma^i\circ \rho^i_j\in R$. 
+  Such a family covers $\xphi$. It requires us to prove 
+
+  \begin{equation*}
+    \phi \vdash_{\vx} \bigvee^{(i,j)\in \Sigma_{i\in I}J^i} 
+    (\exists \vz^i_j.\; \zeta^i_j \wedge \bigwedge_{n\in \vx} x_n = {z^i_j}_{\rho^i_j\circ \sigma^i(n)})
+  \end{equation*}
+  
+  the proof is straightforward by combining \ref{seq1} and \ref{seq2} above. 
+
+  
+ 
+\end{proof}
+
+For this proof, the trickest part is the construction of the index of the covering family in $R$, i.e. the dependent sum $\Sigma_{i\in I}J^i$. 
+It need to be a term of our small universe $\Univ$. We equip our small universe with the following two ingredients, which will be enough for this proof.
+
+\begin{itemize}
+  \item $\Univ$ is closed under dependent sum. We axiomatize a `small object former' that makes $\Sigma$-objects in $U$ by
+  taking a small object $A\in \Univ$ and a family $B:A\to Type$ indexed by $A$. Accordingly, we add axioms formulating
+  the projections and the computation rules of the dependent sum in $\Univ$.
+  \item $\Univ$ admits a form of axiom of choice. More formally, for each term $A\in \Univ$ representing a 
+  small object, an a small family of types indexed by $A$, if each of $X_a$ for $a\in A$ is nonempty, then the type 
+  $\Pi_{a\in A}X_a$ is nonempty.
+\end{itemize}
+
+
+The reason that we need the axiom of choice is that our constructor for the $\Sigma$-object in $\Univ$ asks
+for a term $B: El(A)\to \Univ$. However, the assumption only gives that for each index in $A$, there exists a $\Univ$-small
+type indexing a family, it does not directly give a function term $El(A)\to \Univ$.
+
+
 
 
 
