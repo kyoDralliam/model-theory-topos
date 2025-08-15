@@ -22,16 +22,18 @@ inductive Derivation : {Γ : S.Context} → S.FormulaContext Γ → S.Formula Γ
   | eq_intro {Θ t} : Derivation Θ (.eq t t)
   | eq_elim {Γ A t1 t2} {Θ Θ' : S.FormulaContext Γ} (φ : S.Formula (A ∶ Γ)) :
     Derivation Θ (t1 =' t2) →
-    Derivation (Θ ++ Θ') (φ.subst (Context.Hom.cons_Id t1)) →
-    Derivation (Θ ++ Θ') (φ.subst (Context.Hom.cons_Id t2))
+    Derivation (Θ' ++ Θ) (φ.subst (Context.Hom.cons_Id t1)) →
+    Derivation (Θ' ++ Θ) (φ.subst (Context.Hom.cons_Id t2))
+  | eq_proj_pair {Γ n} {Aᵢ : (i : Fin n) → S} (tᵢ : (i : Fin n) → Γ ⊢ᵗ (Aᵢ i)) {i : Fin n} {Θ} :
+      Derivation Θ ((Term.pair tᵢ).proj i =' tᵢ i)
+  | eq_pair_proj {Γ n} {Aᵢ : Fin n → DerivedSorts S.Sorts} (t : Γ ⊢ᵗ .prod Aᵢ) {Θ} :
+      Derivation Θ (Term.pair (fun i ↦ t.proj i) =' t)
   | existsQ_intro {Γ A} {Θ : S.FormulaContext Γ} (φ : S.Formula (A ∶ Γ)) (t : S.Term Γ A):
     Derivation Θ (φ.subst (Context.Hom.cons_Id t)) → Derivation Θ (.existsQ φ)
   | existsQ_elim {Γ A} {Θ : S.FormulaContext Γ} (φ : S.Formula (A ∶ Γ)) :
       Derivation Θ (∃' φ) → Derivation (Θ.subst (Γ.π A)) φ
 
 variable {Γ : S.Context} {Θ Θ' : FormulaContext Γ} {ψ : Formula Γ}
-
-def Derivation.weaken' (P) : (Derivation Θ ψ) → Derivation (Θ.snoc P) ψ := by sorry
 
 def Derivation.weaken (D : Derivation Θ ψ) : Derivation (Θ ++ Θ') ψ := sorry
 

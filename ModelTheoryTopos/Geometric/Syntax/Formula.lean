@@ -76,6 +76,10 @@ def FormulaContext.cons (P : S.Formula Γ) : FormulaContext Γ where
   length := Θ.length + 1
   ctx := Matrix.vecCons P Θ.ctx
 
+@[simp]
+lemma FormulaContext.lenght_cons (P : S.Formula Γ) : (Θ.cons P).length = Θ.length + 1 := by
+  simp [cons]
+
 def FormulaContext.snoc (P : S.Formula Γ) : FormulaContext Γ where
   length := Θ.length + 1
   ctx := Matrix.vecSnoc P Θ.ctx

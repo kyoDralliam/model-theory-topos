@@ -9,6 +9,8 @@ universe u v w
 
 namespace CategoryTheory
 
+section
+
 variable (κ : Type w) (C : Type u) [Category.{v} C]
 
 class Regular extends HasFiniteLimits C, Limits.HasStrongEpiMonoFactorisations C where
@@ -19,14 +21,51 @@ class Regular extends HasFiniteLimits C, Limits.HasStrongEpiMonoFactorisations C
 attribute [instance] Regular.strongIsRegular Regular.RegularStable
 
 class Geometric extends Regular C where
-  hasFalse (X : C) : HasInitial (Subobject X)
-  hasJoins (X : C) (I : Set κ) : HasCoproductsOfShape I (Subobject X)
+  has_false (X : C) : HasInitial (Subobject X)
+  has_joins_subobject (X : C) (I : Set κ) : HasCoproductsOfShape I (Subobject X)
+  isJoin_isStableUnderBaseChange {Y X : C} (f : Y ⟶ X) {I : Set κ} (fP : I → Subobject X) :
+    ∐ (fun (i : I) ↦ (Subobject.pullback f).obj (fP i)) = (Subobject.pullback f).obj (∐ fP)
 
-attribute [instance] Geometric.hasFalse Geometric.hasJoins
+attribute [instance] Geometric.has_false Geometric.has_joins_subobject
+attribute [simp] Geometric.isJoin_isStableUnderBaseChange
 
 abbrev Coherent := Geometric C Bool
 
+end
+
+namespace Geometric
+
+variable {κ : Type w} {C : Type u} [Category.{v} C]
 variable [geo : Geometric κ C]
+
+def emptymap (X : C) : Set.Elem (fun (_ : κ) ↦ False) → Subobject X := fun i ↦ by
+  obtain ⟨val, property⟩ := i
+  have := property.out
+  simp_all only
+
+noncomputable def initialSubobject (X : C) : Subobject X :=
+  let empty : Set κ := ∅
+  ∐ (fun (i : empty) ↦ by
+  obtain ⟨val, property⟩ := i
+  simp_all only [Set.mem_empty_iff_false, empty])
+
+def initialHom {X : C} (m : Subobject X) : initialSubobject (κ := κ) X ⟶ m := by
+  constructor
+  constructor
+  sorry
+
+instance (X : C) : HasInitial (Subobject X) := by
+  let myEmpty : Set κ := ∅
+  let f : myEmpty → Subobject X := fun i ↦ by aesop
+  sorry
+
+instance (X : C) : OrderBot (Subobject X) := by sorry
+
+-- Show
+instance (X : C) : HasBinaryProducts (Subobject X) := by sorry
+
+
+-- instance geoHasFiniteProducts (X : C) : HasFiniteProducts (Subobject X) := sorry
 
 /- # TODO lemmas
 After more stuff is added, most of these will not have to be even mentioned,
@@ -48,8 +87,4 @@ subobject is the following:
    subobjects has the structure it should have.
 -/
 
-instance (X : C) : OrderBot (Subobject X) := by sorry
-
-instance geoHasFiniteProducts (X : C) : HasFiniteProducts (Subobject X) := sorry
-
-end CategoryTheory
+end CategoryTheory.Geometric
