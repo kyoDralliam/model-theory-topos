@@ -6,10 +6,9 @@ import Mathlib.CategoryTheory.Limits.Shapes.FiniteLimits
 import Mathlib.CategoryTheory.MorphismProperty.Limits
 import Mathlib.CategoryTheory.Limits.Shapes.RegularMono
 import ModelTheoryTopos.Geometric.Syntax.Signature
-
-
 import Mathlib.Data.Fin.Basic
 import Mathlib.Data.Finset.Basic
+import ModelTheoryTopos.ForMathlib.Data.Fin.VecNotation
 
 open CategoryTheory Limits
 
