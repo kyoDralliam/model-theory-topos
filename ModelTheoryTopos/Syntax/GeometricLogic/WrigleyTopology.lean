@@ -16,7 +16,7 @@ open CategoryTheory
 namespace WrigleyTopology
 variable [SmallUniverse]
 
-def cover_from_over.represent_renaming (xφ : fmlInCtx m) (σ : Over xφ)
+def cover_from_over.represent_renaming {m:theory} (xφ : fmlInCtx m) (σ : Over xφ)
    :fml m.sig (xφ.ctx + σ.left.ctx) :=
       .eqs (k:=xφ.ctx)
         (fun i => .var (R.in10 i)) -- x_i
@@ -258,6 +258,17 @@ lemma ΓsubstxQuoEqs (s:  Fin (Limits.pushout f.map g.map) ⟶ Fin (xφ.ctx + z�
     (fml.eq (tm.var (x2w' f g j)) (tm.var (w2w' f g (ι₁ f g j))))) := sorry
 
 
+lemma xφcoveringWitness (s:  Fin (Limits.pushout f.map g.map) ⟶ Fin (xφ.ctx + zζ.ctx))
+ (seq: ιs  f g ∘ s = id):
+ let φ := xφ.formula
+ let liftφ : fml m.sig (xφ.ctx + zζ.ctx) := fml.ren R.in10 φ
+ let quoφ: fml m.sig (Limits.pushout f.map g.map) := fml.ren (ι₁ f g) φ
+ let liftquoφ: fml m.sig (xφ.ctx + zζ.ctx + Limits.pushout f.map g.map) := fml.ren (x2w' f g) φ
+ Hilbert.proof (liftφ.conj (gluingEqs f g))
+ (fml.subst (substn (tm.var ∘ s)) (liftquoφ.conj (xQuoEqs f g))) := sorry
+
+
+
 lemma coveringWitness (s:  Fin (Limits.pushout f.map g.map) ⟶ Fin (xφ.ctx + zζ.ctx))
  (seq: ιs  f g ∘ s = id):
  let φ := xφ.formula
@@ -272,8 +283,10 @@ lemma coveringWitness (s:  Fin (Limits.pushout f.map g.map) ⟶ Fin (xφ.ctx + z
  (fml.subst (substn (tm.var ∘ s)) ((liftquoφ.conj liftquoζ).conj (xQuoEqs f g))) := sorry
 
 
-theorem stability {X Y: fmlInCtx m} {S: Sieve X} (f: Y⟶ X) :
- S ∈ sieves X → Sieve.pullback f S ∈ sieves Y := sorry
+theorem stability {yψ xφ: fmlInCtx m} {S: Sieve yψ} (f: xφ⟶ yψ) :
+ S ∈ sieves yψ → Sieve.pullback f S ∈ sieves xφ := by
+
+ sorry
 
 
 end Stability
@@ -281,14 +294,14 @@ end Stability
 
 namespace Transitivity
 
-theorem transitivity  ⦃X : fmlInCtx m⦄ ⦃S : Sieve X⦄
-(h_S:  S ∈ sieves X ) (R : Sieve X)
-   (h_R: ∀ ⦃Y : fmlInCtx m⦄ ⦃f : Y ⟶ X⦄, S.arrows f → Sieve.pullback f R ∈ sieves Y) : R ∈ sieves X := sorry
+theorem transitivity  ⦃xφ : fmlInCtx m⦄ ⦃S : Sieve xφ⦄
+(h_S:  S ∈ sieves xφ ) (R : Sieve xφ)
+   (h_R: ∀ ⦃yψ : fmlInCtx m⦄ ⦃f : yψ ⟶ xφ⦄, S.arrows f → Sieve.pullback f R ∈ sieves yψ) : R ∈ sieves xφ := sorry
 
 end Transitivity
 
 
-instance [SmallUniverse.UniverseClosureProps] : GrothendieckTopology (fmlInCtx m) where
+instance SyntacticTopology [SmallUniverse.UniverseClosureProps] : GrothendieckTopology (fmlInCtx m) where
     sieves := WrigleyTopology.sieves
     top_mem' := by
       intro xφ
