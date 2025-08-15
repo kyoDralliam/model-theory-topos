@@ -165,11 +165,11 @@ We prove these three conditions in the following three subsections.
   \end{equation}
 
   Then we obtain a family indexing by $\Sigma_{i\in I}J^i$ that covers $\xphi$. The arrows are of the form:
-  \[
+  \begin{center}
   \begin{tikzcd}
     \zzeta^i_j\ar[r,"\rho^i_j"] & \ypsi^i\ar[r,"\sigma^i"] & \xphi
   \end{tikzcd}
-  \]
+  \end{center}
   Recall that $\rho^i_j$ is in the pullback' of the sieve $R$ along $\sigma^i$, so we have the composition $\sigma^i\circ \rho^i_j\in R$. 
   Such a family covers $\xphi$. It requires us to prove 
 
@@ -225,12 +225,12 @@ $f^*\{g_K\}$ contains a covering family.
 
 We use the fact that if $\{g_k\}\subseteq \{g_K\}$ is the covering family, then the covering family contained in $f^*\{g_K\}$ has arrows obtained in the following 
 way: for each $k$, consider the pullback square: 
-\[
+\begin{center}
   \begin{tikzcd}
      f^* \zzeta \ar[r,"\iota_2^k"]\ar[d,"f^*(g_k):= \iota_1^k"]  & \zzeta\ar[d,"g_k"]\\
      \xphi \ar[r,"f"] & \ypsi
   \end{tikzcd}
-\]
+\end{center}
 
 then the covering family consists of arrows of the form $\iota_1^k$ as in the diagram above.
 
@@ -241,23 +241,23 @@ The construction of pullbacks in the syntactic category is as follows. For a pai
 the pullback of $g$ along $f$ is pictured as:
 
 
-\[
+\begin{center}
   \begin{tikzcd}
      \fmlInCtx{\vw}{\ophi\land \ozeta \land\bigwedge_{i\in \vec{y}} \ox_{f(i)} = \oz_{g(i)}} \ar[r,"\iota_2"]\ar[d,"\iota_1"]  & \zzeta\ar[d,"g"]\\
      \xphi \ar[r,"f"] & \ypsi
   \end{tikzcd}
-\]
+\end{center}
 We will take the abuse of the notation and denote both a map $f:\xphi\to \ypsi$ and the underlying renaming map between contexts $f:\vy\to \vx$ 
 using the same letter. 
 Then the context $\vw$ is the pushout of the maps $f:\vy\to \vx$ and $g:\vy\to \vz$ in the category of finite sets. 
 The coprojections into $\vw$ are denoted $\iota_1:\vx\to\vw$ and $\iota_2:\vz\to \vw$, as below:
 
-\[
+\begin{center}
 \begin{tikzcd}
  \vec{y}\ar[d,"f"]\ar[r,"\sigma"] & \vec{z}\ar[d,"\iota_2"]\\
  \vec{x}\ar[r,"\iota_1"] & \vec{w}
 \end{tikzcd}
-\]
+\end{center}
 
 That is, $\vw$ is the quotient from the disjoint union $\vx + \vz$ by gluing images in $\vx$ and $\vz$ of the same $y_i\in \vy$ together.
 
