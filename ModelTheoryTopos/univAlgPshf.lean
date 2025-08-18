@@ -8,7 +8,7 @@ import Mathlib.CategoryTheory.ComposableArrows
 import Mathlib.CategoryTheory.Functor.Category
 import Mathlib.Algebra.Group.Hom.Defs
 import Mathlib.CategoryTheory.Opposites
-import ModelTheoryTopos.Syntax.GeometricLogic.SyntacticSite
+--import ModelTheoryTopos.Syntax.GeometricLogic.SyntacticSite
 
 
 import Mathlib.Algebra.Category.Semigrp.Basic
