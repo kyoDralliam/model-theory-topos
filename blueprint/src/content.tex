@@ -12,7 +12,7 @@
 
 In (the first big part of) this project, we will formalize the topos semantics of geometric logic, where `topos' refer to a Grothendieck topos.
 
-We formalize sequentially 
+We formalize sequentially
 \begin{itemize}
   \item a deep embedding of (multi-sorted) syntax of geometric logic
   \item interpretation of geometric syntax on a geometric category
@@ -39,7 +39,7 @@ Here is a list of choices that we made:
   \item We allow infinite many sorts, which is reasonable for the application on internal logic of any category
   \item We employ the construction of syntactic site in Wrigley's PhD work, which is equivalent to the standard construction
   in Johnstone
-  \item We use an intrisic characterization of sheaf topos in terms of axioms. In particular, the objects in 
+  \item We use an intrisic characterization of sheaf topos in terms of axioms. In particular, the objects in
   our topos are not a priori functors
 
 \end{itemize}
@@ -47,51 +47,24 @@ Here is a list of choices that we made:
 
 Our plan is to split the project into three big parts:
 \begin{itemize}
-  \item soundness and completeness proof among geometric logic 
+  \item soundness and completeness proof among geometric logic
   \item completeness among Grothendieck topoi via syntactic site
   \item applications of soundness and completeness
 \end{itemize}
 
 \chapter{Monosorted Geometric Logic}
-We aim for multi-sorted geometric logic eventually. But the part of completeness proof of our project is rather complicated, we stick to 
+We aim for multi-sorted geometric logic eventually. But the part of completeness proof of our project is rather complicated, we stick to
 monosorted signature in our experimental stage. We will integrate it into multisorted case once the monosorted case is done.
 
 \section{Geometric Signature, Theories and Logic}
 
 \begin{definition}
   %Lean code should be a datatype, how to link that?
-A geometric signature contains the information of 
+A geometric signature contains the information of
 \end{definition}
 
 %\section{Syntactic Site for a Geometric Theory} Previously @KM: is that okay?
 
-\newcommand{\thT}{\ensuremath{\mathcal{T}}}
-\newcommand{\fmlInCtx}[2]{\{ #1 | #2 \}}
-\newcommand{\subs}[2]{{#1}[{#1}]}
-\newcommand{\Univ}{\ensuremath{\mathscr{U}}}
-%added
-\newcommand{\quot}{\text{quot}}
-\newcommand{\vxz}{\vec{x}+\vec{z}}
-\newcommand{\vw}{\vec{w}}
-\newcommand{\vx}{\vec{x}}
-\newcommand{\vy}{\vec{y}}
-\newcommand{\vz}{\vec{z}}
-\newcommand{\iotas}{\ensuremath{[\iota_1,\iota_2]}}
-\newcommand{\xphi}{\fmlInCtx{\vec{x}}{\phi}}
-\newcommand{\ypsi}{\fmlInCtx{\vec{y}}{\psi}}
-\newcommand{\zzeta}{\fmlInCtx{\vec{z}}{\zeta}}
-\newcommand{\ophi}{\overline{\phi}}
-\newcommand{\opsi}{\overline{\psi}}
-\newcommand{\ozeta}{\overline{\zeta}}
-\newcommand{\inl}{\mathsf{inl}}
-\newcommand{\inr}{\mathsf{inr}}
-
-\newcommand{\tphi}{\tilde{\phi}}
-\newcommand{\tpsi}{\tilde{\psi}}
-\newcommand{\tzeta}{\tilde{\zeta}}
-\newcommand{\ox}{\overline{x}}
-\newcommand{\oz}{\overline{z}}
-%added
 
 For the whole section, we fix a geometric theory \thT{} over some universe \Univ{}.
 
@@ -104,7 +77,7 @@ For the whole section, we fix a geometric theory \thT{} over some universe \Univ
     \item An object is of the form $\xphi$ where $\vx$ is a context consists of variables $x_1, \ldots, x_{n}$ and $\phi $ is a geometric
     formula under this context. i.e. $\phi$ contains only free variables from $\vx$.
     %as objects, pairs $\fmlInCtx{\vec{x}}{\varphi}$ of a context $\vec{x} \coloneq x_1, \ldots, x_{n}$ of variables and a geometric formula $\vec{x} \vdash_{\thT} \varphi$ over \thT{};
-    \item A map $\xphi\to \ypsi$ is a renaming $\vy\to \vx$ satisfying some extra condition. 
+    \item A map $\xphi\to \ypsi$ is a renaming $\vy\to \vx$ satisfying some extra condition.
     A \emph{renaming} $\vy\to \vx$ is a function $f:\{y_1,\ldots,y_m\}\to \{x_1,\ldots,x_n\}$ that maps variables to variables.
     Such a renaming defines a map $\xphi\to \ypsi$ if $\phi\vdash_{\vx}\psi[x_{f(i)}/y_i]$, means that as formulas in the context $\vx$, we have $\phi$
     proves $\psi[x_{f(i)}/y_i]$ in the theory  \thT{}.
@@ -127,7 +100,7 @@ This covering family defines a syntactic site:
 
 \begin{definition}[Syntactic Site]
   \lean{WrigleyTopology.SyntacticTopology}
-  A sieve is a covering sieve when it contains a covering family as defined in Definition \ref{Def:CoveringFamily}. 
+  A sieve is a covering sieve when it contains a covering family as defined in Definition \ref{Def:CoveringFamily}.
 \end{definition}
 
 To prove Definition \ref{Def:CoveringFamily} gives a topology, we need to check the three conditions as in the definition of Grothendieck
@@ -148,15 +121,15 @@ We prove these three conditions in the following three subsections.
 \end{lemma}
 
 \begin{proof}
-  As $S$ is a covering sieve, $S$ contains a covering family, say the family $\{\sigma^i: \ypsi^i\to \xphi\}$ indexed by $i\in I$. 
-  By definition of covering family, we have 
+  As $S$ is a covering sieve, $S$ contains a covering family, say the family $\{\sigma^i: \ypsi^i\to \xphi\}$ indexed by $i\in I$.
+  By definition of covering family, we have
   \begin{equation}\label{seq1}
     \phi \vdash_{\vx} \bigvee^{i\in I} (\exists \vy^i. \;\psi^i \wedge \bigwedge_{n \in \vx} x_n = {y^i}_{\sigma^i(n)})
   \end{equation}
 
   The assumption says for each $\sigma^i: \{\vy^i\mid \psi^i\} \to \xphi$, the pullback' of $R$ along $\sigma^i$ is a covering sieve
   on  $\{\vy^i\mid \psi^i\}$ .
-  This means each such sieve contains a covering family. Say, for each $i\in I$, we have a set $J^i$ indexing this covering family, and 
+  This means each such sieve contains a covering family. Say, for each $i\in I$, we have a set $J^i$ indexing this covering family, and
   the family is written as $\{\rho_j: \zzeta_j\to \ypsi^i\}$ then we have
 
   \begin{equation}\label{seq2}
@@ -170,29 +143,29 @@ We prove these three conditions in the following three subsections.
     \zzeta^i_j\ar[r,"\rho^i_j"] & \ypsi^i\ar[r,"\sigma^i"] & \xphi
   \end{tikzcd}
   \end{center}
-  Recall that $\rho^i_j$ is in the pullback' of the sieve $R$ along $\sigma^i$, so we have the composition $\sigma^i\circ \rho^i_j\in R$. 
-  Such a family covers $\xphi$. It requires us to prove 
+  Recall that $\rho^i_j$ is in the pullback' of the sieve $R$ along $\sigma^i$, so we have the composition $\sigma^i\circ \rho^i_j\in R$.
+  Such a family covers $\xphi$. It requires us to prove
 
   \begin{equation*}
-    \phi \vdash_{\vx} \bigvee^{(i,j)\in \Sigma_{i\in I}J^i} 
+    \phi \vdash_{\vx} \bigvee^{(i,j)\in \Sigma_{i\in I}J^i}
     (\exists \vz^i_j.\; \zeta^i_j \wedge \bigwedge_{n\in \vx} x_n = {z^i_j}_{\rho^i_j\circ \sigma^i(n)})
   \end{equation*}
-  
-  the proof is straightforward by combining \ref{seq1} and \ref{seq2} above. 
 
-  
- 
+  the proof is straightforward by combining \ref{seq1} and \ref{seq2} above.
+
+
+
 \end{proof}
 
-For this proof, the trickest part is the construction of the index of the covering family in $R$, i.e. the dependent sum $\Sigma_{i\in I}J^i$. 
+For this proof, the trickest part is the construction of the index of the covering family in $R$, i.e. the dependent sum $\Sigma_{i\in I}J^i$.
 It need to be a term of our small universe $\Univ$. We equip our small universe with the following two ingredients, which will be enough for this proof.
 
 \begin{itemize}
   \item $\Univ$ is closed under dependent sum. We axiomatize a `small object former' that makes $\Sigma$-objects in $U$ by
   taking a small object $A\in \Univ$ and a family $B:A\to Type$ indexed by $A$. Accordingly, we add axioms formulating
   the projections and the computation rules of the dependent sum in $\Univ$.
-  \item $\Univ$ admits a form of axiom of choice. More formally, for each term $A\in \Univ$ representing a 
-  small object, an a small family of types indexed by $A$, if each of $X_a$ for $a\in A$ is nonempty, then the type 
+  \item $\Univ$ admits a form of axiom of choice. More formally, for each term $A\in \Univ$ representing a
+  small object, an a small family of types indexed by $A$, if each of $X_a$ for $a\in A$ is nonempty, then the type
   $\Pi_{a\in A}X_a$ is nonempty.
 \end{itemize}
 
@@ -207,7 +180,7 @@ type indexing a family, it does not directly give a function term $El(A)\to \Uni
 
 \subsection{Stability}
 
-The definition of stability is as follows: For a site $(C,J)$, the covering $J$ is stable under pullback if for a arrow $f:x\to y$ in $C$, 
+The definition of stability is as follows: For a site $(C,J)$, the covering $J$ is stable under pullback if for a arrow $f:x\to y$ in $C$,
 if $S\in J(y)$, i.e. $S$, is a covering sieve on $y$, then the pullback $f^*(S)$ along $f$ is a covering sieve on $x$, i.e. $f^*(S) \in J(x)$.
 
 Note that the notion of ``pullback of sieves'' is not in terms of pullback squares by definition. The definition is:
@@ -218,13 +191,13 @@ Note that the notion of ``pullback of sieves'' is not in terms of pullback squar
 \end{equation*}
 
 To be super clear, whenever we say refer to ``pullback of sieves'' under this definition in English words, rather than ``pullback squares'', we will write it
-as pullback'. 
+as pullback'.
 In our case, we want to prove that if we have a covering sieve $\{g_K\}\to \ypsi$, then its pullback' is a covering sieve.
 That is, if we have a covering family in $\{g_K\}$, covering $\ypsi$ as in definition \ref{Def:CoveringFamily}, then the pullback'
 $f^*\{g_K\}$ contains a covering family.
 
-We use the fact that if $\{g_k\}\subseteq \{g_K\}$ is the covering family, then the covering family contained in $f^*\{g_K\}$ has arrows obtained in the following 
-way: for each $k$, consider the pullback square: 
+We use the fact that if $\{g_k\}\subseteq \{g_K\}$ is the covering family, then the covering family contained in $f^*\{g_K\}$ has arrows obtained in the following
+way: for each $k$, consider the pullback square:
 \begin{center}
   \begin{tikzcd}
      f^* \zzeta \ar[r,"\iota_2^k"]\ar[d,"f^*(g_k):= \iota_1^k"]  & \zzeta\ar[d,"g_k"]\\
@@ -237,7 +210,7 @@ then the covering family consists of arrows of the form $\iota_1^k$ as in the di
 In fact, we are not using the universal property of pullbacks in our proof. Instead, we effectively construct a pullback structure and use
 one of the projection maps as the covers we want, without proving that what we construct is actually a pullback.
 
-The construction of pullbacks in the syntactic category is as follows. For a pair of arrows $f: \xphi\to \ypsi$ and $g:\zzeta\to \ypsi$, 
+The construction of pullbacks in the syntactic category is as follows. For a pair of arrows $f: \xphi\to \ypsi$ and $g:\zzeta\to \ypsi$,
 the pullback of $g$ along $f$ is pictured as:
 
 
@@ -247,9 +220,9 @@ the pullback of $g$ along $f$ is pictured as:
      \xphi \ar[r,"f"] & \ypsi
   \end{tikzcd}
 \end{center}
-We will take the abuse of the notation and denote both a map $f:\xphi\to \ypsi$ and the underlying renaming map between contexts $f:\vy\to \vx$ 
-using the same letter. 
-Then the context $\vw$ is the pushout of the maps $f:\vy\to \vx$ and $g:\vy\to \vz$ in the category of finite sets. 
+We will take the abuse of the notation and denote both a map $f:\xphi\to \ypsi$ and the underlying renaming map between contexts $f:\vy\to \vx$
+using the same letter.
+Then the context $\vw$ is the pushout of the maps $f:\vy\to \vx$ and $g:\vy\to \vz$ in the category of finite sets.
 The coprojections into $\vw$ are denoted $\iota_1:\vx\to\vw$ and $\iota_2:\vz\to \vw$, as below:
 
 \begin{center}
@@ -273,9 +246,9 @@ from the assumption that $\{g_k\}$ is a covering family, i.e.
 
 \[\psi\vdash_{\vy} \bigvee_k \exists \vz_k.\; \tzeta_k\land y_i = z_{g_k(i)}\]
 
-  
-Our strategy is to establish $\vw$ as an \emph{effective quotient} of $\vx+ \vz$. 
-Here we can take quotient by any relation $R$, instead of only equivalence relations. 
+
+Our strategy is to establish $\vw$ as an \emph{effective quotient} of $\vx+ \vz$.
+Here we can take quotient by any relation $R$, instead of only equivalence relations.
 The exactness condition will refer to the equivalence closure of the relation $R$, defined as:
 
 \begin{definition}[Equivalence Closure]
@@ -298,13 +271,13 @@ We then define effective quotient as:
 
 \end{definition}
 
-In our case, the relation $R$ will be 
+In our case, the relation $R$ will be
 
 
 
 \begin{definition}[Relation defined by the equalities in $f(i) = g(i)$]
-  Relation $R$ is the non-equivalence relation, that only relates pairs of elements in $\vx+\vz$ 
-  iff they are images of the same element in $\vy$. That is 
+  Relation $R$ is the non-equivalence relation, that only relates pairs of elements in $\vx+\vz$
+  iff they are images of the same element in $\vy$. That is
   \lean{WrigleyTopology.Stability.Rrel}
   \begin{equation}
     R(l_1,l_2):= \text{exists}\; y_i \in \vy \;\text{such that}\; l_1 = \inl(f(i))\; \text{and}\;  l_2 = \inl(g(i))
@@ -312,7 +285,7 @@ In our case, the relation $R$ will be
 \end{definition}
 
 The quotient map $\iotas: \vx+ \vz\to \vw$ will be induced by the
-universal property of the coproduct, and the $s$ will be any section of it. For the moment, we assume such a section exists, although we do not define it 
+universal property of the coproduct, and the $s$ will be any section of it. For the moment, we assume such a section exists, although we do not define it
 computably.
 
 Let $s:\vw\to \vx+\vz$ be a section of $\iotas$, we will be able to use this $s$ to provide a witness, i.e. a substitution for the $\exists \vw_k$, to prove the
@@ -322,8 +295,8 @@ sequent that establishes the pullback family $f^*\{g_k\}$ as a covering family o
 Assuming we have an effective quotient structure $s:\vw\to \vx+\vz$ and $\iotas:\vx+\vz\to \vw$, we take four steps to prove critical lemmas:
 
   \begin{equation*}
-    \bigwedge_{i\in \vec{y}} x_{f(i)} = z_{\sigma(i)} \vdash 
-     (\bigwedge_{j\in\vec{x}}x_j = w_{\iota_1(j)}) [w_l:=(\vxz)_{s(l)}] 
+    \bigwedge_{i\in \vec{y}} x_{f(i)} = z_{\sigma(i)} \vdash
+     (\bigwedge_{j\in\vec{x}}x_j = w_{\iota_1(j)}) [w_l:=(\vxz)_{s(l)}]
    \end{equation*}
 
 and symmetrically:
@@ -336,7 +309,7 @@ We denote the LHS of the above sequents by $E$.
 
 For proving the above, to facilitate the use of effective quotient structure, we define a relation $S$ on the set $\vx+\vz$.
 \begin{definition}[Relation defined by mapping to the same element in the quotient]
-  Relation $S$ is defined by having the same image under the quotient map $\iotas:\vx+\vz\to \vw$. That is 
+  Relation $S$ is defined by having the same image under the quotient map $\iotas:\vx+\vz\to \vw$. That is
   \lean{WrigleyTopology.Stability.Srel}
   \begin{equation}
     S(l_1,l_2):= \iotas(l_1) = \iotas(l_2)
@@ -366,7 +339,7 @@ For proving the above, to facilitate the use of effective quotient structure, we
 \end{lemma}
 
 \begin{proof}
-  The proof is by induction of the construction of the proof of $R^*$. (Remark: It is doable since we formalize equivalence closure 
+  The proof is by induction of the construction of the proof of $R^*$. (Remark: It is doable since we formalize equivalence closure
   as a type instead of a proposition.)
 
 \begin{itemize}
@@ -383,11 +356,11 @@ For proving the above, to facilitate the use of effective quotient structure, we
   \end{equation*}
 \end{lemma}
 \begin{proof}
-  We spell out the proof of 
+  We spell out the proof of
   \lean{WrigleyTopology.Stability.xφcoveringWitness}
   \begin{equation*}
-    \bigwedge_{i\in \vec{y}} x_{f(i)} = z_{\sigma(i)} \vdash 
-     (\bigwedge_{j\in\vec{x}}x_j = w_{\iota_1(j)}) [w_l:=(\vxz)_{s(l)}] 
+    \bigwedge_{i\in \vec{y}} x_{f(i)} = z_{\sigma(i)} \vdash
+     (\bigwedge_{j\in\vec{x}}x_j = w_{\iota_1(j)}) [w_l:=(\vxz)_{s(l)}]
    \end{equation*}
    for illustration. The other half is by symmetry.
 
@@ -412,56 +385,56 @@ $\iotas\circ s = 1$ cancels out. Both LHS and RHS is $\iota_1(j)$.
 
 
 
-  
+
 \begin{lemma}[Witness for the existential quantification in lemma \ref{Lemma:stabCovFam}]\label{Lem:Witness}
   \lean{WrigleyTopology.Stability.coveringWitness}
   \begin{equation*}
-    \phi\land \zeta\land \bigwedge_{i\in \vec{y}} x_{f(i)} = z_{\sigma(i)}\vdash_{\vx + \vz} (\overline{\phi}\land \overline{\zeta}\land\bigwedge_{j\in\vec{x}} x_j = w_{\iota_1(j)})[w_l:=(\vxz)_{s(l)}] 
+    \phi\land \zeta\land \bigwedge_{i\in \vec{y}} x_{f(i)} = z_{\sigma(i)}\vdash_{\vx + \vz} (\overline{\phi}\land \overline{\zeta}\land\bigwedge_{j\in\vec{x}} x_j = w_{\iota_1(j)})[w_l:=(\vxz)_{s(l)}]
   \end{equation*}
 \end{lemma}
 
 \begin{proof}
-  Let $\Gamma$ denote the LHS of the sequent. We prove 
+  Let $\Gamma$ denote the LHS of the sequent. We prove
   \begin{equation*}
-    \Gamma \vdash (\bigwedge_{j\in\vec{x}}x_j = w_{\iota_1(j)}\land \bigwedge_{j'\in\vec{z}}z_{j'}= w_{\iota_2(j')}) [w_l:=(\vxz)_{s(l)}] 
+    \Gamma \vdash (\bigwedge_{j\in\vec{x}}x_j = w_{\iota_1(j)}\land \bigwedge_{j'\in\vec{z}}z_{j'}= w_{\iota_2(j')}) [w_l:=(\vxz)_{s(l)}]
   \end{equation*}
 
   By the lemma above, we have:
-  
+
   \begin{equation*}
-   \bigwedge_{i\in \vec{y}} x_{f(i)} = z_{\sigma(i)} \vdash 
-    (\bigwedge_{j\in\vec{x}}x_j = w_{\iota_1(j)}) [w_l:=(\vxz)_{s(l)}] 
+   \bigwedge_{i\in \vec{y}} x_{f(i)} = z_{\sigma(i)} \vdash
+    (\bigwedge_{j\in\vec{x}}x_j = w_{\iota_1(j)}) [w_l:=(\vxz)_{s(l)}]
   \end{equation*}
 
-  and 
+  and
 
   \begin{equation*}
-    \bigwedge_{i\in \vec{y}} x_{f(i)} = z_{\sigma(i)} \vdash 
-    (\bigwedge_{j'\in\vec{z}}z_{j'}= w_{\iota_2(j')}) [w_l:=(\vxz)_{s(l)}] 
+    \bigwedge_{i\in \vec{y}} x_{f(i)} = z_{\sigma(i)} \vdash
+    (\bigwedge_{j'\in\vec{z}}z_{j'}= w_{\iota_2(j')}) [w_l:=(\vxz)_{s(l)}]
   \end{equation*}
   This will prove the equational part of the RHS of lemma \ref{Lem:Witness}, and by congruence of equalities we have:
-  Then as $\ophi := \phi[w_{\iota(j)}/x_j]$, we have 
+  Then as $\ophi := \phi[w_{\iota(j)}/x_j]$, we have
   \begin{equation*}
-    \phi\land ((\bigwedge_{j\in\vec{x}}x_j = w_{\iota_1(j)})[w_l:=(\vxz)_{s(l)}])  \vdash_{\vx + \vz} \ophi [w_l:=(\vxz)_{s(l)}] 
+    \phi\land ((\bigwedge_{j\in\vec{x}}x_j = w_{\iota_1(j)})[w_l:=(\vxz)_{s(l)}])  \vdash_{\vx + \vz} \ophi [w_l:=(\vxz)_{s(l)}]
   \end{equation*}
 
-  
+
   %The proof will need some constructs about \emph{effective quotient}. Relevant definitions and lemmas are below.
 
-  
+
 
 
 
 \end{proof}
 
 \begin{lemma}[Stability of covering families]\label{Lemma:stabCovFam}
-  If a family $\{g_k\}\to \vec{y}\mid \psi$ is a covering family, 
+  If a family $\{g_k\}\to \vec{y}\mid \psi$ is a covering family,
   then for each $f: \vec{x}\mid \phi\to \vec{y}\mid\psi$, the pullback of this covering is again a covering family.
 \end{lemma}
 \begin{proof}
   We want to show that from:
   \[\psi\vdash_{\vy} \bigvee_k \exists \vz_k.\; \tzeta_k\land y_i = z_{g_k(i)}\]
-  that 
+  that
   \[\phi \vdash_{\vx} \bigvee_k (\exists\vw_k.\;(\ophi\land \ozeta_k \land\bigwedge_{i\in \vec{y}} \ox_{f(i)} = \oz_{g(i)}) \land \bigwedge_{j\in\vec{x}}w_{{\iota^k_1(j)}} = x_j )\]
 
   We only spell out how to reduce the goal to lemma \ref{Lem:Witness}. After this reduction, we can drop the index $k$ in the proof.
@@ -471,32 +444,32 @@ $\iotas\circ s = 1$ cancels out. Both LHS and RHS is $\iota_1(j)$.
   \begin{equation}\label{e1}
    \phi\vdash_{\vx} \psi[x_{f(i)}/y_i]
   \end{equation}
-   
 
-  As $\{g_k:\zzeta\to \ypsi\}$ is a covering family on $\ypsi$, by definition \ref{Def:CoveringFamily}, we have 
+
+  As $\{g_k:\zzeta\to \ypsi\}$ is a covering family on $\ypsi$, by definition \ref{Def:CoveringFamily}, we have
   \[\psi\vdash_{\vy} \bigvee_k \exists z_k.\;\zeta_k \land \bigwedge_{i\in \vy} y_i = z_{g_k(i)}\]
 
-  By the proof rule on substitution, we have 
+  By the proof rule on substitution, we have
 
-  
+
   \begin{equation}\label{e2}
   \psi [x_{f(i)}/y_i]\vdash_{\vx} (\bigvee_k \exists z_k.\;\zeta_k \land \bigwedge_{i\in \vy} y_i = z_{g_k(i)})  [x_{f(i)}/y_i]
   \end{equation}
 
-  
+
   where the RHS reduces to, by definition of substitution
   \[\bigvee_k \exists z_k.\;\zeta_k \land \bigwedge_{i\in \vy} x_{f(i)} = z_{g_k(i)}\]
-  
+
   Applying the cut rule on \ref{e1} and \ref{e2} gives
   \[\phi\vdash_{\vx} \bigvee_k \exists z_k.\;\zeta_k \land \bigwedge_{i\in \vy} x_{f(i)} = z_{g_k(i)}\]
 
   It is sufficient to show
   \begin{equation*}
     \phi\land \bigvee_k \exists z_k.\;\zeta_k \land \bigwedge_{i\in \vy} x_{f(i)} = z_{g_k(i)}\vdash_{\vx}
-      \bigvee_k \exists \vw_k. \;(\ophi\land \ozeta_k \land\bigwedge_{i\in \vec{y}} \ox_{f(i)} = \oz_{g(i)}) \land \bigwedge_{j\in\vec{x}}w_{{\iota^k_1(j)}} = x_j  
+      \bigvee_k \exists \vw_k. \;(\ophi\land \ozeta_k \land\bigwedge_{i\in \vec{y}} \ox_{f(i)} = \oz_{g(i)}) \land \bigwedge_{j\in\vec{x}}w_{{\iota^k_1(j)}} = x_j
   \end{equation*}
 
-  Frobinus and distributivity transform the LHS into 
+  Frobinus and distributivity transform the LHS into
   \begin{equation}
      \bigvee_k \exists z_k. \phi\land \zeta_k \land \bigwedge_{i\in \vy} x_{f(i)} = z_{g_k(i)}
   \end{equation}
@@ -505,11 +478,11 @@ $\iotas\circ s = 1$ cancels out. Both LHS and RHS is $\iota_1(j)$.
   Elimination of existential reduces it into:
   \begin{equation*}
     \phi\land \zeta_k \land \bigwedge_{i\in \vy} x_{f(i)} = z_{g_k(i)} \vdash_{\vx + \vz}
-    \exists \vw_k.\;(\ophi\land \ozeta_k \land\bigwedge_{i\in \vec{y}} \ox_{f(i)} = \oz_{g(i)}) \land \bigwedge_{j\in\vec{x}}w_{{\iota^k_1(j)}} = x_j 
+    \exists \vw_k.\;(\ophi\land \ozeta_k \land\bigwedge_{i\in \vec{y}} \ox_{f(i)} = \oz_{g(i)}) \land \bigwedge_{j\in\vec{x}}w_{{\iota^k_1(j)}} = x_j
   \end{equation*}
 
   The witness is given by any section of the quotient map $[\iota_1,\iota_2]:\vx + \vz \to \vw$. It reduces the goal to the lemma \ref{Lem:Witness}.
-  
+
 \end{proof}
 
 \begin{theorem}[Stability of covering sieves]
@@ -519,8 +492,8 @@ $\iotas\circ s = 1$ cancels out. Both LHS and RHS is $\iota_1(j)$.
 \begin{proof}
   If $\{g_K\}\to \vec{y}\mid \psi$ is a covering sieve, then it contains a covering family $\{g_k: \to \vec{y}\mid \psi\}$.
   %
-  For each of the map $g_{k}:\vec{z_k}\mid \zeta_k$ in the covering family, we consider the object 
-  \[C:=\vec{w}\mid \ophi\land \ozeta \land\bigwedge_{i\in \vec{y}} \ox_{f(i)} = \oz_{g(i)}\]. 
+  For each of the map $g_{k}:\vec{z_k}\mid \zeta_k$ in the covering family, we consider the object
+  \[C:=\vec{w}\mid \ophi\land \ozeta \land\bigwedge_{i\in \vec{y}} \ox_{f(i)} = \oz_{g(i)}\].
 
   Here we have $\vec{w}:= \vec{x}+ \vec{z}$ is the pushout of $f$ and $\sigma$.
 
@@ -531,7 +504,7 @@ $\iotas\circ s = 1$ cancels out. Both LHS and RHS is $\iota_1(j)$.
    \end{tikzcd}
   \]
 
-  The underlying map $\iota_1:\vx\to\vw$ actually defines a map $C \to \xphi$. 
+  The underlying map $\iota_1:\vx\to\vw$ actually defines a map $C \to \xphi$.
   %
   For each of $g_k$, we have such a map. And such maps form a covering family on $\xphi$.
   %
@@ -544,7 +517,7 @@ $\iotas\circ s = 1$ cancels out. Both LHS and RHS is $\iota_1(j)$.
      \end{tikzcd}
   \]
   Observe from the above square that the composition $f\circ \iota_1$ is equal to a pre-composition of arrow with an arrow $g\in\{g_K\}$, so each of the composition
-   $f\circ \iota_1 \in \{g_K\}$. 
+   $f\circ \iota_1 \in \{g_K\}$.
   %
   This proves the maps of the form $\iota_1$ are all in the pullback sieve $f^*\{g_K\}$.
   %

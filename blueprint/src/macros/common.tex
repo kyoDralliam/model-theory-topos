@@ -4,7 +4,7 @@
 
 % The theorem-like environments defined below are those that appear by default
 % in the dependency graph. See the README of leanblueprint if you need help to
-% customize this. 
+% customize this.
 % The configuration below use the theorem counter for all those environments
 % (this is what the [theorem] arguments mean) and never resets it.
 % If you want for instance to number them within chapters then you can add
@@ -21,3 +21,32 @@
 
 \theoremstyle{definition}
 \newtheorem{definition}[theorem]{Definition}
+
+
+\newcommand{\thT}{\ensuremath{\mathcal{T}}}
+\newcommand{\fmlInCtx}[2]{\{ #1 | #2 \}}
+\newcommand{\subs}[2]{{#1}[{#1}]}
+\newcommand{\Univ}{\ensuremath{\mathscr{U}}}
+%added
+\newcommand{\quot}{\text{quot}}
+\newcommand{\vxz}{\vec{x}+\vec{z}}
+\newcommand{\vw}{\vec{w}}
+\newcommand{\vx}{\vec{x}}
+\newcommand{\vy}{\vec{y}}
+\newcommand{\vz}{\vec{z}}
+\newcommand{\iotas}{\ensuremath{[\iota_1,\iota_2]}}
+\newcommand{\xphi}{\fmlInCtx{\vec{x}}{\phi}}
+\newcommand{\ypsi}{\fmlInCtx{\vec{y}}{\psi}}
+\newcommand{\zzeta}{\fmlInCtx{\vec{z}}{\zeta}}
+\newcommand{\ophi}{\overline{\phi}}
+\newcommand{\opsi}{\overline{\psi}}
+\newcommand{\ozeta}{\overline{\zeta}}
+\newcommand{\inl}{\mathsf{inl}}
+\newcommand{\inr}{\mathsf{inr}}
+
+\newcommand{\tphi}{\tilde{\phi}}
+\newcommand{\tpsi}{\tilde{\psi}}
+\newcommand{\tzeta}{\tilde{\zeta}}
+\newcommand{\ox}{\overline{x}}
+\newcommand{\oz}{\overline{z}}
+%added
