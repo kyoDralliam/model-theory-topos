@@ -35,6 +35,10 @@ inductive Derivation : {Γ : S.Context} → S.FormulaContext Γ → S.Formula Γ
 
 variable {Γ : S.Context} {Θ Θ' : FormulaContext Γ} {ψ : Formula Γ}
 
-def Derivation.weaken (D : Derivation Θ ψ) : Derivation (Θ ++ Θ') ψ := sorry
+def Derivation.weaken (D : Derivation Θ ψ) : Derivation (Θ' ++ Θ) ψ := sorry
+
+def Derivation.cut (D : Derivation Θ' ψ) (Dᵢ : (i : Fin Θ'.length) → Derivation Θ (Θ'.ctx i)) :
+    Derivation Θ ψ :=
+  sorry
 
 end Signature

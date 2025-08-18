@@ -26,8 +26,7 @@ instance : CoeSort (SmallUniverse S) Type* where
 variable [κ : SmallUniverse S]
 
 inductive Formula : S.Context → Type* where
-  | rel {Γ} (o : S.Relations) :
-      ((i : Fin o.arity) → S.Term Γ (o.sortedArity i)) → Formula Γ
+  | rel {Γ} (o : S.Relations) : Term Γ (o.domain) → Formula Γ
   | true {Γ} : Formula Γ
   | false {Γ} : Formula Γ
   | conj {Γ} : Formula Γ → Formula Γ → Formula Γ
@@ -49,7 +48,7 @@ scoped macro_rules
 
 def Formula.subst {Γ Δ : S.Context} (σ : Δ ⟶ Γ) (P : Γ ⊢ᶠ𝐏) : Δ ⊢ᶠ𝐏 :=
   match P with
-  | rel P ft => .rel P (fun i ↦ (ft i).subst σ)
+  | rel P t => .rel P (t.subst σ)
   | ⊤' => ⊤'
   | ⊥' => ⊥'
   | P ∧' Q => (P.subst σ) ∧' (Q.subst σ)
