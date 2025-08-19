@@ -9,3 +9,4 @@ import ModelTheoryTopos.Category.Presheaf
 import ModelTheoryTopos.Category.InterpretGeometricPresheaf
 import ModelTheoryTopos.Misc
 import ModelTheoryTopos.univAlgPshf
+import ModelTheoryTopos.Syntax.GeometricLogic.WrigleyTopology
