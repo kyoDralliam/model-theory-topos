@@ -9,7 +9,7 @@ package «model-theory-topos» where
   -- add any additional package configuration options here
 
 require mathlib from git
-  "https://github.com/leanprover-community/mathlib4.git" @ "v4.23.0-rc2"
+  "https://github.com/leanprover-community/mathlib4.git" @ "v4.22.0-rc3"
 
 @[default_target]
 lean_lib «ModelTheoryTopos» where
