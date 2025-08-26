@@ -20,12 +20,12 @@ variable (S) in
 @[ext]
 structure Context : Type* where
   length : ℕ
-  ctx : Fin length → S
+  nth : Fin length → S
 
 @[reducible]
-def Context.cons (A : S) (Γ : S.Context) : S.Context where
-  length := Γ.length + 1
-  ctx := Matrix.vecCons A Γ.ctx
+def Context.cons (A : S) (xs : S.Context) : S.Context where
+  length := xs.length + 1
+  nth := Matrix.vecCons A xs.nth
 
 @[reducible]
 def Context.signature : S.Context → Signature := fun _ => S
@@ -33,49 +33,54 @@ def Context.signature : S.Context → Signature := fun _ => S
 -- Note that this is `\:`
 scoped[Signature] infixr:67 " ∶ " => Signature.Context.cons
 
-inductive Term (Γ : S.Context) : S → Type* where
-  | var {A} : {i : Fin Γ.length // Γ.ctx i = A} → Term Γ A
-  | func (f : S.Functions) : Term Γ f.domain → Term Γ f.codomain
+inductive Term (xs : S.Context) : S → Type* where
+  | var {A} : {i : Fin xs.length // xs.nth i = A} → Term xs A
+  | func (f : S.Functions) : Term xs f.domain → Term xs f.codomain
   | pair {n} {Aᵢ : Fin n → S} :
-      ((i : Fin n) → Term Γ (Aᵢ i)) → Term Γ (.prod Aᵢ)
-  | proj {n} {Aᵢ : Fin n → S} : Term Γ (.prod Aᵢ) → (i : Fin n) → Term Γ (Aᵢ i)
+      ((i : Fin n) → Term xs (Aᵢ i)) → Term xs (.prod Aᵢ)
+  | proj {n} {Aᵢ : Fin n → S} : Term xs (.prod Aᵢ) → (i : Fin n) → Term xs (Aᵢ i)
 
-scoped syntax:25 term:51 " ⊢ᵗ " term:50 : term
+scoped notation:25 "⊢ᵗ[" xs:51 "] " t:50  => Term xs t
 
-scoped macro_rules
-  | `($Γ ⊢ᵗ $A:term) => `(Term $Γ $A)
-
-def Context.nth (Γ : S.Context) (i : Fin Γ.length) : Γ ⊢ᵗ Γ.ctx i :=
+def Context.nthTerm (xs : S.Context) (i : Fin xs.length) : ⊢ᵗ[xs] xs.nth i :=
   Term.var ⟨i , rfl⟩
 
-def Context.Hom (Δ Γ : S.Context) : Type* := (i : Fin Γ.length) → Δ ⊢ᵗ Γ.ctx i
+def Context.Hom (ys xs : S.Context) : Type* := (i : Fin xs.length) → ⊢ᵗ[ys] xs.nth i
 
-def Context.id (Γ : S.Context) : Context.Hom Γ Γ := Γ.nth
+def Context.id (xs : S.Context) : Context.Hom xs xs := xs.nthTerm
 
 @[reducible]
-def Term.subst {Δ Γ : S.Context} (σ : Context.Hom Δ Γ) {A : S} :
-   Γ ⊢ᵗ A → Δ ⊢ᵗ A
+def Term.subst {ys xs : S.Context} (σ : Context.Hom ys xs) {A : S} :
+   ⊢ᵗ[xs] A → ⊢ᵗ[ys] A
   | var v => v.prop ▸ σ v.val
   | func f t  => .func f (t.subst σ)
   | pair tᵢ => pair (fun i ↦ (tᵢ i).subst σ)
   | proj (Aᵢ := Aᵢ) t i => proj (t.subst σ) i
 
-@[simp]
-def Context.comp {Θ Δ Γ : S.Context} (f : Context.Hom Θ Δ) (g : Context.Hom Δ Γ) :
-  Context.Hom Θ Γ := fun i ↦ (g i).subst f
+def Term.subst_subst (σ : Context.Hom zs ys) (σ' : Context.Hom ys xs) (t : ⊢ᵗ[xs] A) :
+    t.subst (fun i ↦ Term.subst σ (σ' i)) = (t.subst σ').subst σ := by
+  induction t with
+  | var i => simp only [subst]; aesop
+  | func f _ _ => simp only [subst, func.injEq]; aesop
+  | pair _ _ => simp only [subst, pair.injEq]; aesop
+  | proj _ i _ => simp only [subst, proj.injEq]; aesop
 
 @[simp]
-lemma Term.subst_id {Γ : S.Context} {A : S} (t : Γ ⊢ᵗ A) : t.subst Γ.id = t :=
+def Context.comp {Θ ys xs : S.Context} (f : Context.Hom Θ ys) (g : Context.Hom ys xs) :
+  Context.Hom Θ xs := fun i ↦ (g i).subst f
+
+@[simp]
+lemma Term.subst_id {xs : S.Context} {A : S} (t : ⊢ᵗ[xs] A) : t.subst xs.id = t :=
   match t with
   | var v => by aesop
   | func f h => by simp only [subst, func.injEq]; simp [Term.subst_id]
   | pair tᵢ => by simp [subst]; funext i; simp [Term.subst_id]
   | proj (Aᵢ := Aᵢ) t i => by simp [subst, Term.subst_id]
 
-lemma Context.assoc {Θ Δ Γ Υ : S.Context}
-    (σ : Context.Hom Θ Δ) (σ' : Context.Hom Δ Γ) (σ'' : Context.Hom Γ Υ) :
+lemma Context.assoc {zs ys xs ws : S.Context}
+    (σ : Context.Hom zs ys) (σ' : Context.Hom ys xs) (σ'' : Context.Hom xs ws) :
     Context.comp (Context.comp σ σ') σ'' = Context.comp σ (Context.comp σ' σ'') :=
-  funext fun i ↦ sorry
+  funext fun i ↦ by unfold Context.comp; apply Term.subst_subst
 
 instance : Category S.Context where
   Hom := Context.Hom
@@ -84,21 +89,21 @@ instance : Category S.Context where
   id_comp σ := by funext; simp
   assoc := Context.assoc
 
-def Context.π (Γ : S.Context) (A : S) :
-    Context.Hom (A ∶ Γ) Γ := fun i ↦ Term.var ⟨i.succ, rfl⟩
+def Context.π (xs : S.Context) (A : S) :
+    Context.Hom (A ∶ xs) xs := fun i ↦ Term.var ⟨i.succ, rfl⟩
 
-def Context.var (Γ : S.Context) (A : S) : A ∶ Γ ⊢ᵗ A :=
+def Context.var (xs : S.Context) (A : S) : ⊢ᵗ[A∶xs] A :=
   Term.var ⟨0 , rfl⟩
 
 @[simp]
-lemma Context.cons_succ (Γ : S.Context) (A : S) (i : Fin Γ.length) :
-  (A ∶ Γ).ctx i.succ = Γ.ctx i := by simp
+lemma Context.cons_succ (xs : S.Context) (A : S) (i : Fin xs.length) :
+  (A ∶ xs).nth i.succ = xs.nth i := by simp
 
-def Context.Hom.cons {Δ Γ : S.Context} (σ : Δ ⟶ Γ) {A : S} (t : S.Term Δ A) :
-    Context.Hom Δ (A ∶ Γ) :=
-  Fin.cons t (fun i ↦ Context.cons_succ Γ A i ▸ σ i)
+def Context.Hom.cons {ys xs : S.Context} (σ : ys ⟶ xs) {A : S} (t : S.Term ys A) :
+    ys ⟶ (A ∶ xs) :=
+  Fin.cons t (fun i ↦ Context.cons_succ xs A i ▸ σ i)
 
-def Context.Hom.cons_Id {Γ : S.Context} {A : S} (t : S.Term Γ A) :
-    Context.Hom Γ (A ∶ Γ) := (Context.id Γ).cons t
+def Context.Hom.cons_Id {xs : S.Context} {A : S} (t : S.Term xs A) :
+  Context.Hom xs (A ∶ xs) := (Context.id xs).cons t
 
 end Signature

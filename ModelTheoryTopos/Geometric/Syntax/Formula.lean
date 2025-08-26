@@ -26,16 +26,16 @@ instance : CoeSort (SmallUniverse S) Type* where
 variable [κ : SmallUniverse S]
 
 inductive Formula : S.Context → Type* where
-  | rel {Γ} (o : S.Relations) : Term Γ (o.domain) → Formula Γ
-  | true {Γ} : Formula Γ
-  | false {Γ} : Formula Γ
-  | conj {Γ} : Formula Γ → Formula Γ → Formula Γ
-  | infdisj {Γ} {I : Set κ} : (I → Formula Γ) → Formula Γ
-  | eq {Γ A} : Γ ⊢ᵗ A → Γ ⊢ᵗ A → Formula Γ
-  | existsQ {A Γ} : Formula (A ∶ Γ) → Formula Γ
+  | rel {xs} (o : S.Relations) : Term xs (o.domain) → Formula xs
+  | true {xs} : Formula xs
+  | false {xs} : Formula xs
+  | conj {xs} : Formula xs → Formula xs → Formula xs
+  | infdisj {xs} {I : Set κ} : (I → Formula xs) → Formula xs
+  | eq {xs A} : ⊢ᵗ[xs] A → ⊢ᵗ[xs] A → Formula xs
+  | existsQ {A xs} : Formula (A ∶ xs) → Formula xs
 
-scoped notation:min "⊤'" => Formula.true
-scoped notation:min "⊥'" => Formula.false
+scoped notation:max "⊤'" => Formula.true
+scoped notation:max "⊥'" => Formula.false
 scoped infixr:62 " ∧' " => Formula.conj
 scoped prefix:100 "⋁'" => Formula.infdisj
 scoped infixr:50 " =' " => Formula.eq
@@ -44,72 +44,98 @@ scoped prefix:110 "∃'" => Formula.existsQ
 scoped syntax:25 term:51 " ⊢ᶠ𝐏" : term
 
 scoped macro_rules
-  | `($Γ ⊢ᶠ𝐏) => `(Formula $Γ)
+  | `($xs ⊢ᶠ𝐏) => `(Formula $xs)
 
-def Formula.subst {Γ Δ : S.Context} (σ : Δ ⟶ Γ) (P : Γ ⊢ᶠ𝐏) : Δ ⊢ᶠ𝐏 :=
-  match P with
-  | rel P t => .rel P (t.subst σ)
+def Formula.subst {xs ys : S.Context} (σ : ys ⟶ xs) (φ : xs ⊢ᶠ𝐏) : ys ⊢ᶠ𝐏 :=
+  match φ with
+  | rel φ t => .rel φ (t.subst σ)
   | ⊤' => ⊤'
   | ⊥' => ⊥'
-  | P ∧' Q => (P.subst σ) ∧' (Q.subst σ)
-  | ⋁' fP => ⋁' (fun i ↦ (fP i).subst σ)
+  | φ ∧' Q => (φ.subst σ) ∧' (Q.subst σ)
+  | ⋁' φᵢ => ⋁' (fun i ↦ (φᵢ i).subst σ)
   | t1 =' t2 => (t1.subst σ) =' (t2.subst σ)
-  | existsQ (A := A) P => ∃' (P.subst (Context.Hom.cons (Δ.π A ≫ σ) (Context.var Δ A)))
+  | existsQ (A := A) φ => ∃' (φ.subst (Context.Hom.cons (ys.π A ≫ σ) (Context.var ys A)))
 
 @[ext]
-structure FormulaContext (Γ : S.Context) : Type* where
+structure FormulaContext (xs : S.Context) : Type* where
   length : ℕ
-  ctx : Fin length → S.Formula Γ
+  nth : Fin length → Formula xs
 
-def FormulaContext.nil (Γ : S.Context) : FormulaContext Γ where
+def FormulaContext.nil (xs : S.Context) : FormulaContext xs where
   length := 0
-  ctx := ![]
+  nth := ![]
 
-variable {Δ Γ : S.Context} (Θ : S.FormulaContext Γ)
+variable {ys xs : S.Context} (Γ : FormulaContext xs)
 
 @[simp]
-lemma FormulaContext.length_0_isNil (φ : Fin 0 → S.Formula Γ) :
-    FormulaContext.mk 0 φ = FormulaContext.nil Γ := by
+lemma FormulaContext.length_0_isNil (φ : Fin 0 → Formula xs) :
+    FormulaContext.mk 0 φ = FormulaContext.nil xs := by
   ext <;> simp [nil]; ext i; exact Fin.elim0 i
 
-def FormulaContext.cons (P : S.Formula Γ) : FormulaContext Γ where
-  length := Θ.length + 1
-  ctx := Matrix.vecCons P Θ.ctx
+@[reducible]
+def FormulaContext.cons (φ : Formula xs) : FormulaContext xs where
+  length := Γ.length + 1
+  nth := Matrix.vecCons φ Γ.nth
 
 @[simp]
-lemma FormulaContext.lenght_cons (P : S.Formula Γ) : (Θ.cons P).length = Θ.length + 1 := by
+lemma FormulaContext.cons_nth0 (Γ : FormulaContext xs) (φ) : (Γ.cons φ).nth 0 = φ := by simp
+
+@[simp]
+lemma FormulaContext.lenght_cons (φ : Formula xs) : (Γ.cons φ).length = Γ.length + 1 := by
   simp [cons]
 
-def FormulaContext.snoc (P : S.Formula Γ) : FormulaContext Γ where
-  length := Θ.length + 1
-  ctx := Matrix.vecSnoc P Θ.ctx
+def FormulaContext.snoc (φ : Formula xs) : FormulaContext xs where
+  length := Γ.length + 1
+  nth := Matrix.vecSnoc φ Γ.nth
 
-def FormulaContext.subst (σ : Δ ⟶ Γ) (Θ : S.FormulaContext Γ) : S.FormulaContext Δ where
-  length := Θ.length
-  ctx i := (Θ.ctx i).subst σ
+def FormulaContext.subst (σ : ys ⟶ xs) (Γ : FormulaContext xs) : FormulaContext ys where
+  length := Γ.length
+  nth i := (Γ.nth i).subst σ
 
 instance instHAppendFormulaContext :
-    HAppend (FormulaContext Γ) (FormulaContext Γ) (FormulaContext (κ := κ) Γ) where
-  hAppend Θ Θ' := {
-    length := Θ.length + Θ'.length
-    ctx := Matrix.vecAppend (by simp) Θ.ctx Θ'.ctx
+    HAppend (FormulaContext xs) (FormulaContext xs) (FormulaContext (κ := κ) xs) where
+  hAppend Γ Γ' := {
+    length := Γ.length + Γ'.length
+    nth := Matrix.vecAppend (by simp) Γ.nth Γ'.nth
   }
 
-instance instMembershipFormulaContext : Membership (Formula Γ) (FormulaContext (κ := κ) Γ) where
-  mem Θ P := ∃ i, Θ.ctx i = P
+instance instMembershipFormulaContext : Membership (Formula xs) (FormulaContext (κ := κ) xs) where
+  mem Γ φ := ∃ i, Γ.nth i = φ
 
 @[simp]
-lemma FormulaContext.append_nil : Θ ++ FormulaContext.nil Γ = Θ := by
+lemma FormulaContext.append_nil : Γ ++ FormulaContext.nil xs = Γ := by
   ext <;> simp [nil, HAppend.hAppend]
 
 @[simp]
-lemma FormulaContext.snoc_append {n : ℕ} (φᵢ : Fin (n + 1) → Formula Γ) :
-    (Θ ++ { length := n, ctx := Matrix.vecInit φᵢ}).snoc (Matrix.vecLast φᵢ) =
-    Θ ++ { length := n + 1, ctx := φᵢ } := by
+lemma FormulaContext.nil_append : FormulaContext.nil xs ++ Γ = Γ := by
+  ext
+  · simp [nil, HAppend.hAppend]
+  · simp [nil, HAppend.hAppend]
+    nth_rw 2 [← Matrix.empty_vecAppend Γ.nth]
+    grind
+
+@[simp]
+lemma FormulaContext.append_length {Γ'} : (Γ' ++ Γ).length = Γ'.length + Γ.length := by
+  simp [HAppend.hAppend]
+
+@[simp]
+lemma FormulaContext.append_nth_l {Γ'} {i : Fin Γ'.length} :
+    (Γ' ++ Γ).nth ⟨i, by simp; omega⟩ = Γ'.nth i := by
+  simp [HAppend.hAppend, Matrix.vecAppend_eq_ite]
+
+@[simp]
+lemma FormulaContext.append_nth_r {Γ'} {i : Fin Γ.length} :
+    (Γ' ++ Γ).nth ⟨Γ'.length + i, by simp⟩ = Γ.nth i := by
+  simp [HAppend.hAppend, Matrix.vecAppend_eq_ite]
+
+@[simp]
+lemma FormulaContext.snoc_append {n : ℕ} (φᵢ : Fin (n + 1) → Formula xs) :
+    (Γ ++ { length := n, nth := Matrix.vecInit φᵢ}).snoc (Matrix.vecLast φᵢ) =
+    Γ ++ { length := n + 1, nth := φᵢ } := by
   ext
   · simp [HAppend.hAppend, FormulaContext.snoc]; omega
   · simp [HAppend.hAppend, FormulaContext.snoc]
-    rw [← Matrix.vecLast_Append (n := Θ.length) (m := n) Θ.ctx φᵢ,
+    rw [← Matrix.vecLast_Append (n := Γ.length) (m := n) Γ.nth φᵢ,
       ← Matrix.vecAppend_init, Matrix.snoc_last_init]
 
 variable (S) in
@@ -127,7 +153,6 @@ attribute [coe] Theory.axioms
 instance : Coe (Theory (κ := κ)) (Set S.Sequent) where
   coe T := T.axioms
 
-instance instMembershipTheory :
-  Membership (S.Sequent) (S.Theory (κ := κ)) := {
-  mem T P := P ∈ T.axioms
+instance instMembershipTheory : Membership (S.Sequent) (S.Theory (κ := κ)) := {
+  mem T φ := φ ∈ T.axioms
 }

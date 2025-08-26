@@ -9,7 +9,6 @@ variable {α : Type u}
 
 section MatrixNotation
 
-
 @[simp]
 theorem vecAppend_empty {n} (v : Fin n → α) : vecAppend rfl v ![] = v := by
   ext
