@@ -75,11 +75,13 @@ noncomputable def Derivation.subst'' {xs} {Γ : FormulaContext xs} {φ : Formula
   | disj_elim D_disj d'ᵢ ih ihᵢ =>
       refine disj_elim (ih ξ) fun i ↦ ihᵢ i ?_
       intro j
-      cases j using Fin.cases
-      · exact Derivation.var _ 0
-      · simp
-        -- Needs weakening
-        sorry
+      cases j using Fin.cases with
+      | zero => exact Derivation.var _ 0
+      | succ i =>
+          simp
+          let almost_there := ξ i
+          -- Needs weakening
+          sorry
   | eq_intro => exact eq_intro
   | @eq_elim _ _ t1 t2 Γ Γ' φ D_eq d ih_eq ih =>
       let Δ_t1_eq_t2 := by
