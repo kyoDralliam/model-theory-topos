@@ -144,6 +144,34 @@ instance instHAppendFormulaContext :
     nth := Matrix.vecAppend (by simp) Γ.nth Γ'.nth
   }
 
+def FormulaContext.mem (φ : Formula xs) (Γ : FormulaContext (κ := κ) xs) : Type _ :=
+  {i // Γ.nth i = φ}
+
+scoped infixr:62 " ∈' " => FormulaContext.mem
+
+def FormulaContext.mem_cons {Γ : FormulaContext (κ := κ) xs} {ψ : Formula xs} (ψinΓ : ψ ∈' Γ) (φ) :
+  ψ ∈' Γ.cons φ := ⟨ψinΓ.1.succ, ψinΓ.2⟩
+
+def FormulaContext.incl (Δ Γ : FormulaContext (κ := κ) xs) :=
+  ∀ ψ, ψ ∈' Δ → ψ ∈' Γ
+
+scoped infixr:62 " ⊆' " => FormulaContext.incl
+
+def FormulaContext.incl_cons (Γ : FormulaContext (κ := κ) xs) (ψ : Formula xs) :
+  Γ ⊆' (Γ.cons ψ) := fun _ ⟨i, p⟩ ↦ ⟨i.succ, p⟩
+
+def FormulaContext.incl_subst {Δ Γ : FormulaContext (κ := κ) xs} (ξ : Δ ⊆' Γ) (σ : ys ⟶ xs) :
+    Δ.subst σ ⊆' Γ.subst σ := fun ψ ⟨i, p⟩ ↦
+  let ⟨j, k⟩ := ξ (Δ.nth i) ⟨i, rfl⟩
+  ⟨j, by rw [FormulaContext.subst_nth, k, ← FormulaContext.subst_nth, p]⟩
+
+def FormulaContext.incl_cons_cons {Δ Γ : FormulaContext (κ := κ) xs} (φ) (ξ : Δ ⊆' Γ) :
+    Δ.cons φ ⊆' Γ.cons φ := fun ψ ⟨i, p⟩ ↦
+  Fin.cases (motive := fun j ↦ (Δ.cons φ).nth j = ψ → ψ ∈' Γ.cons φ)
+    (fun p ↦ p ▸ ⟨0, rfl⟩)
+    (fun i p ↦ p ▸ FormulaContext.mem_cons (ξ (Δ.nth i) ⟨i, rfl⟩) φ)
+    i p
+
 instance instMembershipFormulaContext : Membership (Formula xs) (FormulaContext (κ := κ) xs) where
   mem Γ φ := ∃ i, Γ.nth i = φ
 
@@ -164,14 +192,29 @@ lemma FormulaContext.append_length (Γ') : (Γ' ++ Γ).length = Γ'.length + Γ.
   simp [HAppend.hAppend]
 
 @[simp]
+lemma FormulaContext.append_nth_l' (Γ') (i : Fin Γ'.length) (l : i < (Γ' ++ Γ).length) :
+    (Γ' ++ Γ).nth ⟨i, l⟩ = Γ'.nth i := by
+  simp [HAppend.hAppend, Matrix.vecAppend_eq_ite]
+
+@[simp]
 lemma FormulaContext.append_nth_l (Γ') (i : Fin Γ'.length) :
     (Γ' ++ Γ).nth ⟨i, by simp; omega⟩ = Γ'.nth i := by
+  simp [HAppend.hAppend, Matrix.vecAppend_eq_ite]
+
+@[simp]
+lemma FormulaContext.append_nth_r' (Γ') (i : Fin Γ.length) (l : Γ'.length + ↑i < (Γ' ++ Γ).length) :
+    (Γ' ++ Γ).nth ⟨Γ'.length + i, l⟩ = Γ.nth i := by
   simp [HAppend.hAppend, Matrix.vecAppend_eq_ite]
 
 @[simp]
 lemma FormulaContext.append_nth_r (Γ') (i : Fin Γ.length) :
     (Γ' ++ Γ).nth ⟨Γ'.length + i, by simp⟩ = Γ.nth i := by
   simp [HAppend.hAppend, Matrix.vecAppend_eq_ite]
+
+def FormulaContext.append_incl_l {Δ Γ Γ' : FormulaContext (κ := κ) xs} :
+  Γ' ++ Γ ⊆' Δ → Γ ⊆' Δ :=
+  fun ξ φ ⟨⟨i, leq⟩, p⟩ ↦
+    ξ φ ⟨⟨Γ'.length + i, by simp [leq]⟩, by rw [FormulaContext.append_nth_r' (i := ⟨i, leq⟩), p]⟩
 
 @[simp]
 lemma FormulaContext.snoc_append {n : ℕ} (φᵢ : Fin (n + 1) → Formula xs) :
