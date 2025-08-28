@@ -26,35 +26,60 @@ instance : CoeSort (SmallUniverse S) Type* where
 variable [κ : SmallUniverse S]
 
 inductive Formula : S.Context → Type* where
-  | rel {xs} (o : S.Relations) : Term xs (o.domain) → Formula xs
+  | rel {xs} (R : S.Relations) : Term xs (R.domain) → Formula xs
   | true {xs} : Formula xs
   | false {xs} : Formula xs
   | conj {xs} : Formula xs → Formula xs → Formula xs
   | infdisj {xs} {I : Set κ} : (I → Formula xs) → Formula xs
   | eq {xs A} : ⊢ᵗ[xs] A → ⊢ᵗ[xs] A → Formula xs
-  | existsQ {A xs} : Formula (A ∶ xs) → Formula xs
+  | exists {A xs} : Formula (A ∶ xs) → Formula xs
 
 scoped notation:max "⊤'" => Formula.true
 scoped notation:max "⊥'" => Formula.false
 scoped infixr:62 " ∧' " => Formula.conj
 scoped prefix:100 "⋁'" => Formula.infdisj
 scoped infixr:50 " =' " => Formula.eq
-scoped prefix:110 "∃'" => Formula.existsQ
+scoped prefix:110 "∃'" => Formula.exists
 
 scoped syntax:25 term:51 " ⊢ᶠ𝐏" : term
 
 scoped macro_rules
   | `($xs ⊢ᶠ𝐏) => `(Formula $xs)
 
-def Formula.subst {xs ys : S.Context} (σ : ys ⟶ xs) (φ : xs ⊢ᶠ𝐏) : ys ⊢ᶠ𝐏 :=
+@[reducible]
+def Formula.subst {ys xs : S.Context} (σ : ys ⟶ xs) (φ : xs ⊢ᶠ𝐏) : ys ⊢ᶠ𝐏 :=
   match φ with
-  | rel φ t => .rel φ (t.subst σ)
+  | rel R t => .rel R (t.subst σ)
   | ⊤' => ⊤'
   | ⊥' => ⊥'
   | φ ∧' Q => (φ.subst σ) ∧' (Q.subst σ)
   | ⋁' φᵢ => ⋁' (fun i ↦ (φᵢ i).subst σ)
   | t1 =' t2 => (t1.subst σ) =' (t2.subst σ)
-  | existsQ (A := A) φ => ∃' (φ.subst (Context.Hom.cons (ys.π A ≫ σ) (Context.var ys A)))
+  | .exists (A := A) φ => ∃' (φ.subst ((Context.consFunctor A).map σ))
+
+@[simp]
+lemma Formula.subst_id {xs : S.Context} (φ : xs ⊢ᶠ𝐏) :
+    φ.subst (𝟙 xs) = φ := by
+  induction φ with
+  | rel _ _ => simp
+  | true => simp
+  | false => simp
+  | conj _ _ h h' => simp [h, h']
+  | infdisj _ h => simp [h]
+  | eq _ _ => simp
+  | @«exists» A zs φ h => simpa using h
+
+lemma Formula.subst_comp {zs : S.Context} (φ : zs ⊢ᶠ𝐏) :
+    {xs ys : S.Context} → (σ : xs ⟶ ys) → (σ' : ys ⟶ zs) →
+    φ.subst (σ ≫ σ') = (φ.subst σ').subst σ := by
+  induction φ with
+  | rel _ _ => simp [Term.subst_comp]
+  | true => simp
+  | false => simp
+  | conj _ _ h h' => simp [h, h']
+  | infdisj _ h => simp [h]
+  | eq _ _ => simp [Term.subst_comp]
+  | @«exists» A zs φ h => simp; intro xs ys σ σ'; rw [← h]
 
 @[ext]
 structure FormulaContext (xs : S.Context) : Type* where
@@ -82,15 +107,35 @@ lemma FormulaContext.cons_nth0 (Γ : FormulaContext xs) (φ) : (Γ.cons φ).nth 
 
 @[simp]
 lemma FormulaContext.lenght_cons (φ : Formula xs) : (Γ.cons φ).length = Γ.length + 1 := by
-  simp [cons]
+  simp
 
 def FormulaContext.snoc (φ : Formula xs) : FormulaContext xs where
   length := Γ.length + 1
   nth := Matrix.vecSnoc φ Γ.nth
 
-def FormulaContext.subst (σ : ys ⟶ xs) (Γ : FormulaContext xs) : FormulaContext ys where
+def FormulaContext.subst (Γ : FormulaContext xs) (σ : ys ⟶ xs) : FormulaContext ys where
   length := Γ.length
   nth i := (Γ.nth i).subst σ
+
+@[simp]
+lemma FormulaContext.subst_id (Γ : FormulaContext xs) : Γ.subst (𝟙 xs) = Γ := by
+  ext <;> simp [subst]
+
+lemma FormulaContext.subst_nth (σ : ys ⟶ xs) (Γ : FormulaContext xs) (i) :
+    (Γ.subst σ).nth i = (Γ.nth i).subst σ := by
+  simp [subst]
+
+lemma FormulaContext.subst_cons (σ : ys ⟶ xs) (Γ : FormulaContext xs) (φ : Formula xs) :
+    (Γ.cons φ).subst σ = (Γ.subst σ).cons (φ.subst σ) := by
+  ext
+  · simp [subst]
+  · simp only [subst, heq_eq_eq]; funext i; cases i using Fin.cases <;> simp
+
+lemma FormulaContext.subst_comp {zs} (σ' : zs ⟶ ys) (σ : ys ⟶ xs) (Γ : FormulaContext xs) :
+    (Γ.subst σ).subst σ' = Γ.subst (σ' ≫ σ) := by
+  ext
+  · simp [subst]
+  · simp only [subst, heq_eq_eq]; funext; simp [Formula.subst_comp]
 
 instance instHAppendFormulaContext :
     HAppend (FormulaContext xs) (FormulaContext xs) (FormulaContext (κ := κ) xs) where
@@ -115,16 +160,16 @@ lemma FormulaContext.nil_append : FormulaContext.nil xs ++ Γ = Γ := by
     grind
 
 @[simp]
-lemma FormulaContext.append_length {Γ'} : (Γ' ++ Γ).length = Γ'.length + Γ.length := by
+lemma FormulaContext.append_length (Γ') : (Γ' ++ Γ).length = Γ'.length + Γ.length := by
   simp [HAppend.hAppend]
 
 @[simp]
-lemma FormulaContext.append_nth_l {Γ'} {i : Fin Γ'.length} :
+lemma FormulaContext.append_nth_l (Γ') (i : Fin Γ'.length) :
     (Γ' ++ Γ).nth ⟨i, by simp; omega⟩ = Γ'.nth i := by
   simp [HAppend.hAppend, Matrix.vecAppend_eq_ite]
 
 @[simp]
-lemma FormulaContext.append_nth_r {Γ'} {i : Fin Γ.length} :
+lemma FormulaContext.append_nth_r (Γ') (i : Fin Γ.length) :
     (Γ' ++ Γ).nth ⟨Γ'.length + i, by simp⟩ = Γ.nth i := by
   simp [HAppend.hAppend, Matrix.vecAppend_eq_ite]
 

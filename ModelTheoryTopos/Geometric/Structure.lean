@@ -34,7 +34,7 @@ structure Structure where
 
 noncomputable section
 
-variable (M : Structure S C) {ys xs : S.Context} (σ : Context.Hom ys xs)
+variable (M : Structure S C) {ys xs : S.Context} (σ : ys ⟶ xs)
 
 abbrev Context.interpret (xs : S.Context) : C :=
   ∏ᶜ (fun i ↦ (xs.nth i).interpret M.sorts)
@@ -117,7 +117,7 @@ noncomputable def Formula.interpret {xs : Context S} : xs ⊢ᶠ𝐏 →
   | .false => ⊥
   | .conj P Q => P.interpret ⨯ Q.interpret
   | .eq t1 t2 => .mk <| equalizer.ι ⟦M | t1⟧ᵗ ⟦M | t2⟧ᵗ
-  | .existsQ (A := A) P => (Subobject.«exists» ((xs.π A).interpret M)).obj <|
+  | .exists (A := A) P => (Subobject.«exists» ((xs.π A).interpret M)).obj <|
       P.interpret
   | .infdisj fP => ∐ (fun i ↦ Formula.interpret (fP i))
 
@@ -129,24 +129,24 @@ lemma Formula.interpret_subst
     {ys xs : Context S} (σ: ys ⟶ xs) (P : xs ⊢ᶠ𝐏) :
     ⟦M | P.subst σ⟧ᶠ = (Subobject.pullback ⟦M|σ⟧ʰ).obj ⟦M | P⟧ᶠ := by
   induction P with
-  | rel R t => simp[subst, Subobject.pullback_comp]
-  | true => simp [subst, Subobject.pullback_top]
-  | false => simp [subst]; sorry
-  | conj P Q hp hq => simp [subst, interpret, hp, hq]
+  | rel R t => simp [Subobject.pullback_comp]
+  | true => simp [Subobject.pullback_top]
+  | false => simp only [interpret]; sorry
+  | conj P Q hp hq => simp [interpret, hp, hq]
   | infdisj fP h =>
-      simp only [interpret, subst]
+      simp only [interpret]
       rw [← G.isJoin_isStableUnderBaseChange]
       have := funext (fun i ↦ h i σ)
       congr
   | eq t1 t2 =>
-      simp only [interpret, subst]
+      simp only [interpret]
       rw [← Subobject.pullback_equalizer]
       congr <;> try simp
       apply HEq_prop
       simp only [eq_iff_iff]
       apply Iff.intro <;> infer_instance
-  | @existsQ A xs P hp =>
-      simp only [interpret, subst]
+  | @«exists» A xs P hp =>
+      simp only [interpret]
       sorry
 
 def Sequent.interpret (U : S.Sequent) : Prop :=
@@ -162,15 +162,50 @@ noncomputable def FormulaContext.interpret
 notation:arg "⟦" M "|" Γ "⟧ᶠᶜ" => FormulaContext.interpret (M := M) Γ
 
 @[simp]
+lemma FormulaContext.interpret_append
+    {xs : Context S} (Γ Δ : FormulaContext xs) :
+    ⟦M|Γ ++ Δ⟧ᶠᶜ = (⟦M|Γ⟧ᶠᶜ ⨯ ⟦M|Δ⟧ᶠᶜ) := by
+  apply Subobject.skeletal_subobject
+  simp [interpret]
+  constructor
+  apply iso_of_both_ways
+    ( prod.lift
+      ( Pi.lift <| fun i ↦
+        append_nth_l Δ _ _ ▸ Pi.π (fun i ↦ ⟦M|(Γ ++ Δ).nth i⟧ᶠ) ⟨i, by simp; omega⟩)
+      ( Pi.lift <| fun i ↦
+        append_nth_r Δ _ _ ▸ Pi.π (fun i ↦ ⟦M|(Γ ++ Δ).nth i⟧ᶠ) ⟨Γ.length + i, by simp⟩))
+  apply Pi.lift
+  intro i
+  by_cases h : i < Γ.length
+  · refine prod.fst ≫ Pi.π _ ⟨i, h⟩ ≫ ?_
+    have : Γ.nth ⟨i, h⟩ = (Γ ++ Δ).nth i := by
+      simp [HAppend.hAppend, Matrix.vecAppend_eq_ite]; grind
+    rw [this]
+    exact 𝟙 _
+  · let k : ℕ := i - Γ.length
+    have p : Γ.length + k = i := by aesop
+    have k_leq : k < Δ.length := by
+      have := i.2
+      simp_all only [not_lt, add_tsub_cancel_of_le, append_length, gt_iff_lt, k]
+      omega
+    refine prod.snd ≫ Pi.π _ ⟨k, k_leq⟩ ≫ ?_
+    have : Δ.nth ⟨k, k_leq⟩ = (Γ ++ Δ).nth i := by
+      have : i = ⟨Γ.length + k, by omega⟩ := by aesop
+      rw [this, ← append_nth_r Δ Γ ⟨k, k_leq⟩]
+    rw [this]
+    exact 𝟙 _
+
+@[simp]
 lemma FormulaContext.interpret_cons
-    {xs : Context S} (Γ : FormulaContext xs) (P : xs ⊢ᶠ𝐏) : ⟦M|Γ.cons P⟧ᶠᶜ = (⟦M|Γ⟧ᶠᶜ ⨯ ⟦M|P⟧ᶠ) := by
+    {xs : Context S} (Γ : FormulaContext xs) (φ : xs ⊢ᶠ𝐏) :
+    ⟦M|Γ.cons φ⟧ᶠᶜ = (⟦M|Γ⟧ᶠᶜ ⨯ ⟦M|φ⟧ᶠ) := by
   apply Subobject.skeletal_subobject
   simp [interpret]
   constructor
   apply iso_of_both_ways
   · apply prod.lift
-    · exact Pi.lift <| fun i ↦ Pi.π (fun i ↦ ⟦M|(Γ.cons P).nth i⟧ᶠ) i.succ
-    · let proj := Pi.π (fun i ↦ ⟦M|(Γ.cons P).nth i⟧ᶠ)
+    · exact Pi.lift <| fun i ↦ Pi.π (fun i ↦ ⟦M|(Γ.cons φ).nth i⟧ᶠ) i.succ
+    · let proj := Pi.π (fun i ↦ ⟦M|(Γ.cons φ).nth i⟧ᶠ)
       simp [cons] at proj
       exact proj 0
   · apply Pi.lift
@@ -178,8 +213,12 @@ lemma FormulaContext.interpret_cons
     cases b using Fin.cases
     · simpa using prod.snd
     · simp only [Matrix.cons_val_succ]
-      refine prod.fst (X := ∏ᶜ fun i ↦ ⟦M|Γ.nth i⟧ᶠ) (Y := ⟦M|P⟧ᶠ) ≫ ?_
+      refine prod.fst (X := ∏ᶜ fun i ↦ ⟦M|Γ.nth i⟧ᶠ) (Y := ⟦M|φ⟧ᶠ) ≫ ?_
       apply Pi.π
+
+lemma FormulaContext.interpret_eq (t1 t2 : ⊢ᵗ[xs] A) :
+  ⟦M|t1 =' t2⟧ᶠ =
+    Subobject.mk (equalizer.ι ⟦M|Context.Hom.cons_Id t1⟧ʰ ⟦M|Context.Hom.cons_Id t2⟧ʰ) := sorry
 
 lemma FormulaContext.interpret_cons_pullback
     {xs : Context S} (Γ : FormulaContext xs) {I : Set κ} (P : xs ⊢ᶠ𝐏) :
@@ -221,7 +260,9 @@ def Soundness {T : S.Theory} {xs : Context S} {Γ : FormulaContext xs} {P : xs �
       simp only [FormulaContext.interpret_cons]
       exact prod.lift (𝟙 _) h.hom
   | eq_intro => simp [FormulaContext.interpret]
-  | @eq_elim xs A t1 t2 Γ Γ' φ D D' h h' =>
+  | @eq_elim xs A t1 t2 Γ Γ' φ D_eq D' h h' =>
+      simp at *
+      apply leOfHom
       sorry
   | @eq_proj_pair xs n A tᵢ i Γ => simp
   | @eq_pair_proj xs n Aᵢ t Γ =>
