@@ -113,7 +113,14 @@ def Context.consFunctor (A : S) : S.Context ⥤ S.Context where
     | zero => simp [Context.var, Term.subst, Hom.cons]
     | succ i => simp [Context.var, Hom.cons]; rw [← Term.subst_comp, ← Term.subst_comp]; congr
 
-def Context.Hom.cons_Id {xs : S.Context} {A : S} (t : S.Term xs A) :
+def Context.Hom.consId {xs : S.Context} {A : S} (t : S.Term xs A) :
   xs ⟶ (A ∶ xs) := Context.Hom.cons (𝟙 xs) t
+
+def Context.Hom.consId_naturality {ys xs : S.Context} (σ : ys ⟶ xs) {A : S} (t : S.Term xs A) :
+  (σ ≫ Context.Hom.consId t) =
+          (Context.Hom.consId (Term.subst σ t) ≫ (Context.consFunctor A).map σ) := sorry
+
+lemma Context.π_naturality (A : S) (σ : xs ⟶ ys) :
+  (Context.consFunctor A).map σ ≫ ys.π A = xs.π A ≫ σ := by rfl
 
 end Signature

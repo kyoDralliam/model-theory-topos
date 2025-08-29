@@ -2,14 +2,6 @@ import ModelTheoryTopos.Geometric.Syntax.Formula
 
 open CategoryTheory Limits
 
-inductive Foo : (n : Nat) → Type where
-  | foo (x : Nat × Nat) : Foo x.fst → Foo x.snd
-
-
-def test {n} (x : Foo n) : Type :=
-  match n, x with
-  | _, .foo x f => sorry -- x.snd is not available
-
 namespace Signature
 
 variable {S : Signature} [κ : SmallUniverse S] [T : S.Theory]
@@ -30,14 +22,14 @@ inductive Derivation : {xs : S.Context} → FormulaContext xs → Formula xs →
     (Dᵢ : (i : I) → Derivation (Γ.cons (φᵢ i)) ψ) : Derivation Γ ψ
   | eq_intro {Γ t} : Derivation Γ (.eq t t)
   | eq_elim {xs A t1 t2} {Γ Γ' : S.FormulaContext xs} (φ : S.Formula (A ∶ xs))
-    (D_eq : Derivation Γ (t1 =' t2)) (D : Derivation (Γ' ++ Γ) (φ.subst (Context.Hom.cons_Id t1))) :
-    Derivation (Γ' ++ Γ) (φ.subst (Context.Hom.cons_Id t2))
+    (D_eq : Derivation Γ (t1 =' t2)) (D : Derivation (Γ' ++ Γ) (φ.subst (Context.Hom.consId t1))) :
+    Derivation (Γ' ++ Γ) (φ.subst (Context.Hom.consId t2))
   | eq_proj_pair {xs n} {Aᵢ : (i : Fin n) → S} (tᵢ : (i : Fin n) → ⊢ᵗ[xs] (Aᵢ i)) {i : Fin n} {Γ} :
       Derivation Γ ((Term.pair tᵢ).proj i =' tᵢ i)
   | eq_pair_proj {xs n} {Aᵢ : Fin n → DerivedSorts S.Sorts} (t : ⊢ᵗ[xs] .prod Aᵢ) {Γ} :
       Derivation Γ (Term.pair (fun i ↦ t.proj i) =' t)
   | exists_intro {xs A} {Γ : S.FormulaContext xs} (φ : S.Formula (A ∶ xs)) (t : S.Term xs A)
-      (D : Derivation Γ (φ.subst (Context.Hom.cons_Id t))) : Derivation Γ (∃' φ)
+      (D : Derivation Γ (φ.subst (Context.Hom.consId t))) : Derivation Γ (∃' φ)
   | exists_elim {xs A} {Γ : S.FormulaContext xs} {φ : S.Formula (A ∶ xs)}
       (D_exists : Derivation Γ (∃' φ)) {ψ}
       (D : Derivation ((Γ.subst (xs.π A)).cons φ) (ψ.subst (xs.π A))) :
@@ -65,8 +57,51 @@ def FormulaContext.Hom.π : (Δ.cons φ) ⟶ Δ :=
   fun i ↦ .var (Δ.cons φ) i.succ
 
 noncomputable def Derivation.wkTm {xs} {Γ : FormulaContext xs} {φ : Formula xs}
-    (D : Γ ⊢ᵈ φ) {ys} (ρ : ys ⟶ xs) : Derivation (T := T) (Γ.subst ρ) (φ.subst ρ) :=
-  sorry
+    (D : Γ ⊢ᵈ φ) : (ys : S.Context) → (ρ : ys ⟶ xs) → Derivation (T := T) (Γ.subst ρ) (φ.subst ρ) :=
+  match D with
+  | @«axiom» _ _ _ xs Γ ψ σ' φinT D => fun ys σ ↦ by
+      let D' := wkTm D _ σ
+      rw [← Formula.subst_comp] at D'
+      rw [← Formula.subst_comp]
+      exact Derivation.axiom (T := T) φinT D'
+  | var Γ i => fun ys σ ↦ Derivation.var (Γ.subst σ) i
+  | true_intro => fun ys σ ↦ true_intro
+  | false_elim D_false => fun ys σ ↦ false_elim (wkTm D_false _ σ)
+  | conj_intro D_left D_right => fun ys σ ↦ conj_intro (wkTm D_left _ σ) (wkTm D_right _ σ)
+  | conj_elim_l D_conj => fun ys σ ↦ conj_elim_l (wkTm D_conj _ σ)
+  | conj_elim_r D_conj => fun ys σ ↦ conj_elim_r (wkTm D_conj _ σ)
+  | disj_intro φᵢ i D => fun ys σ ↦ disj_intro _ i (wkTm D _ σ)
+  | disj_elim D_disj Dᵢ => fun ys σ ↦ by
+      apply disj_elim
+      · exact Derivation.wkTm D_disj _ σ
+      · intro i
+        rw [← FormulaContext.subst_cons]
+        exact Derivation.wkTm (Dᵢ i) _ σ
+  | eq_intro => fun ys σ ↦ eq_intro
+  | @eq_elim _ _ _ xs A t1 t2 Γ Γ' φ D_eq D => fun ys σ ↦ by
+      let faa : Γ'.subst σ ++ Γ.subst σ ⊢ᵈ (φ.subst ((Context.consFunctor A).map σ)).subst (Context.Hom.consId (t1.subst σ)) := by
+        rw [← FormulaContext.subst_append, ← Formula.subst_comp, ← Context.Hom.consId_naturality, Formula.subst_comp]
+        exact Derivation.wkTm D _ σ
+      let fee' := Derivation.wkTm D_eq _ σ
+      let fee : Γ.subst σ ⊢ᵈ t1.subst σ =' t2.subst σ := by
+        exact fee'
+      let fii := eq_elim _ fee faa
+      rw [FormulaContext.subst_append, ← Formula.subst_comp, Context.Hom.consId_naturality, Formula.subst_comp]
+      exact fii
+  | eq_proj_pair tᵢ => fun ys σ ↦ eq_proj_pair _
+  | eq_pair_proj t => fun ys σ ↦ eq_pair_proj _
+  | exists_intro φ t D => fun ys σ ↦ by
+      let D' := (wkTm D _ σ)
+      rw [← Formula.subst_comp, Context.Hom.consId_naturality, Formula.subst_comp] at D'
+      exact exists_intro _ _ D'
+  | exists_elim D_exists D => fun ys σ ↦ by
+      apply Derivation.exists_elim
+      · exact Derivation.wkTm D_exists _ σ
+      · let faa := Derivation.wkTm D _ ((Context.consFunctor _).map σ)
+        simp at faa
+        rw [FormulaContext.subst_cons, ← FormulaContext.subst_comp, ← Formula.subst_comp] at faa
+        rw [← FormulaContext.subst_comp, ← Formula.subst_comp]
+        exact faa
 
 def Derivation.wkFml {xs} {Γ : FormulaContext xs} {φ : Formula xs}
     (D : Γ ⊢ᵈ φ) : (Δ : FormulaContext xs) → (ξ : Γ ⊆' Δ) → Derivation (T := T) Δ φ :=
@@ -129,14 +164,23 @@ noncomputable def Derivation.subst' {xs} {Γ : FormulaContext xs} {φ : Formula 
           rw [this]
           apply Derivation.wkFml (ξ k)
           exact Δ.incl_cons _
-  | .(Γ), _, @eq_intro _ _ _ .(xs) A Γ t => fun ys σ Δ ξ ↦
-      sorry
+  | .(Γ), _, @eq_intro _ _ _ .(xs) A Γ t => fun ys σ Δ ξ ↦ eq_intro
   | .(Γ' ++ Γ), _, @eq_elim _ _ _ .(xs) A t1 t2 Γ Γ' φ D_eq D  => fun ys σ Δ ξ ↦
-      sorry
-  | .(Γ), _, @eq_proj_pair _ _ _ .(xs) n Aᵢ tᵢ i Γ => fun ys σ Δ ξ ↦
-      sorry
-  | .(Γ), _, @eq_pair_proj _ _ _ .(xs) n Aᵢ t Γ => fun ys σ Δ ξ ↦
-      sorry
+      by
+      rw [← Formula.subst_comp, Context.Hom.consId_naturality, Formula.subst_comp, ← FormulaContext.nil_append Δ]
+      apply eq_elim
+      · apply subst' D_eq
+        intro i
+        let foo := ξ ⟨i, by simp [FormulaContext.subst_append]; omega⟩
+        -- rw [FormulaContext.subst_append] at foo
+        sorry
+      · simp
+        let foo := wkTm D _ σ
+        rw [← FormulaContext.subst_id ((Γ' ++ Γ).subst σ)] at ξ
+        let faa := subst' foo _ (𝟙 _) _ (ξ)
+        sorry
+  | .(Γ), _, @eq_proj_pair _ _ _ .(xs) n Aᵢ tᵢ i Γ => fun ys σ Δ ξ ↦ eq_proj_pair _
+  | .(Γ), _, @eq_pair_proj _ _ _ .(xs) n Aᵢ t Γ => fun ys σ Δ ξ ↦ eq_pair_proj _
   | .(Γ), _, @exists_intro _ _ _ .(xs) A Γ φ t D => fun ys σ Δ ξ ↦
       sorry
   | .(Γ), _, @exists_elim _ _ _ .(xs) A Γ φ D_exists ψ D => fun ys σ Δ ξ ↦
@@ -148,17 +192,13 @@ noncomputable def Derivation.subst' {xs} {Γ : FormulaContext xs} {φ : Formula 
       apply Derivation.subst' D
       rw [FormulaContext.subst_cons]
       apply FormulaContext.Hom.cons
-      · rw [FormulaContext.subst_comp]
-        have : ((Context.consFunctor A).map σ ≫ xs.π A) = ys.π A ≫ σ := sorry
-        rw [this]
-        intro i
-        have : (Γ.subst (ys.π A ≫ σ)).nth i = Formula.subst (ys.π A) ((Γ.subst σ).nth i) := sorry
-        rw [this]
-        exact Derivation.subst' (ξ i) (A ∶ ys) (ys.π A) _
-          (FormulaContext.Hom.π (Δ.subst (ys.π A)) (Formula.subst ((Context.consFunctor A).map σ) φ))
+      · intro i
+        let foo := wkTm (ξ i) _ (ys.π A)
+        rw [FormulaContext.subst_nth, ← Formula.subst_comp, ← Context.π_naturality, Formula.subst_comp] at foo
+        let faa := wkFml foo
+        apply faa
+        exact (Δ.subst (ys.π A)).incl_cons (Formula.subst ((Context.consFunctor A).map σ) φ)
       · exact Derivation.var _ 0
-  termination_by sizeOf Γ -- Placeholder to typecheck
-  decreasing_by all_goals sorry
 
 instance {xs} : Category (FormulaContext (κ := κ) xs) where
   id Γ i := .var Γ i

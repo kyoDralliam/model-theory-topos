@@ -218,7 +218,7 @@ lemma FormulaContext.interpret_cons
 
 lemma FormulaContext.interpret_eq (t1 t2 : ⊢ᵗ[xs] A) :
   ⟦M|t1 =' t2⟧ᶠ =
-    Subobject.mk (equalizer.ι ⟦M|Context.Hom.cons_Id t1⟧ʰ ⟦M|Context.Hom.cons_Id t2⟧ʰ) := sorry
+    Subobject.mk (equalizer.ι ⟦M|Context.Hom.consId t1⟧ʰ ⟦M|Context.Hom.consId t2⟧ʰ) := sorry
 
 lemma FormulaContext.interpret_cons_pullback
     {xs : Context S} (Γ : FormulaContext xs) {I : Set κ} (P : xs ⊢ᶠ𝐏) :

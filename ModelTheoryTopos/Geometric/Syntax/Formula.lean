@@ -132,17 +132,59 @@ lemma FormulaContext.subst_cons (σ : ys ⟶ xs) (Γ : FormulaContext xs) (φ : 
   · simp only [subst, heq_eq_eq]; funext i; cases i using Fin.cases <;> simp
 
 lemma FormulaContext.subst_comp {zs} (σ' : zs ⟶ ys) (σ : ys ⟶ xs) (Γ : FormulaContext xs) :
-    (Γ.subst σ).subst σ' = Γ.subst (σ' ≫ σ) := by
+    Γ.subst (σ' ≫ σ) = (Γ.subst σ).subst σ' := by
   ext
   · simp [subst]
   · simp only [subst, heq_eq_eq]; funext; simp [Formula.subst_comp]
 
 instance instHAppendFormulaContext :
     HAppend (FormulaContext xs) (FormulaContext xs) (FormulaContext (κ := κ) xs) where
-  hAppend Γ Γ' := {
-    length := Γ.length + Γ'.length
-    nth := Matrix.vecAppend (by simp) Γ.nth Γ'.nth
+  hAppend Δ Γ := {
+    length := Δ.length + Γ.length
+    nth := Matrix.vecAppend (by simp) Δ.nth Γ.nth
   }
+
+section
+
+variable (Δ Γ : FormulaContext xs)
+
+@[simp]
+lemma FormulaContext.append_length : (Δ ++ Γ).length = Δ.length + Γ.length := by
+  rfl
+
+@[simp]
+lemma FormulaContext.append_nth_l' (i : Fin Δ.length) (l : i < (Δ ++ Γ).length) :
+    (Δ ++ Γ).nth ⟨i, l⟩ = Δ.nth i := by
+  simp [HAppend.hAppend, Matrix.vecAppend_eq_ite]
+
+@[simp]
+lemma FormulaContext.append_nth_l (i : Fin Δ.length) :
+    (Δ ++ Γ).nth ⟨i, by simp; omega⟩ = Δ.nth i := by
+  simp [HAppend.hAppend, Matrix.vecAppend_eq_ite]
+
+@[simp]
+lemma FormulaContext.append_nth_r' (i : Fin Γ.length) (l : Δ.length + ↑i < (Δ ++ Γ).length) :
+    (Δ ++ Γ).nth ⟨Δ.length + i, l⟩ = Γ.nth i := by
+  simp [HAppend.hAppend, Matrix.vecAppend_eq_ite]
+
+@[simp]
+lemma FormulaContext.append_nth_r (i : Fin Γ.length) :
+    (Δ ++ Γ).nth ⟨Δ.length + i, by simp⟩ = Γ.nth i := by
+  simp [HAppend.hAppend, Matrix.vecAppend_eq_ite]
+
+lemma FormulaContext.subst_append (σ: ys ⟶ xs) :
+    (Δ ++ Γ).subst σ = Δ.subst σ ++ Γ.subst σ := by
+  ext
+  · rfl
+  · apply heq_of_eq
+    funext i;
+    cases Nat.lt_or_ge i Δ.length with
+    | inl h =>
+      have := FormulaContext.append_nth_l' Δ Γ ⟨i, h⟩
+      have := FormulaContext.append_nth_l (Δ.subst σ) (Γ.subst σ) ⟨i, h⟩
+      sorry
+    | inr h => sorry
+
 
 def FormulaContext.mem (φ : Formula xs) (Γ : FormulaContext (κ := κ) xs) : Type _ :=
   {i // Γ.nth i = φ}
@@ -172,6 +214,11 @@ def FormulaContext.incl_cons_cons {Δ Γ : FormulaContext (κ := κ) xs} (φ) (�
     (fun i p ↦ p ▸ FormulaContext.mem_cons (ξ (Δ.nth i) ⟨i, rfl⟩) φ)
     i p
 
+def FormulaContext.append_incl_l {Δ Γ Γ' : FormulaContext (κ := κ) xs} :
+  Γ' ++ Γ ⊆' Δ → Γ ⊆' Δ :=
+  fun ξ φ ⟨⟨i, leq⟩, p⟩ ↦
+    ξ φ ⟨⟨Γ'.length + i, by simp [leq]⟩, by rw [FormulaContext.append_nth_r' (i := ⟨i, leq⟩), p]⟩
+
 instance instMembershipFormulaContext : Membership (Formula xs) (FormulaContext (κ := κ) xs) where
   mem Γ φ := ∃ i, Γ.nth i = φ
 
@@ -186,35 +233,6 @@ lemma FormulaContext.nil_append : FormulaContext.nil xs ++ Γ = Γ := by
   · simp [nil, HAppend.hAppend]
     nth_rw 2 [← Matrix.empty_vecAppend Γ.nth]
     grind
-
-@[simp]
-lemma FormulaContext.append_length (Γ') : (Γ' ++ Γ).length = Γ'.length + Γ.length := by
-  simp [HAppend.hAppend]
-
-@[simp]
-lemma FormulaContext.append_nth_l' (Γ') (i : Fin Γ'.length) (l : i < (Γ' ++ Γ).length) :
-    (Γ' ++ Γ).nth ⟨i, l⟩ = Γ'.nth i := by
-  simp [HAppend.hAppend, Matrix.vecAppend_eq_ite]
-
-@[simp]
-lemma FormulaContext.append_nth_l (Γ') (i : Fin Γ'.length) :
-    (Γ' ++ Γ).nth ⟨i, by simp; omega⟩ = Γ'.nth i := by
-  simp [HAppend.hAppend, Matrix.vecAppend_eq_ite]
-
-@[simp]
-lemma FormulaContext.append_nth_r' (Γ') (i : Fin Γ.length) (l : Γ'.length + ↑i < (Γ' ++ Γ).length) :
-    (Γ' ++ Γ).nth ⟨Γ'.length + i, l⟩ = Γ.nth i := by
-  simp [HAppend.hAppend, Matrix.vecAppend_eq_ite]
-
-@[simp]
-lemma FormulaContext.append_nth_r (Γ') (i : Fin Γ.length) :
-    (Γ' ++ Γ).nth ⟨Γ'.length + i, by simp⟩ = Γ.nth i := by
-  simp [HAppend.hAppend, Matrix.vecAppend_eq_ite]
-
-def FormulaContext.append_incl_l {Δ Γ Γ' : FormulaContext (κ := κ) xs} :
-  Γ' ++ Γ ⊆' Δ → Γ ⊆' Δ :=
-  fun ξ φ ⟨⟨i, leq⟩, p⟩ ↦
-    ξ φ ⟨⟨Γ'.length + i, by simp [leq]⟩, by rw [FormulaContext.append_nth_r' (i := ⟨i, leq⟩), p]⟩
 
 @[simp]
 lemma FormulaContext.snoc_append {n : ℕ} (φᵢ : Fin (n + 1) → Formula xs) :
