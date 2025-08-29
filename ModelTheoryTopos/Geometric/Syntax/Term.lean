@@ -118,7 +118,16 @@ def Context.Hom.consId {xs : S.Context} {A : S} (t : S.Term xs A) :
 
 def Context.Hom.consId_naturality {ys xs : S.Context} (σ : ys ⟶ xs) {A : S} (t : S.Term xs A) :
   (σ ≫ Context.Hom.consId t) =
-          (Context.Hom.consId (Term.subst σ t) ≫ (Context.consFunctor A).map σ) := sorry
+    (Context.Hom.consId (Term.subst σ t) ≫ (Context.consFunctor A).map σ) := by
+  funext i
+  cases i using Fin.cases with
+  | zero => rfl
+  | succ i =>
+    simp [consId, CategoryStruct.comp, consFunctor, cons, CategoryStruct.id, Context.nthTerm]
+    rw [← Term.subst_comp];
+    simp [CategoryStruct.comp, Context.π, Term.subst]
+    nth_rw 1 [← Term.subst_id (σ i)]
+    rfl
 
 lemma Context.π_naturality (A : S) (σ : xs ⟶ ys) :
   (Context.consFunctor A).map σ ≫ ys.π A = xs.π A ≫ σ := by rfl

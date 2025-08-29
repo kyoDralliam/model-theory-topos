@@ -171,29 +171,25 @@ lemma FormulaContext.interpret_append
   apply iso_of_both_ways
     ( prod.lift
       ( Pi.lift <| fun i ↦
-        append_nth_l Δ _ _ ▸ Pi.π (fun i ↦ ⟦M|(Γ ++ Δ).nth i⟧ᶠ) ⟨i, by simp; omega⟩)
+        append_nth_l Γ _ _ ▸ Pi.π (fun i ↦ ⟦M|(Γ ++ Δ).nth i⟧ᶠ) ⟨i, by simp; omega⟩)
       ( Pi.lift <| fun i ↦
-        append_nth_r Δ _ _ ▸ Pi.π (fun i ↦ ⟦M|(Γ ++ Δ).nth i⟧ᶠ) ⟨Γ.length + i, by simp⟩))
+        append_nth_r Γ _ _ ▸ Pi.π (fun i ↦ ⟦M|(Γ ++ Δ).nth i⟧ᶠ) ⟨Γ.length + i, by simp⟩))
   apply Pi.lift
-  intro i
+  intro ⟨i, i_leq⟩
   by_cases h : i < Γ.length
-  · refine prod.fst ≫ Pi.π _ ⟨i, h⟩ ≫ ?_
-    have : Γ.nth ⟨i, h⟩ = (Γ ++ Δ).nth i := by
-      simp [HAppend.hAppend, Matrix.vecAppend_eq_ite]; grind
-    rw [this]
-    exact 𝟙 _
+  · refine prod.fst ≫ Pi.π _ ⟨i, h⟩ ≫ eqToHom ?_
+    rw [FormulaContext.append_nth_l'']
   · let k : ℕ := i - Γ.length
-    have p : Γ.length + k = i := by aesop
+    have p : i = Γ.length + k := by aesop
     have k_leq : k < Δ.length := by
-      have := i.2
-      simp_all only [not_lt, add_tsub_cancel_of_le, append_length, gt_iff_lt, k]
+      simp [append_length] at i_leq
       omega
-    refine prod.snd ≫ Pi.π _ ⟨k, k_leq⟩ ≫ ?_
-    have : Δ.nth ⟨k, k_leq⟩ = (Γ ++ Δ).nth i := by
-      have : i = ⟨Γ.length + k, by omega⟩ := by aesop
-      rw [this, ← append_nth_r Δ Γ ⟨k, k_leq⟩]
+    refine prod.snd ≫ Pi.π _ ⟨k, k_leq⟩ ≫ eqToHom ?_
+    have : Δ.nth ⟨k, k_leq⟩ = (Γ ++ Δ).nth ⟨Γ.length + k, p ▸ i_leq⟩ := by
+      rw [FormulaContext.append_nth_r'']
     rw [this]
-    exact 𝟙 _
+    congr
+    exact p.symm
 
 @[simp]
 lemma FormulaContext.interpret_cons

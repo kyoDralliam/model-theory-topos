@@ -153,6 +153,11 @@ lemma FormulaContext.append_length : (Δ ++ Γ).length = Δ.length + Γ.length :
   rfl
 
 @[simp]
+lemma FormulaContext.append_nth_l'' (i : ℕ) (k : i < Δ.length) (l : i < (Δ ++ Γ).length) :
+    (Δ ++ Γ).nth ⟨i, l⟩ = Δ.nth ⟨i, k⟩ := by
+  simp [HAppend.hAppend, Matrix.vecAppend_eq_ite]; aesop
+
+@[simp]
 lemma FormulaContext.append_nth_l' (i : Fin Δ.length) (l : i < (Δ ++ Γ).length) :
     (Δ ++ Γ).nth ⟨i, l⟩ = Δ.nth i := by
   simp [HAppend.hAppend, Matrix.vecAppend_eq_ite]
@@ -160,6 +165,12 @@ lemma FormulaContext.append_nth_l' (i : Fin Δ.length) (l : i < (Δ ++ Γ).lengt
 @[simp]
 lemma FormulaContext.append_nth_l (i : Fin Δ.length) :
     (Δ ++ Γ).nth ⟨i, by simp; omega⟩ = Δ.nth i := by
+  simp [HAppend.hAppend, Matrix.vecAppend_eq_ite]
+
+@[simp]
+lemma FormulaContext.append_nth_r''
+    (i : ℕ) (k : i < Γ.length) (l : Δ.length + i < (Δ ++ Γ).length) :
+    (Δ ++ Γ).nth ⟨Δ.length + i, l⟩ = Γ.nth ⟨i, k⟩ := by
   simp [HAppend.hAppend, Matrix.vecAppend_eq_ite]
 
 @[simp]
@@ -177,14 +188,19 @@ lemma FormulaContext.subst_append (σ: ys ⟶ xs) :
   ext
   · rfl
   · apply heq_of_eq
-    funext i;
-    cases Nat.lt_or_ge i Δ.length with
-    | inl h =>
-      have := FormulaContext.append_nth_l' Δ Γ ⟨i, h⟩
-      have := FormulaContext.append_nth_l (Δ.subst σ) (Γ.subst σ) ⟨i, h⟩
-      sorry
-    | inr h => sorry
-
+    funext ⟨i, k⟩;
+    by_cases h : i < Δ.length
+    · rw [FormulaContext.append_nth_l'' (Δ.subst σ) (Γ.subst σ) i h k]
+      simp [subst]
+      rw [FormulaContext.append_nth_l'' Δ Γ i]
+    · let j := i - Δ.length
+      have i_eq : i = Δ.length + j:= by omega
+      have fin_eq : Fin.mk i k = ⟨Δ.length + j, by rw [← i_eq]; exact k⟩ := by grind
+      rw [fin_eq]
+      simp [subst] at k
+      have p := FormulaContext.append_nth_r'' (Δ.subst σ) (Γ.subst σ) j (by simp [subst]; omega) (by simp [subst]; omega)
+      simp [subst] at *
+      rw [p, FormulaContext.append_nth_r'' Δ Γ j]
 
 def FormulaContext.mem (φ : Formula xs) (Γ : FormulaContext (κ := κ) xs) : Type _ :=
   {i // Γ.nth i = φ}
