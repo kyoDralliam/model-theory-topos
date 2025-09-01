@@ -35,11 +35,6 @@ lemma equalizerProdLiftIso.hom_snd {Z X Y : C} (f1 f2 : Z ⟶ X) (g1 g2 : Z ⟶ 
     equalizerProdLiftIsoSnd f1 f2 g1 g2 :=
   sorry
 
--- Another possible proof is as follows:
--- 1. Given maps f1, f2: C → A and g1,g2 : C → B, the equalizer of the maps CxC → AxB is the
--- product of the equalizers (this is just interchange of limits).
--- 2. The pullback of a map fxg:AxB -> CxD along ⟨h1,h2⟩:E -> CxD is the pullback of h1*f and h2*g.
--- 3. The result follows from the previous by factorizing C -> AxB as C -> CxC -> AxB.
 theorem equalizerProdLift_isPullback :
     IsPullback
       (equalizerProdLiftIsoFst f1 f2 g1 g2)
@@ -50,3 +45,21 @@ theorem equalizerProdLift_isPullback :
     (equalizerProdLiftIso f1 f2 g1 g2)
     (equalizerProdLiftIso.hom_fst f1 f2 g1 g2)
     (equalizerProdLiftIso.hom_snd f1 f2 g1 g2)
+
+-- The equalizer of <f1,1> and <g1:1> : Z -> X×Z is the equalizer of f1 and g1.
+def EqualizerSmth :
+  IsLimit (Fork.ofι (f := f1) (g := f2) (equalizer.ι (prod.lift f1 (𝟙 Z)) (prod.lift f2 (𝟙 Z))) (by sorry)) := sorry
+
+def EqualizerIso :
+  equalizer (prod.lift f1 (𝟙 Z)) (prod.lift f2 (𝟙 Z)) ≅ equalizer f1 f2 := sorry
+
+lemma Equalizer_eq :
+  (EqualizerIso f1 f2).hom ≫ equalizer.ι f1 f2 =
+    equalizer.ι (prod.lift f1 (𝟙 Z)) (prod.lift f2 (𝟙 Z)) := sorry
+
+lemma Equalizer_eq' :
+  (EqualizerIso f1 f2).inv ≫ equalizer.ι (prod.lift f1 (𝟙 Z)) (prod.lift f2 (𝟙 Z)) =
+    equalizer.ι f1 f2 := sorry
+
+-- noncomputable def equalizerIsEqualizer : IsLimit (Fork.ofι (equalizer.ι f g)
+--     (equalizer.condition f g)) :=

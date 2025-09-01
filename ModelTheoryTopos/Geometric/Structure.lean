@@ -36,10 +36,12 @@ noncomputable section
 
 variable (M : Structure S C) {ys xs : S.Context} (σ : ys ⟶ xs)
 
-abbrev Context.interpret (xs : S.Context) : C :=
-  ∏ᶜ (fun i ↦ (xs.nth i).interpret M.sorts)
-
 notation:arg "⟦" M "|" A "⟧ᵈ" => DerivedSorts.interpret (Structure.sorts M) A
+
+@[reducible]
+def Context.interpret (xs : S.Context) : C :=
+  ∏ᶜ (fun i ↦ ⟦M | xs.nth i⟧ᵈ)
+
 notation:arg "⟦" M "|" xs "⟧ᶜ" => Context.interpret M xs
 notation:arg "⟦" M "|" A "⟧ˢ" => Structure.sorts (self := M) A
 notation:arg "⟦" M "|" xs "⟧ᵖ" =>
@@ -78,6 +80,12 @@ def Context.Hom.interpret : ⟦M | ys⟧ᶜ ⟶ ⟦M | xs⟧ᶜ := Pi.lift (fun 
 notation:arg "⟦" M "|" σ "⟧ʰ" => Context.Hom.interpret M σ
 
 @[simp]
+lemma Context.Hom.interpret_id : ⟦M | 𝟙 xs⟧ʰ = 𝟙 ⟦M | xs⟧ᶜ := by
+  refine Pi.hom_ext _ _ (fun i ↦ ?_)
+  simp [CategoryStruct.id, Context.nthTerm, Term.interpret]
+
+
+@[simp]
 lemma Context.Hom.interpret_subst {A : S} (t : ⊢ᵗ[xs] A) :
     ⟦M | t.subst σ⟧ᵗ = ⟦M | σ⟧ʰ ≫ ⟦M | t⟧ᵗ := by
   induction t with
@@ -91,6 +99,17 @@ lemma Context.Hom.interpret_subst {A : S} (t : ⊢ᵗ[xs] A) :
   | proj t i =>
       simp only [Term.interpret, Context.Hom.interpret]
       rw [← Category.assoc]; congr
+
+def Context.interpretConsIso (xs : S.Context) (A : S) :
+  ⟦M | A ∶ xs⟧ᶜ ≅ ⟦M | A⟧ᵈ ⨯ ⟦M | xs⟧ᶜ where
+  hom := prod.lift (Pi.π _ 0) (Pi.lift (fun i ↦ Pi.π _ i.succ))
+  inv := Pi.lift (Fin.cases prod.fst (fun i ↦ prod.snd ≫ Pi.π _ i))
+  hom_inv_id := by apply Pi.hom_ext; intro i; cases i using Fin.cases <;> simp
+
+lemma Context.Hom.interpret_consId {A : S} (t : ⊢ᵗ[xs] A) :
+  ⟦M|Context.Hom.consId t⟧ʰ =
+    (prod.lift ⟦M|t⟧ᵗ (𝟙 ⟦M|xs⟧ᶜ)) ≫ (Context.interpretConsIso M xs A).inv :=
+  sorry
 
 end
 
@@ -110,15 +129,23 @@ lemma Term.interpret_subst
   | proj t i h => simp [interpret]
 
 @[simp]
+lemma Context.Hom.interpret_comp (σ : xs ⟶ ys) (σ' : ys ⟶ zs) :
+  ⟦M | σ ≫ σ'⟧ʰ = ⟦M | σ⟧ʰ ≫ ⟦M | σ'⟧ʰ := by
+  apply Pi.hom_ext
+  intro i
+  simp only [limit.lift_π, Fan.mk_pt, Fan.mk_π_app, Category.assoc]
+  rw [← Term.interpret_subst]
+  rfl
+
+@[simp]
 noncomputable def Formula.interpret {xs : Context S} : xs ⊢ᶠ𝐏 →
     (Subobject <| ⟦M | xs ⟧ᶜ)
-  | .rel P t => (Subobject.pullback ⟦M | t⟧ᵗ).obj <| M.Relations P
+  | .rel R t => (Subobject.pullback ⟦M | t⟧ᵗ).obj <| M.Relations R
   | .true => ⊤
   | .false => ⊥
   | .conj P Q => P.interpret ⨯ Q.interpret
-  | .eq t1 t2 => .mk <| equalizer.ι ⟦M | t1⟧ᵗ ⟦M | t2⟧ᵗ
-  | .exists (A := A) P => (Subobject.«exists» ((xs.π A).interpret M)).obj <|
-      P.interpret
+  | .eq t1 t2 => equalizerSubobject ⟦M | t1⟧ᵗ ⟦M | t2⟧ᵗ
+  | .exists (A := A) φ => (Subobject.exists ((xs.π A).interpret M)).obj φ.interpret
   | .infdisj fP => ∐ (fun i ↦ Formula.interpret (fP i))
 
 notation:arg "⟦" M "|" P "⟧ᶠ" =>
@@ -141,10 +168,7 @@ lemma Formula.interpret_subst
   | eq t1 t2 =>
       simp only [interpret]
       rw [← Subobject.pullback_equalizer]
-      congr <;> try simp
-      apply HEq_prop
-      simp only [eq_iff_iff]
-      apply Iff.intro <;> infer_instance
+      congr <;> simp
   | @«exists» A xs P hp =>
       simp only [interpret]
       sorry
@@ -159,7 +183,7 @@ noncomputable def FormulaContext.interpret
     {xs : Context S} (Γ : FormulaContext xs) : Subobject ⟦M|xs⟧ᶜ :=
   ∏ᶜ (fun i ↦ ⟦M | Γ.nth i⟧ᶠ)
 
-notation:arg "⟦" M "|" Γ "⟧ᶠᶜ" => FormulaContext.interpret (M := M) Γ
+notation3:arg "⟦" M "|" Γ "⟧ᶠᶜ" => FormulaContext.interpret (M := M) Γ
 
 @[simp]
 lemma FormulaContext.interpret_append
@@ -214,7 +238,7 @@ lemma FormulaContext.interpret_cons
 
 lemma FormulaContext.interpret_eq (t1 t2 : ⊢ᵗ[xs] A) :
   ⟦M|t1 =' t2⟧ᶠ =
-    Subobject.mk (equalizer.ι ⟦M|Context.Hom.consId t1⟧ʰ ⟦M|Context.Hom.consId t2⟧ʰ) := sorry
+    equalizerSubobject ⟦M|Context.Hom.consId t1⟧ʰ ⟦M|Context.Hom.consId t2⟧ʰ := sorry
 
 lemma FormulaContext.interpret_cons_pullback
     {xs : Context S} (Γ : FormulaContext xs) {I : Set κ} (P : xs ⊢ᶠ𝐏) :
@@ -258,15 +282,50 @@ def Soundness {T : S.Theory} {xs : Context S} {Γ : FormulaContext xs} {P : xs �
   | eq_intro => simp [FormulaContext.interpret]
   | @eq_elim xs A t1 t2 Γ Γ' φ D_eq D' h h' =>
       simp at *
-      apply leOfHom
-      sorry
+      refine Subobject.le_of_comm ?_ ?_
+      · apply (Subobject.isPullback _ _).lift
+          ((Subobject.ofLE _ _ h') ≫ (Subobject.pullbackπ _ _)) (⟦M|Γ'⟧ᶠᶜ ⨯ ⟦M|Γ⟧ᶠᶜ).arrow
+        rw [Category.assoc, Subobject.pullback_condition]
+        simp
+        have : equalizerSubobject ⟦M|t1⟧ᵗ ⟦M|t2⟧ᵗ =
+            equalizerSubobject ⟦M|Context.Hom.consId t1⟧ʰ ⟦M|Context.Hom.consId t2⟧ʰ := by
+          rw [Context.Hom.interpret_consId, Context.Hom.interpret_consId]
+          have : equalizerSubobject (prod.lift ⟦M|t1⟧ᵗ (𝟙 ⟦M|xs⟧ᶜ) ≫ (Context.interpretConsIso M xs A).inv)
+               (prod.lift ⟦M|t2⟧ᵗ (𝟙 ⟦M|xs⟧ᶜ) ≫ (Context.interpretConsIso M xs A).inv) =  equalizerSubobject (prod.lift ⟦M|t1⟧ᵗ (𝟙 ⟦M|xs⟧ᶜ))
+                 (prod.lift ⟦M|t2⟧ᵗ (𝟙 ⟦M|xs⟧ᶜ)) := by
+            -- This should follow from the fact that the equalizer of f >> h and g >> h for an epi h is the equalizer of f and g
+            fapply Subobject.mk_eq_mk_of_comm
+            · sorry
+            · sorry
+          rw [this]
+          fapply Subobject.mk_eq_mk_of_comm
+          · apply Iso.symm
+            apply EqualizerIso
+          · simp
+            rw [Equalizer_eq']
+        rw [this] at h
+        have : (⟦M|Γ'⟧ᶠᶜ ⨯ ⟦M|Γ⟧ᶠᶜ).arrow =
+          Subobject.ofLE _ _ (leOfHom (prod.snd (X := ⟦M|Γ'⟧ᶠᶜ) (Y := ⟦M|Γ⟧ᶠᶜ))) ≫
+            Subobject.ofLE _ _ h ≫ (equalizerSubobject ⟦M|Context.Hom.consId t1⟧ʰ ⟦M|Context.Hom.consId t2⟧ʰ).arrow :=
+          sorry
+        rw [this]
+        rw [Category.assoc, Category.assoc, Limits.equalizerSubobject_arrow_comp]
+        simp
+      · simp
   | @eq_proj_pair xs n A tᵢ i Γ => simp
   | @eq_pair_proj xs n Aᵢ t Γ =>
       have : IsIso (equalizer.ι ⟦M|Term.pair fun i ↦ t.proj i⟧ᵗ ⟦M|t⟧ᵗ) :=
         equalizer.ι_of_eq <| Term.interpret_proj M t
       simp [CategoryTheory.Subobject.mk_eq_top_of_isIso]
-  | exists_intro φ t D h => sorry
-  | exists_elim D h => sorry
+  | exists_intro φ t D h =>
+      rw [Formula.interpret_subst] at h
+      refine le_trans h ?_
+      apply Subobject.le_of_comm ((Subobject.pullbackπ _ _) ≫ Subobject.existsπ _ _)
+      simp
+      rw [Subobject.existsπ_sq, ← Category.assoc, Subobject.pullback_condition]
+      rw [Category.assoc, ← Context.Hom.interpret_comp]
+      simp
+  | @exists_elim xs A Γ φ D_exists ψ D ih_exists ih_D => sorry
 
 end
 end Signature

@@ -43,6 +43,7 @@ def isGLB_IsLimit (I : Set C) (c : Cone (functorOfSet I)) (h : IsLimit c) : IsGL
 def IsLimitOfIsGLB (I : Set C) (c : Cone (functorOfSet I)) (h : IsGLB I c.pt) : IsLimit c where
   lift d := (h.2 (lowerBoundOfCone I d).prop).hom
 
+-- Could be generalized: I : Type*, F : Discrete I ⥤ C, HasLimit F iff ∃ x, IsGLB (Set.range F.obj) x
 lemma hasLimit_iff_hasGLB (I : Set C) : HasLimit (functorOfSet I) ↔ ∃ x, IsGLB I x := by
   constructor <;> intro h
   · let limitCone := getLimitCone (functorOfSet I)
