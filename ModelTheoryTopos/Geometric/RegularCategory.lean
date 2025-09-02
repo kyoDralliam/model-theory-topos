@@ -1,6 +1,7 @@
 import Mathlib.CategoryTheory.Subobject.Basic
 import Mathlib.CategoryTheory.EffectiveEpi.Basic
 import Mathlib.CategoryTheory.MorphismProperty.Limits
+import Mathlib.CategoryTheory.Limits.Shapes.FiniteLimits
 import Mathlib.CategoryTheory.Limits.Shapes.Images
 
 open CategoryTheory Limits
@@ -64,8 +65,10 @@ instance (X : C) : OrderBot (Subobject X) := by sorry
 -- Show
 instance (X : C) : HasBinaryProducts (Subobject X) := by sorry
 
-
--- instance geoHasFiniteProducts (X : C) : HasFiniteProducts (Subobject X) := sorry
+theorem frobenius {X Y : C} (f : X ⟶ Y) (x : Subobject X) (y : Subobject Y) :
+  (Subobject.exists f).obj (Limits.prod x ((Subobject.pullback f).obj y)) =
+     Limits.prod ((Subobject.exists f).obj x) y :=
+  sorry
 
 /- # TODO lemmas
 After more stuff is added, most of these will not have to be even mentioned,

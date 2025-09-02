@@ -2,7 +2,6 @@ import Mathlib.Data.Matrix.Notation
 import Mathlib.CategoryTheory.Subobject.Basic
 import Mathlib.CategoryTheory.Subobject.Lattice
 import Mathlib.CategoryTheory.Limits.Shapes.FiniteLimits
-import Mathlib.CategoryTheory.Limits.Shapes.FiniteLimits
 import Mathlib.CategoryTheory.MorphismProperty.Limits
 import Mathlib.CategoryTheory.Limits.Shapes.RegularMono
 import ModelTheoryTopos.Geometric.Syntax.Formula
@@ -137,7 +136,7 @@ lemma Context.Hom.interpret_comp (σ : xs ⟶ ys) (σ' : ys ⟶ zs) :
   rw [← Term.interpret_subst]
   rfl
 
-@[simp]
+@[reducible, simp]
 noncomputable def Formula.interpret {xs : Context S} : xs ⊢ᶠ𝐏 →
     (Subobject <| ⟦M | xs ⟧ᶜ)
   | .rel R t => (Subobject.pullback ⟦M | t⟧ᵗ).obj <| M.Relations R
@@ -236,15 +235,22 @@ lemma FormulaContext.interpret_cons
       refine prod.fst (X := ∏ᶜ fun i ↦ ⟦M|Γ.nth i⟧ᶠ) (Y := ⟦M|φ⟧ᶠ) ≫ ?_
       apply Pi.π
 
-lemma FormulaContext.interpret_eq (t1 t2 : ⊢ᵗ[xs] A) :
-  ⟦M|t1 =' t2⟧ᶠ =
-    equalizerSubobject ⟦M|Context.Hom.consId t1⟧ʰ ⟦M|Context.Hom.consId t2⟧ʰ := sorry
-
 lemma FormulaContext.interpret_cons_pullback
     {xs : Context S} (Γ : FormulaContext xs) {I : Set κ} (P : xs ⊢ᶠ𝐏) :
     ⟦M|Γ.cons P⟧ᶠᶜ = (Subobject.map (⟦M|Γ⟧ᶠᶜ).arrow).obj
       (((Subobject.pullback (⟦M|Γ⟧ᶠᶜ).arrow).obj ⟦M|P⟧ᶠ))  := by
   -- This should follow from the above and products in `Subobject X` being pullbacks in `C`
+  sorry
+
+lemma FormulaContext.interpret_eq (t1 t2 : ⊢ᵗ[xs] A) :
+  ⟦M|t1 =' t2⟧ᶠ =
+    equalizerSubobject ⟦M|Context.Hom.consId t1⟧ʰ ⟦M|Context.Hom.consId t2⟧ʰ := sorry
+
+lemma FormulaContext.interpret_subst
+    {xs ys : Context S} (Γ : FormulaContext xs) (σ : ys ⟶ xs) :
+    ⟦M|Γ.subst σ⟧ᶠᶜ = (Subobject.pullback ⟦M|σ⟧ʰ).obj ⟦M|Γ⟧ᶠᶜ := by
+  simp [FormulaContext.interpret, FormulaContext.subst_nth]
+  -- Products commute with pullbacks
   sorry
 
 lemma FormulaContext.interpret_cons_join
@@ -325,7 +331,16 @@ def Soundness {T : S.Theory} {xs : Context S} {Γ : FormulaContext xs} {P : xs �
       rw [Subobject.existsπ_sq, ← Category.assoc, Subobject.pullback_condition]
       rw [Category.assoc, ← Context.Hom.interpret_comp]
       simp
-  | @exists_elim xs A Γ φ D_exists ψ D ih_exists ih_D => sorry
+  | @exists_elim xs A Γ φ D_exists ψ D ih_exists ih_D =>
+      apply le_trans (leOfHom <| prod.lift (homOfLE ih_exists) (𝟙 _))
+      rw [← Geometric.frobenius (κ := κ)]
+      apply leOfHom
+      apply (Adjunction.homEquiv (Subobject.existsPullbackAdj ⟦M|xs.π A⟧ʰ)
+        (⟦M|φ⟧ᶠ ⨯ (Subobject.pullback ⟦M|xs.π A⟧ʰ).obj ⟦M|Γ⟧ᶠᶜ) ⟦M|ψ⟧ᶠ).invFun
+      rw [Formula.interpret_subst] at ih_D
+      refine eqToHom ?_≫ homOfLE ih_D
+      rw [FormulaContext.interpret_cons, FormulaContext.interpret_subst]
+      rw [Subobject.prod_eq_inf, Subobject.prod_eq_inf, inf_comm]
 
 end
 end Signature
