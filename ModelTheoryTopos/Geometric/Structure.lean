@@ -11,7 +11,6 @@ import ModelTheoryTopos.ForMathlib.Subobject
 import ModelTheoryTopos.ForMathlib.Miscellaneous
 
 open CategoryTheory Limits Signature
-
 namespace Signature
 
 universe u v

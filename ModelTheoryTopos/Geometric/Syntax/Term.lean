@@ -26,7 +26,7 @@ structure Context : Type* where
 def Context.signature : S.Context → Signature := fun _ => S
 
 inductive Term (xs : S.Context) : S → Type* where
-  | var {A} : {i : Fin xs.length // xs.nth i = A} → Term xs A
+  | var (i : Fin xs.length) :  Term xs (xs.nth i)
   | func (f : S.Functions) : Term xs f.domain → Term xs f.codomain
   | pair {n} {Aᵢ : Fin n → S} :
       ((i : Fin n) → Term xs (Aᵢ i)) → Term xs (.prod Aᵢ)
@@ -35,7 +35,7 @@ inductive Term (xs : S.Context) : S → Type* where
 scoped notation:25 "⊢ᵗ[" xs:51 "] " t:50  => Term xs t
 
 def Context.nthTerm (xs : S.Context) (i : Fin xs.length) : ⊢ᵗ[xs] xs.nth i :=
-  Term.var ⟨i , rfl⟩
+  Term.var i
 
 def Context.Hom (xs ys : S.Context) : Type* := (i : Fin ys.length) → ⊢ᵗ[xs] ys.nth i
 
@@ -45,7 +45,7 @@ instance : Quiver S.Context where
 @[reducible]
 def Term.subst {ys xs : S.Context} (σ : ys ⟶ xs) {A : S} :
    ⊢ᵗ[xs] A → ⊢ᵗ[ys] A
-  | var v => v.prop ▸ σ v.val
+  | var i => σ i
   | func f t  => .func f (t.subst σ)
   | pair tᵢ => pair (fun i ↦ (tᵢ i).subst σ)
   | proj (Aᵢ := Aᵢ) t i => proj (t.subst σ) i
@@ -84,10 +84,10 @@ def Context.cons (A : S) (xs : S.Context) : S.Context where
 scoped[Signature] infixr:67 " ∶ " => Signature.Context.cons
 
 def Context.π (xs : S.Context) (A : S) :
-    (A ∶ xs) ⟶ xs := fun i ↦ Term.var ⟨i.succ, rfl⟩
+    (A ∶ xs) ⟶ xs := fun i ↦ .var (xs := A ∶ xs) i.succ
 
 def Context.var (xs : S.Context) (A : S) : ⊢ᵗ[A∶xs] A :=
-  Term.var ⟨0 , rfl⟩
+  Term.var 0
 
 @[simp]
 lemma Context.cons_succ (xs : S.Context) (A : S) (i : Fin xs.length) :
