@@ -1,5 +1,8 @@
 import ModelTheoryTopos.Geometric.Syntax.Derivation
+import ModelTheoryTopos.Geometric.Structure
+import Mathlib
 
+open AlgebraicGeometry
 open CategoryTheory Limits Signature
 namespace Signature
 
@@ -56,3 +59,31 @@ def RingTheory : RingSignature.Theory where
     ⟨⟨3, fun _ => R⟩, ⊤', (0 * 1 * 2 : ⊢ᵗ[_] R) =' (0 * (1 * 2))⟩
     -- write all axioms
     }
+
+variable {κ} {X : Scheme}
+
+open TopCat
+
+variable (X) in
+instance presheafIsGeometric  : Geometric κ (Sheaf Type X) := sorry
+
+variable (M : Structure RingSignature (Sheaf Type X))
+
+def sheafOfRingsOfInternalRing (h : Theory.interpret M RingTheory) : Sheaf CommRingCat X where
+  val := {
+    obj X :=
+      have : CommRing ((M.sorts ()).val.obj X) := sorry
+      .of ((M.sorts ()).val.obj X)
+    map := sorry
+  }
+  cond := sorry
+
+def structureOfSheafOfRings (s : Sheaf CommRingCat X) :
+    Structure RingSignature (Sheaf Type X) where
+  sorts x := sorry
+  Functions := sorry
+  Relations r := by cases r
+
+def internalRingOfSheafOfRings (s : Sheaf CommRingCat X) :
+    Theory.interpret (structureOfSheafOfRings s) RingTheory :=
+  sorry

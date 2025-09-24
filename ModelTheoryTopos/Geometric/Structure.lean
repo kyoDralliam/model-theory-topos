@@ -48,7 +48,7 @@ notation:arg "⟦" M "|" xs "⟧ᵖ" =>
 @[reducible]
 def Term.interpret {A : S} :
     ⊢ᵗ[xs] A → (⟦M | xs⟧ᶜ ⟶ (⟦M | A⟧ᵈ))
-  | .var v => Pi.π (fun i ↦ ⟦M | xs.nth i⟧ᵈ) v.val ≫ eqToHom (by aesop)
+  | .var v => Pi.π (fun i ↦ ⟦M | xs.nth i⟧ᵈ) v ≫ eqToHom (by aesop)
   | .func f t => t.interpret ≫ M.Functions f
   | pair tᵢ => Pi.lift fun i ↦ (tᵢ i).interpret
   | proj (Aᵢ := Aᵢ) t i => t.interpret ≫ Pi.π (fun i ↦ ⟦M | Aᵢ i⟧ᵈ) i
