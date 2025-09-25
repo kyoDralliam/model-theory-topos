@@ -1,11 +1,19 @@
 import ModelTheoryTopos.Geometric.Syntax.Formula
 
+/-!
+# Derivations
+
+In this file we define derivations, given in a natural deduction style. We show that derivation are
+stable under substitution.
+-/
+
 open CategoryTheory Limits
 
 namespace Signature
 
 variable {S : Signature} [κ : SmallUniverse S] [T : S.Theory]
 
+/-- A natural deduction style definition of derivation. -/
 inductive Derivation : {xs : S.Context} → FormulaContext xs → Formula xs → Type* where
   | axiom {xs} {Γ : FormulaContext xs} {φ : S.Sequent} {σ : xs ⟶ φ.ctx}
       (φinT : φ ∈ T) (D : Derivation Γ (φ.premise.subst σ)) : Derivation Γ (φ.concl.subst σ)
@@ -41,101 +49,113 @@ scoped notation:25 Γ " ⊢ᵈ " φ:50  => Derivation Γ φ
 variable {xs : S.Context} {Δ Γ : FormulaContext xs} {φ : Formula xs}
 
 variable (Δ Γ) in
+/--
+A morphism between formula contexts `Δ ⟶ Γ` consists of a derivation of each formula in `Γ`, from
+the formulas in Δ
+-/
 def FormulaContext.Hom : Type _ :=
   (i : Fin Γ.length) → Δ ⊢ᵈ Γ.nth i
 
 instance : Quiver (FormulaContext xs) where
   Hom := FormulaContext.Hom
 
+/-- The identity formula context morphism. -/
 def FormulaContext.Hom.Id (Γ : FormulaContext xs) : Γ ⟶ Γ := .var Γ
 
+/-- The extension of a formula context morphism by a new derivation. -/
 def FormulaContext.Hom.cons (ξ : Δ ⟶ Γ) (D : Δ ⊢ᵈ φ) : Δ ⟶ (Γ.cons φ) :=
   Fin.cases D ξ
 
 variable (Δ φ) in
+/-- The projection formula context morphism. -/
 def FormulaContext.Hom.π : (Δ.cons φ) ⟶ Δ :=
   fun i ↦ .var (Δ.cons φ) i.succ
 
-def Derivation.wkTm {xs} {Γ : FormulaContext xs} {φ : Formula xs}
+/-- Derivations can be substituded by context morphisms. -/
+def Derivation.substContextHom {xs} {Γ : FormulaContext xs} {φ : Formula xs}
     (D : Γ ⊢ᵈ φ) : (ys : S.Context) → (ρ : ys ⟶ xs) → Derivation (T := T) (Γ.subst ρ) (φ.subst ρ) :=
   match D with
   | @«axiom» _ _ _ xs Γ ψ σ' φinT D => fun ys σ ↦ by
-      let D' := wkTm D _ σ
-      rw [← Formula.subst_comp] at D'
-      rw [← Formula.subst_comp]
+      let D' := substContextHom D _ σ
+      rw [← Formula.subst_comp] at D' ⊢
       exact Derivation.axiom (T := T) φinT D'
   | var Γ i => fun ys σ ↦ Derivation.var (Γ.subst σ) i
   | true_intro => fun ys σ ↦ true_intro
-  | false_elim D_false => fun ys σ ↦ false_elim (wkTm D_false _ σ)
-  | conj_intro D_left D_right => fun ys σ ↦ conj_intro (wkTm D_left _ σ) (wkTm D_right _ σ)
-  | conj_elim_l D_conj => fun ys σ ↦ conj_elim_l (wkTm D_conj _ σ)
-  | conj_elim_r D_conj => fun ys σ ↦ conj_elim_r (wkTm D_conj _ σ)
-  | disj_intro φᵢ i D => fun ys σ ↦ disj_intro _ i (wkTm D _ σ)
+  | false_elim D_false => fun ys σ ↦ false_elim (substContextHom D_false _ σ)
+  | conj_intro D_left D_right => fun ys σ ↦
+      conj_intro (substContextHom D_left _ σ) (substContextHom D_right _ σ)
+  | conj_elim_l D_conj => fun ys σ ↦ conj_elim_l (substContextHom D_conj _ σ)
+  | conj_elim_r D_conj => fun ys σ ↦ conj_elim_r (substContextHom D_conj _ σ)
+  | disj_intro φᵢ i D => fun ys σ ↦ disj_intro _ i (substContextHom D _ σ)
   | disj_elim D_disj Dᵢ => fun ys σ ↦
       disj_elim
-        (Derivation.wkTm D_disj _ σ)
-        (fun i ↦ FormulaContext.subst_cons σ Γ _ ▸ Derivation.wkTm (Dᵢ i) _ σ)
+        (substContextHom D_disj _ σ)
+        (fun i ↦ FormulaContext.subst_cons σ Γ _ ▸ substContextHom (Dᵢ i) _ σ)
   | eq_intro => fun ys σ ↦ eq_intro
   | @eq_elim _ _ _ xs A t1 t2 Γ Γ' φ D_eq D => fun ys σ ↦ by
-      let D' := Derivation.wkTm D _ σ
+      let D' := substContextHom D _ σ
       rw [FormulaContext.subst_append, ← Formula.subst_comp, Context.Hom.consId_naturality,
-        Formula.subst_comp] at D'
-      rw [FormulaContext.subst_append, ← Formula.subst_comp, Context.Hom.consId_naturality,
-        Formula.subst_comp]
-      exact eq_elim _ (Derivation.wkTm D_eq _ σ) D'
+        Formula.subst_comp] at D' ⊢
+      exact eq_elim _ (substContextHom D_eq _ σ) D'
   | eq_proj_pair tᵢ => fun ys σ ↦ eq_proj_pair _
   | eq_pair_proj t => fun ys σ ↦ eq_pair_proj _
   | exists_intro φ t D => fun ys σ ↦ by
-      let D' := (wkTm D _ σ)
+      let D' := (substContextHom D _ σ)
       rw [← Formula.subst_comp, Context.Hom.consId_naturality, Formula.subst_comp] at D'
       exact exists_intro _ _ D'
   | exists_elim D_exists D => fun ys σ ↦ by
-      apply Derivation.exists_elim (Derivation.wkTm D_exists _ σ)
-      let D' := Derivation.wkTm D _ ((Context.consFunctor _).map σ)
+      apply Derivation.exists_elim (substContextHom D_exists _ σ)
+      let D' := substContextHom D _ ((Context.consFunctor _).map σ)
       rw [FormulaContext.subst_cons, ← FormulaContext.subst_comp, ← Formula.subst_comp] at D'
       rw [← FormulaContext.subst_comp, ← Formula.subst_comp]
       exact D'
 
-def Derivation.wkFml {xs} {Γ : FormulaContext xs} {φ : Formula xs}
+/--
+Given a derivation of `φ` on context `Γ`, if `Γ ⊆' Δ` then we also have a derivation of `φ` in `Δ`.
+-/
+def Derivation.weakenFormulaContext {xs} {Γ : FormulaContext xs} {φ : Formula xs}
     (D : Γ ⊢ᵈ φ) : (Δ : FormulaContext xs) → (ξ : Γ ⊆' Δ) → Derivation (T := T) Δ φ :=
   match D with
   | @«axiom» _ _ _ xs Γ ψ σ φinT D => fun _ ξ ↦
-      .axiom (T := T) φinT (.wkFml D _ ξ)
+      .axiom (T := T) φinT (.weakenFormulaContext D _ ξ)
   | @var _ _ _ xs Γ i => fun Δ ξ ↦
       let ⟨j, q⟩ := ξ (Γ.nth i) ⟨i, rfl⟩
       q ▸ .var Δ j
   | @true_intro _ _ _ xs Γ => fun _ _ ↦ .true_intro
-  | @false_elim _ _ _ xs Γ φ D_false => fun _ ξ ↦ false_elim (.wkFml D_false _ ξ)
+  | @false_elim _ _ _ xs Γ φ D_false => fun _ ξ ↦ false_elim (.weakenFormulaContext D_false _ ξ)
   | @conj_intro _ _ _ xs Γ φ ψ D_left D_right => fun _ ξ ↦
-      conj_intro (.wkFml D_left _ ξ) (.wkFml D_right _ ξ)
-  | @conj_elim_l _ _ _  xs Γ φ ψ D_conj => fun _ ξ ↦ conj_elim_l (.wkFml D_conj _ ξ)
-  | @conj_elim_r _ _ _ xs Γ φ ψ D_conj => fun _ ξ ↦ conj_elim_r (.wkFml D_conj _ ξ)
-  | @disj_intro _ _ _ xs Γ I φᵢ i D => fun _ ξ ↦ disj_intro φᵢ i (.wkFml D _ ξ)
+      conj_intro (.weakenFormulaContext D_left _ ξ) (.weakenFormulaContext D_right _ ξ)
+  | @conj_elim_l _ _ _  xs Γ φ ψ D_conj => fun _ ξ ↦ conj_elim_l (.weakenFormulaContext D_conj _ ξ)
+  | @conj_elim_r _ _ _ xs Γ φ ψ D_conj => fun _ ξ ↦ conj_elim_r (.weakenFormulaContext D_conj _ ξ)
+  | @disj_intro _ _ _ xs Γ I φᵢ i D => fun _ ξ ↦ disj_intro φᵢ i (.weakenFormulaContext D _ ξ)
   | @disj_elim _ _ _ xs Γ ψ _ φᵢ D_disj Dᵢ  => fun Δ ξ ↦
-      disj_elim (wkFml D_disj _ ξ) fun i ↦
-        (wkFml (Dᵢ i) (Δ.cons (φᵢ i)) (FormulaContext.incl_cons_cons (φᵢ i) ξ))
+      disj_elim (weakenFormulaContext D_disj _ ξ) fun i ↦
+        (weakenFormulaContext (Dᵢ i) (Δ.cons (φᵢ i)) (FormulaContext.incl_cons_cons (φᵢ i) ξ))
   | @eq_intro _ _ _ xs A Γ t => fun _ _ ↦ eq_intro
   | @eq_elim _ _ _ xs A _ t2 Γ Γ' φ D_eq D  => fun Δ ξ ↦
     FormulaContext.nil_append (κ := κ) Δ ▸
-      eq_elim φ (Γ' := .nil _) (.wkFml D_eq _ (FormulaContext.append_incl_l ξ))
-        (.wkFml D _ (FormulaContext.nil_append (κ := κ) _ ▸ ξ))
+      eq_elim φ (Γ' := .nil _) (.weakenFormulaContext D_eq _ (FormulaContext.append_incl_l ξ))
+        (.weakenFormulaContext D _ (FormulaContext.nil_append (κ := κ) _ ▸ ξ))
   | @eq_proj_pair _ _ _ xs n Aᵢ tᵢ i Γ => fun _ _ ↦ eq_proj_pair tᵢ
   | @eq_pair_proj _ _ _ xs n Aᵢ t Γ => fun _ _ ↦ eq_pair_proj t
-  | @exists_intro _ _ _ xs A Γ φ t D => fun _ ξ ↦ exists_intro φ t (.wkFml D _ ξ)
+  | @exists_intro _ _ _ xs A Γ φ t D => fun _ ξ ↦ exists_intro φ t (.weakenFormulaContext D _ ξ)
   | @exists_elim _ _ _ xs _ Γ φ D_exists ψ D => fun _ ξ ↦
-    exists_elim (.wkFml D_exists _ ξ)
-      (.wkFml D _ (FormulaContext.incl_cons_cons φ (FormulaContext.incl_subst ξ _)))
+    exists_elim (.weakenFormulaContext D_exists _ ξ)
+      (.weakenFormulaContext D _ (FormulaContext.incl_cons_cons φ (FormulaContext.incl_subst ξ _)))
 
+/-- The functorial action of the `cons` operation on formula context morphisms. -/
 def Derivation.Hom.consMap {xs} {Δ Γ : FormulaContext xs} (φ : Formula xs) (ξ : Δ ⟶ Γ) :
     (Δ.cons φ).Hom (T := T) (Γ.cons φ) :=
-  Fin.cases (.var _ 0) (fun i ↦ wkFml (ξ i) _ (FormulaContext.incl_cons Δ φ))
+  Fin.cases (.var _ 0) (fun i ↦ weakenFormulaContext (ξ i) _ (FormulaContext.incl_cons Δ φ))
 
+/-- The functorial action of the `subst` operation on formula context morphisms. -/
 def Derivation.Hom.substMap {xs ys} {Δ Γ : FormulaContext xs} (σ : ys ⟶ xs) (ξ : Δ ⟶ Γ) :
     (Δ.subst σ).Hom (T := T) (Γ.subst σ) :=
-  fun i ↦ wkTm (ξ i) _ σ
+  fun i ↦ substContextHom (ξ i) _ σ
 
+/-- Derivations can be substituded by formula context morphisms. -/
 def Derivation.subst {xs} {Γ : FormulaContext xs} {φ : Formula xs}
-    (D : Γ ⊢ᵈ φ) {Δ : FormulaContext xs} (ξ : Δ.Hom Γ) : Derivation (T := T) Δ φ :=
+    (D : Γ ⊢ᵈ φ) {Δ : FormulaContext xs} (ξ : Δ ⟶ Γ) : Derivation (T := T) Δ φ :=
   match D with
   | «axiom» φinT D => .axiom (T := T) φinT (subst D ξ)
   | var Γ i => ξ i
@@ -162,6 +182,7 @@ def Derivation.subst {xs} {Γ : FormulaContext xs} {φ : Formula xs}
       Derivation.exists_elim (subst D_exists ξ)
       (subst D (Derivation.Hom.consMap _ (Derivation.Hom.substMap _ ξ)))
 
+/-- The `CategoryStruct` on formula contexts. -/
 instance {xs} : CategoryStruct (FormulaContext (κ := κ) xs) where
   id Γ i := .var Γ i
   comp ξ ξ' i := Derivation.subst (ξ' i) ξ

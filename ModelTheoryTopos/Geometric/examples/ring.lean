@@ -6,6 +6,7 @@ open AlgebraicGeometry
 open CategoryTheory Limits Signature
 namespace Signature
 
+/-- The symbol (functions) of rings -/
 inductive RingSymbols where
   | plus : RingSymbols
   | zero : RingSymbols
@@ -15,6 +16,7 @@ inductive RingSymbols where
 
 notation3 "R" => DerivedSorts.inj ()
 
+/-- The signature of rings -/
 def RingSignature : Signature where
   Sorts := Unit
   Functions := {
@@ -39,19 +41,24 @@ instance {xs : RingSignature.Context} : Mul (⊢ᵗ[xs] R) where
 instance : RingSignature.SmallUniverse where
   type := ℕ
 
+/--
+This is a hack that Jovan Gerbscheid came up with, which allows us to use de Bruijn variables.
+-/
 class DecideTrue (p : Prop) [Decidable p] where
   isTrue : p
 
 instance (p : Prop) (h : p) : @DecideTrue p (.isTrue h) :=
   @DecideTrue.mk _ (.isTrue h) h
 
-instance [Decidable p] [DecideTrue p] : Fact p where
+instance {p} [Decidable p] [DecideTrue p] : Fact p where
   out := DecideTrue.isTrue
 
-instance foo {n : ℕ} {xs : Fin (n + 1) → RingSignature} (i : ℕ) [Fact (i < n + 1)]:
+instance {n : ℕ} {xs : Fin (n + 1) → RingSignature} (i : ℕ) [Fact (i < n + 1)]:
     OfNat (⊢ᵗ[⟨n+1,xs⟩] (xs ⟨i,Fact.out⟩)) i where
   ofNat := .var (xs := ⟨n+1,xs⟩) ⟨i,Fact.out⟩
+-- end of hack
 
+/-- The theory of rings -/
 def RingTheory : RingSignature.Theory where
   axioms := {
     ⟨⟨2, fun _ => R⟩, ⊤', (0 + 1 : ⊢ᵗ[_] R) =' 1 + 0⟩,
